@@ -102,7 +102,7 @@ function encodedPath(parts: string[]) {
   return parts.map(encodeURIComponent).join('/');
 }
 
-async function createNextcloudFolders(baseUrl: string, parts: string[], authorization: string) {
+export async function createNextcloudFolders(baseUrl: string, parts: string[], authorization: string) {
   for (let index = 1; index <= parts.length; index += 1) {
     const response = await fetch(`${baseUrl.replace(/\/$/, '')}/${encodedPath(parts.slice(0, index))}`, {
       method: 'MKCOL',
@@ -112,10 +112,22 @@ async function createNextcloudFolders(baseUrl: string, parts: string[], authoriz
   }
 }
 
-async function createPublicShare(remotePath: string, authorization: string) {
+async function createPublicShare(remotePath: string, authorization: string, publicUpload = false) {
   const ocsUrl = process.env.NEXTCLOUD_OCS_URL;
   if (!ocsUrl) throw new Error('NEXTCLOUD_OCS_URL_REQUIRED');
-  const response = await fetch(ocsUrl, {
+  const endpoint = new URL(ocsUrl);
+  endpoint.searchParams.set('format', 'json');
+  const shareBody: Record<string, string> = {
+    path: remotePath,
+    shareType: '3',
+    permissions: publicUpload ? '4' : '1',
+  };
+  if (publicUpload) {
+    shareBody.publicUpload = 'true';
+    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    shareBody.expireDate = expiry.toISOString().slice(0, 10);
+  }
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       Authorization: authorization,
@@ -123,13 +135,138 @@ async function createPublicShare(remotePath: string, authorization: string) {
       Accept: 'application/json',
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: new URLSearchParams({ path: remotePath, shareType: '3', permissions: '1' })
+    body: new URLSearchParams(shareBody)
   });
   if (!response.ok) throw new Error(`NEXTCLOUD_SHARE_${response.status}`);
   const payload: any = await response.json();
-  const shareUrl = payload?.ocs?.data?.url;
-  if (!shareUrl) throw new Error('NEXTCLOUD_SHARE_URL_MISSING');
-  return `${String(shareUrl).replace(/\/$/, '')}/download`;
+  const share = payload?.ocs?.data;
+  if (!share?.url || !share?.id || !share?.token) throw new Error('NEXTCLOUD_SHARE_DATA_MISSING');
+  return {
+    id: String(share.id),
+    token: String(share.token),
+    url: String(share.url).replace(/\/$/, ''),
+  };
+}
+
+async function deletePublicShare(shareId: string, authorization: string) {
+  const ocsUrl = process.env.NEXTCLOUD_OCS_URL;
+  if (!ocsUrl || !shareId) return;
+  const endpoint = `${ocsUrl.replace(/\/$/, '')}/${encodeURIComponent(shareId)}?format=json`;
+  await fetch(endpoint, {
+    method: 'DELETE',
+    headers: { Authorization: authorization, 'OCS-APIRequest': 'true', Accept: 'application/json' },
+  }).catch(() => undefined);
+}
+
+function nextcloudAuth() {
+  const webdavUrl = process.env.NEXTCLOUD_WEBDAV_URL;
+  const user = process.env.NEXTCLOUD_USERNAME;
+  const password = process.env.NEXTCLOUD_APP_PASSWORD;
+  if (!webdavUrl || !user || !password) throw new Error('NEXTCLOUD_WEBDAV_REQUIRED');
+  return {
+    webdavUrl: webdavUrl.replace(/\/$/, ''),
+    authorization: `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`,
+  };
+}
+
+function publicDavBase(webdavUrl: string) {
+  if (process.env.NEXTCLOUD_PUBLIC_DAV_URL) return process.env.NEXTCLOUD_PUBLIC_DAV_URL.replace(/\/$/, '');
+  return `${new URL(webdavUrl).origin}/public.php/dav/files`;
+}
+
+export async function storeAssetBuffer(input: {
+  buffer: Buffer;
+  tenantId: string;
+  folder: string;
+  fileName: string;
+  mimeType: string;
+}) {
+  const { webdavUrl, authorization } = nextcloudAuth();
+  const parts = [
+    safeSegment(process.env.NEXTCLOUD_ROOT || 'ContentPlanner', 'ContentPlanner'),
+    safeSegment(input.tenantId, 'tenant'),
+    safeSegment(input.folder, 'assets'),
+  ];
+  await createNextcloudFolders(webdavUrl, parts, authorization);
+  const storedName = `${randomBytes(16).toString('hex')}-${safeSegment(input.fileName, 'asset')}`;
+  const relativeParts = [...parts, storedName];
+  const response = await fetch(`${webdavUrl}/${encodedPath(relativeParts)}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: authorization,
+      'Content-Type': input.mimeType,
+      'Content-Length': String(input.buffer.length),
+    },
+    body: input.buffer,
+  });
+  if (!response.ok) throw new Error(`NEXTCLOUD_ASSET_UPLOAD_${response.status}`);
+  const share = await createPublicShare(`/${relativeParts.join('/')}`, authorization);
+  return { url: `${share.url}/download`, provider: 'nextcloud-webdav' };
+}
+
+export async function initDirectNextcloudUpload(input: {
+  intentId: string;
+  tenantId: string;
+  clientId: string;
+  postDate?: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+}) {
+  const extension = MIME_EXTENSIONS[input.mimeType];
+  if (!extension) throw new Error('MEDIA_TYPE_NOT_ALLOWED');
+  const originalExtension = path.extname(input.fileName).slice(1).toLowerCase();
+  if (!FILE_EXTENSIONS[input.mimeType]?.includes(originalExtension)) throw new Error('MEDIA_EXTENSION_INVALID');
+  const maxBytes = Math.max(1, Number(process.env.MAX_MEDIA_UPLOAD_GB || 20)) * 1024 * 1024 * 1024;
+  if (!input.size || input.size > maxBytes) throw new Error('MEDIA_SIZE_INVALID');
+
+  const { webdavUrl, authorization } = nextcloudAuth();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(input.postDate || '') ? String(input.postDate) : new Date().toISOString().slice(0, 10);
+  const parts = [
+    safeSegment(process.env.NEXTCLOUD_ROOT || 'ContentPlanner', 'ContentPlanner'),
+    safeSegment(input.tenantId, 'tenant'),
+    safeSegment(input.clientId, 'client'),
+    date.slice(0, 7),
+    `upload-${safeSegment(input.intentId, 'intent')}`,
+  ];
+  const storedName = `${date}-${safeSegment(path.parse(input.fileName).name, 'media')}-${randomBytes(8).toString('hex')}.${extension}`;
+  await createNextcloudFolders(webdavUrl, parts, authorization);
+  const folderPath = `/${parts.join('/')}`;
+  const share = await createPublicShare(folderPath, authorization, true);
+  return {
+    uploadUrl: `${publicDavBase(webdavUrl)}/${encodeURIComponent(share.token)}/${encodeURIComponent(storedName)}`,
+    remotePath: `${folderPath}/${storedName}`,
+    storedName,
+    uploadShareId: share.id,
+  };
+}
+
+export async function finalizeDirectNextcloudUpload(input: {
+  remotePath: string;
+  uploadShareId: string;
+  mimeType: string;
+  expectedSize: number;
+}) {
+  const { webdavUrl, authorization } = nextcloudAuth();
+  const fileUrl = `${webdavUrl}/${encodedPath(input.remotePath.split('/').filter(Boolean))}`;
+  const head = await fetch(fileUrl, { method: 'HEAD', headers: { Authorization: authorization } });
+  if (!head.ok) throw new Error('NEXTCLOUD_UPLOAD_NOT_FOUND');
+  const actualSize = Number(head.headers.get('content-length') || 0);
+  if (!actualSize || actualSize !== input.expectedSize) throw new Error('NEXTCLOUD_UPLOAD_SIZE_MISMATCH');
+
+  const sampleResponse = await fetch(fileUrl, {
+    headers: { Authorization: authorization, Range: 'bytes=0-31' },
+  });
+  if (!sampleResponse.ok || !sampleResponse.body) throw new Error('NEXTCLOUD_UPLOAD_VERIFY_FAILED');
+  const reader = sampleResponse.body.getReader();
+  const first = await reader.read();
+  await reader.cancel();
+  const sample = first.value?.slice(0, 32) || new Uint8Array();
+  if (!matchesSignature(sample, input.mimeType)) throw new Error('MEDIA_SIGNATURE_INVALID');
+
+  await deletePublicShare(input.uploadShareId, authorization);
+  const share = await createPublicShare(input.remotePath, authorization);
+  return { url: `${share.url}/download`, provider: 'nextcloud-direct' };
 }
 
 export function isNextcloudConfigured() {
@@ -172,7 +309,10 @@ export async function storeMedia(input: StoreMediaInput) {
     if (publicBase) return { url: `${publicBase.replace(/\/$/, '')}/${encodedPath(relativeParts)}`, provider: 'nextcloud-mount' };
     const user = process.env.NEXTCLOUD_USERNAME;
     const password = process.env.NEXTCLOUD_APP_PASSWORD;
-    if (user && password) return { url: await createPublicShare(remotePath, `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`), provider: 'nextcloud-mount' };
+    if (user && password) {
+      const share = await createPublicShare(remotePath, `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`);
+      return { url: `${share.url}/download`, provider: 'nextcloud-mount' };
+    }
     throw new Error('NEXTCLOUD_PUBLIC_URL_REQUIRED');
   }
 
@@ -189,7 +329,8 @@ export async function storeMedia(input: StoreMediaInput) {
       duplex: 'half'
     } as any);
     if (!upload.ok) throw new Error(`NEXTCLOUD_UPLOAD_${upload.status}`);
-    return { url: await createPublicShare(remotePath, authorization), provider: 'nextcloud-webdav' };
+    const share = await createPublicShare(remotePath, authorization);
+    return { url: `${share.url}/download`, provider: 'nextcloud-webdav' };
   }
 
   const localRoot = path.resolve(process.cwd(), 'server', 'uploads', safeSegment(input.tenantId, 'tenant'), 'media');

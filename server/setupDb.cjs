@@ -3,24 +3,40 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
-const dbHost = process.env.DB_HOST || 'localhost';
-const dbUser = process.env.DB_USER || 'root';
-const dbPassword = process.env.DB_PASSWORD || '';
-const dbName = process.env.DB_NAME || 'content_planner';
+const databaseUrl = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL) : null;
+const dbHost = databaseUrl?.hostname || process.env.DB_HOST || 'localhost';
+const dbPort = Number(databaseUrl?.port || process.env.DB_PORT || 3306);
+const dbUser = databaseUrl ? decodeURIComponent(databaseUrl.username) : process.env.DB_USER || 'root';
+const dbPassword = databaseUrl ? decodeURIComponent(databaseUrl.password) : process.env.DB_PASSWORD || '';
+const dbName = databaseUrl ? decodeURIComponent(databaseUrl.pathname.replace(/^\//, '')) : process.env.DB_NAME || 'content_planner';
+const sslEnabled = process.env.DB_SSL_MODE === 'required' || databaseUrl?.searchParams.get('ssl-mode') === 'REQUIRED';
+const sslCa = process.env.DB_SSL_CA_BASE64 ? Buffer.from(process.env.DB_SSL_CA_BASE64, 'base64').toString('utf8') : undefined;
 
 console.log('🔄 Conectando ao host MySQL...');
 
 // Conexão inicial sem banco de dados para poder criá-lo
 const connection = mysql.createConnection({
     host: dbHost,
+    port: dbPort,
     user: dbUser,
-    password: dbPassword
+    password: dbPassword,
+    database: databaseUrl ? dbName : undefined,
+    ssl: sslEnabled ? {
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+        ...(sslCa ? { ca: sslCa } : {})
+    } : undefined
 });
 
 connection.connect(err => {
     if (err) {
         console.error('❌ Erro ao conectar ao MySQL:', err.message);
         process.exit(1);
+    }
+
+    if (databaseUrl) {
+        console.log(`Conectado ao banco gerenciado "${dbName}". Sincronizando schema...`);
+        runSchemaSync();
+        return;
     }
 
     console.log(`%c Conectado ao MySQL. Garantindo que a database "${dbName}" existe...`, 'color: green');
@@ -199,6 +215,37 @@ function runSchemaSync() {
             content TEXT NOT NULL,
             createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE
+        )`,
+        `CREATE TABLE IF NOT EXISTS upload_intents (
+            id VARCHAR(64) PRIMARY KEY,
+            tenant_id VARCHAR(50) NOT NULL,
+            user_uid VARCHAR(128) NOT NULL,
+            client_id VARCHAR(50) NOT NULL,
+            remote_path TEXT NOT NULL,
+            stored_name VARCHAR(255) NOT NULL,
+            mime_type VARCHAR(100) NOT NULL,
+            size_bytes BIGINT NOT NULL,
+            upload_share_id VARCHAR(100) NOT NULL,
+            final_url TEXT,
+            expires_at DATETIME NOT NULL,
+            finalized_at DATETIME,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_upload_intent_owner (tenant_id, user_uid),
+            INDEX idx_upload_intent_expiry (expires_at)
+        )`,
+        `CREATE TABLE IF NOT EXISTS deadline_alert_log (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            tenant_id VARCHAR(50) NOT NULL,
+            alert_date DATE NOT NULL,
+            alert_kind VARCHAR(20) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_tenant_alert (tenant_id, alert_date, alert_kind)
+        )`,
+        `CREATE TABLE IF NOT EXISTS rate_limits (
+            bucket_key VARCHAR(191) PRIMARY KEY,
+            hit_count INT NOT NULL DEFAULT 1,
+            reset_at DATETIME NOT NULL,
+            INDEX idx_rate_limit_reset (reset_at)
         )`
     ];
 

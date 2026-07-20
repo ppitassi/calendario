@@ -28,6 +28,18 @@ function notifyPostsUpdated() {
 async function downloadPdf(endpoint: string, fileName = 'planejamento.pdf'): Promise<void> {
     try {
         const response = await axios.get(endpoint, { responseType: 'blob' });
+        const contentType = String(response.headers['content-type'] || '');
+        if (contentType.includes('application/json')) {
+            const payload = JSON.parse(await response.data.text());
+            if (!payload.downloadUrl) throw new Error(payload.error || 'URL do PDF não retornada.');
+            const directLink = document.createElement('a');
+            directLink.href = payload.downloadUrl;
+            directLink.rel = 'noopener';
+            document.body.appendChild(directLink);
+            directLink.click();
+            directLink.remove();
+            return;
+        }
         const url = window.URL.createObjectURL(response.data);
         const link = document.createElement('a');
         link.href = url;
@@ -269,19 +281,26 @@ export const api = {
     },
 
     async uploadMediaFile(file: File, clientId: string, postDate?: string): Promise<{ url: string; provider: string }> {
-        const res = await axios.put(`${API_URL}/uploads/media`, file, {
+        const initialized = await axios.post(`${API_URL}/uploads/media/init`, {
+            clientId,
+            postDate,
+            fileName: file.name,
+            mimeType: file.type,
+            size: file.size,
+        });
+        const upload = await fetch(initialized.data.uploadUrl, {
+            method: 'PUT',
             headers: {
                 'Content-Type': file.type,
-                'Content-Length': String(file.size),
-                'x-file-name': encodeURIComponent(file.name),
-                'x-client-id': clientId,
-                'x-post-date': postDate || ''
+                'X-Requested-With': 'XMLHttpRequest',
             },
-            timeout: 0,
-            maxBodyLength: Infinity,
-            maxContentLength: Infinity
+            body: file,
         });
-        return res.data;
+        if (!upload.ok) throw new Error(`Falha no envio direto ao Nextcloud (${upload.status}).`);
+        const finalized = await axios.post(`${API_URL}/uploads/media/finalize`, {
+            intentId: initialized.data.intentId,
+        });
+        return finalized.data;
     },
 
     async geolocate(): Promise<any> {

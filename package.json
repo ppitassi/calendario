@@ -2,6 +2,9 @@
     "name": "content-planner-app",
     "private": true,
     "version": "1.0.0",
+    "engines": {
+        "node": ">=20.9 <25"
+    },
     "scripts": {
         "dev": "next dev --port=3006",
         "build": "next build",
@@ -21,7 +24,7 @@
         "motion": "^12.23.24",
         "mysql2": "^3.22.3",
         "next": "^16.2.10",
-        "playwright": "^1.57.0",
+        "playwright-core": "^1.57.0",
         "react": "^19.0.1",
         "react-dom": "^19.0.1",
         "react-image-crop": "^11.0.10",
@@ -37,5 +40,8 @@
     },
     "allowScripts": {
         "sharp@0.34.5": true
+    },
+    "overrides": {
+        "postcss": "8.5.16"
     }
 }

@@ -158,7 +158,7 @@ export function SmartMediaUploader({
                 ? 'Upload de Vídeo ou Capa' 
                 : 'Upload de Mídia (Detecta Feed / Story)'}
             </span>
-            <span className="text-xs opacity-60">Imagens ficam no storage local; vídeos pesados seguem para o Nextcloud</span>
+            <span className="text-xs opacity-60">Mídias são enviadas diretamente ao Nextcloud</span>
           </button>
           
           <input 

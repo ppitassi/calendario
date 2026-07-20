@@ -3,10 +3,15 @@ import { getDbPool } from './db';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import path from 'path';
-import { randomBytes } from 'crypto';
+import { randomBytes, timingSafeEqual } from 'crypto';
 import { promises as fsp } from 'fs';
 import { completeWithLeia } from './leia';
-import { storeMedia } from './storage';
+import {
+  finalizeDirectNextcloudUpload,
+  initDirectNextcloudUpload,
+  storeAssetBuffer,
+  storeMedia,
+} from './storage';
 import {
   getPresentationData,
   getReviewData,
@@ -32,7 +37,16 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   socialmedia: ['canCreatePosts', 'canEditAssignedPosts', 'canEditCalendar', 'canReviewAndSend', 'canConfigClients', 'canViewPresentation', 'canComment'],
 };
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
-function rateLimited(key: string, limit: number, windowMs: number) {
+async function rateLimited(key: string, limit: number, windowMs: number) {
+  if (process.env.VERCEL) {
+    const windowSeconds = Math.max(1, Math.ceil(windowMs / 1000));
+    await exec(
+      'INSERT INTO rate_limits (bucket_key, hit_count, reset_at) VALUES (?, 1, DATE_ADD(NOW(), INTERVAL ? SECOND)) ON DUPLICATE KEY UPDATE hit_count = IF(reset_at <= NOW(), 1, hit_count + 1), reset_at = IF(reset_at <= NOW(), DATE_ADD(NOW(), INTERVAL ? SECOND), reset_at)',
+      [key.slice(0, 190), windowSeconds, windowSeconds],
+    );
+    const bucket = (await rows('SELECT hit_count FROM rate_limits WHERE bucket_key = ? LIMIT 1', [key.slice(0, 190)]))[0];
+    return Number(bucket?.hit_count || 0) > limit;
+  }
   const now = Date.now(); const current = rateBuckets.get(key);
   if (!current || current.resetAt <= now) { rateBuckets.set(key, { count: 1, resetAt: now + windowMs }); return false; }
   return ++current.count > limit;
@@ -108,16 +122,25 @@ async function getContext(req: NextRequest): Promise<Ctx> {
 
 function isPublic(route: string) {
   if (route === '/health' || route === '/health/db') return true;
+  if (route === '/cron/deadlines') return true;
   if (route === '/auth/login' || route === '/auth/validate-token') return true;
   if (route.startsWith('/auth/social/login') || route.startsWith('/auth/callback')) return true;
   if (route.startsWith('/public/') || route.startsWith('/review/')) return true;
   return false;
 }
 
+function validCronSecret(req: NextRequest) {
+  const secret = process.env.CRON_SECRET || '';
+  const supplied = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  const expectedBuffer = Buffer.from(secret);
+  const suppliedBuffer = Buffer.from(supplied);
+  return Boolean(secret) && expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer);
+}
+
 function requiredPermission(method: string, route: string): Permission | null {
   if (isPublic(route)) return null;
   if (route === '/users/preferences') return null;
-  if (route === '/uploads/media') return 'canCreatePosts';
+  if (route.startsWith('/uploads/media')) return 'canCreatePosts';
   if (route.startsWith('/admin/') || route === '/agencies' || route.startsWith('/users') || route.startsWith('/custom-roles') || route.startsWith('/agency/settings')) return 'canManageRoles';
   if (route.startsWith('/analytics/') || route.startsWith('/presentation/')) return 'canViewPresentation';
   if (route.includes('/comments')) return 'canComment';
@@ -191,10 +214,13 @@ let activePdfJobs = 0;
 async function renderPdf(url: string) {
   if (activePdfJobs >= 2) throw new Error('PDF_BUSY');
   activePdfJobs += 1;
-  const { chromium } = await import('playwright');
+  const { chromium } = await import('playwright-core');
   let browser: any;
   try {
-    browser = await chromium.launch({ headless: true });
+    if (process.env.VERCEL && !process.env.BROWSERLESS_URL) throw new Error('BROWSERLESS_URL_REQUIRED');
+    browser = process.env.BROWSERLESS_URL
+      ? await chromium.connectOverCDP(process.env.BROWSERLESS_URL)
+      : await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
@@ -254,6 +280,18 @@ async function renderPdf(url: string) {
   }
 }
 
+function internalAppOrigin(req: NextRequest) {
+  const configured = process.env.APP_URL || process.env.INTERNAL_APP_URL;
+  if (configured) {
+    const origin = new URL(configured).origin;
+    if (!/^https?:\/\//.test(origin)) throw new Error('APP_URL_INVALID');
+    return origin;
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.VERCEL) throw new Error('APP_URL_REQUIRED');
+  return `http://127.0.0.1:${process.env.PORT || 3006}`;
+}
+
 async function sendWAMessage(to: string, text: string) {
   if (!to || !text) return;
   const apiKey = process.env.EVOLUTION_API_KEY;
@@ -264,7 +302,7 @@ async function sendWAMessage(to: string, text: string) {
 }
 
 async function uploadBase64(data: any, audio = false, tenantId = 'default_agency') {
-  const { base64, subfolder = audio ? 'audio' : 'profiles', clientName = 'Geral', postDate, designerName } = data;
+  const { base64, subfolder = audio ? 'audio' : 'profiles', clientName = 'Geral', postDate, designerName, fileName } = data;
   if (!base64) throw new Error(audio ? 'Nenhum áudio enviado' : 'Nenhuma imagem enviada');
   const match = String(base64).match(/^data:([a-z]+\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\r\n]+)$/i);
   if (!match) throw new Error('Arquivo base64 inválido.');
@@ -275,7 +313,8 @@ async function uploadBase64(data: any, audio = false, tenantId = 'default_agency
   if (!ext) throw new Error('Tipo de arquivo não permitido.');
   const payload = match[2];
   const buffer = Buffer.from(payload, 'base64');
-  if (!buffer.length || buffer.length > (audio ? 25 : 15) * 1024 * 1024) throw new Error('Arquivo vazio ou acima do limite permitido.');
+  const maxBytes = process.env.VERCEL ? 3 * 1024 * 1024 : (audio ? 25 : 15) * 1024 * 1024;
+  if (!buffer.length || buffer.length > maxBytes) throw new Error('Arquivo vazio ou acima do limite permitido.');
   const signatureOk = ext === 'jpg' ? buffer[0] === 0xff && buffer[1] === 0xd8
     : ext === 'png' ? buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
     : ext === 'gif' ? buffer.subarray(0, 3).toString() === 'GIF'
@@ -285,6 +324,19 @@ async function uploadBase64(data: any, audio = false, tenantId = 'default_agency
     : ext === 'webm' ? buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))
     : buffer.subarray(0, 3).toString() === 'ID3' || buffer[0] === 0xff;
   if (!signatureOk) throw new Error('Conteúdo não corresponde ao tipo declarado.');
+  if (process.env.VERCEL) {
+    const folderAliases: Record<string, string> = { audio: 'audio', profiles: 'profiles', avatars: 'profiles', logos: 'client-logos', branding: 'branding', posts: 'posts' };
+    const folder = folderAliases[String(subfolder)] || (audio ? 'audio' : 'profiles');
+    const cleanName = `${String(fileName || randomBytes(12).toString('hex')).replace(/[^a-zA-Z0-9._-]/g, '_')}.${ext}`;
+    const stored = await storeAssetBuffer({
+      buffer,
+      tenantId,
+      folder,
+      fileName: cleanName,
+      mimeType: match[1].toLowerCase(),
+    });
+    return stored.url;
+  }
   const tenantFolder = String(tenantId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'default_agency';
   const uploadsRoot = path.join(process.cwd(), 'server', 'uploads', tenantFolder);
   let dir: string;
@@ -323,9 +375,52 @@ export async function handleApi(method: string, route: string, req: NextRequest,
       return ok({ ok: true, db: 'connected', result: result[0] });
     }
 
+    if (route === '/cron/deadlines' && method === 'GET') {
+      if (!validCronSecret(req)) return err('NÃ£o autorizado.', 401);
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: process.env.APP_TIMEZONE || 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      const day = Number(values.day);
+      const dateKey = `${values.year}-${values.month}-${values.day}`;
+      const agencies = await rows(
+        'SELECT id, name, deadline_pre, deadline_final FROM agencies WHERE deadline_pre = ? OR deadline_final = ?',
+        [day, day],
+      );
+      let notifications = 0;
+      for (const agency of agencies) {
+        const kinds = [
+          ...(Number(agency.deadline_pre) === day ? ['pre'] : []),
+          ...(Number(agency.deadline_final) === day ? ['final'] : []),
+        ];
+        for (const kind of kinds) {
+          const inserted = await exec(
+            'INSERT IGNORE INTO deadline_alert_log (tenant_id, alert_date, alert_kind) VALUES (?, ?, ?)',
+            [agency.id, dateKey, kind],
+          );
+          if (!inserted.affectedRows) continue;
+          const clients = await rows(
+            'SELECT name, whatsappGroupId FROM clients WHERE tenant_id = ? AND whatsappGroupId IS NOT NULL AND whatsappGroupId <> ?',
+            [agency.id, ''],
+          );
+          const message = kind === 'pre'
+            ? `Alerta de prÃ©-calendÃ¡rio: hoje Ã© o prazo de preparaÃ§Ã£o da agÃªncia ${agency.name}.`
+            : `Alerta de prazo final: hoje Ã© o fechamento do calendÃ¡rio da agÃªncia ${agency.name}.`;
+          for (const client of clients) {
+            await sendWAMessage(client.whatsappGroupId, `${message} Cliente: ${client.name}.`).catch(() => undefined);
+            notifications += 1;
+          }
+        }
+      }
+      return ok({ success: true, notifications });
+    }
+
     if (route === '/auth/login' && method === 'POST') {
       const loginIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-      if (rateLimited(`login:${loginIp}`, 10, 15 * 60_000)) return err('Muitas tentativas. Aguarde antes de tentar novamente.', 429);
+      if (await rateLimited(`login:${loginIp}`, 10, 15 * 60_000)) return err('Muitas tentativas. Aguarde antes de tentar novamente.', 429);
       const data = await body(req);
       const email = data.email || data.username;
       const password = data.password;
@@ -527,20 +622,42 @@ export async function handleApi(method: string, route: string, req: NextRequest,
 
     if (route === '/review/[token]/export-pdf' && method === 'GET') {
       const requestIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-      if (rateLimited(`pdf:${requestIp}`, 5, 60_000)) return err('Limite de geração de PDF excedido.', 429);
+      if (await rateLimited(`pdf:${requestIp}`, 5, 60_000)) return err('Limite de geração de PDF excedido.', 429);
+      const tokenData = await validateReviewToken(params.token);
+      if (isReviewDataError(tokenData)) return err(tokenData.error, tokenData.status);
       const data = await getReviewData(params.token);
       if (isReviewDataError(data)) return err(data.error, data.status);
-      const internalOrigin = process.env.INTERNAL_APP_URL || `http://127.0.0.1:${process.env.PORT || 3006}`;
+      const internalOrigin = internalAppOrigin(req);
       const pdf = await renderPdf(`${internalOrigin}/review/${encodeURIComponent(params.token)}/export`);
+      if (process.env.VERCEL) {
+        const stored = await storeAssetBuffer({
+          buffer: Buffer.from(pdf),
+          tenantId: tokenData.tenant_id,
+          folder: 'pdfs',
+          fileName: `planejamento-${params.token}.pdf`,
+          mimeType: 'application/pdf',
+        });
+        return ok({ downloadUrl: stored.url });
+      }
       return new Response(pdf, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="planejamento.pdf"' } });
     }
     if (route === '/presentation/[clientId]/[month]/export-pdf' && method === 'GET') {
       if (!(await tenantOwnsClient(params.clientId, ctx.tenantId))) return err('Cliente inválido.', 403);
-      if (rateLimited(`pdf:${ctx.userUid}`, 10, 60_000)) return err('Limite de geração de PDF excedido.', 429);
+      if (await rateLimited(`pdf:${ctx.userUid}`, 10, 60_000)) return err('Limite de geração de PDF excedido.', 429);
       const data = await getPresentationData(params.clientId, params.month);
       if (isReviewDataError(data)) return err(data.error, data.status);
-      const internalOrigin = process.env.INTERNAL_APP_URL || `http://127.0.0.1:${process.env.PORT || 3006}`;
+      const internalOrigin = internalAppOrigin(req);
       const pdf = await renderPdf(`${internalOrigin}/presentation/${encodeURIComponent(params.clientId)}/${encodeURIComponent(params.month)}/export`);
+      if (process.env.VERCEL) {
+        const stored = await storeAssetBuffer({
+          buffer: Buffer.from(pdf),
+          tenantId: ctx.tenantId,
+          folder: 'pdfs',
+          fileName: `planejamento-${params.clientId}-${params.month}.pdf`,
+          mimeType: 'application/pdf',
+        });
+        return ok({ downloadUrl: stored.url });
+      }
       return new Response(pdf, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="planejamento.pdf"' } });
     }
 
@@ -598,9 +715,47 @@ export async function handleApi(method: string, route: string, req: NextRequest,
 
     if (route === '/upload-base64' && method === 'POST') return ok({ url: await uploadBase64(await body(req), false, ctx.tenantId) });
     if (route === '/upload-audio' && method === 'POST') return ok({ url: await uploadBase64(await body(req), true, ctx.tenantId) });
+    if (route === '/uploads/media/init' && method === 'POST') {
+      if (await rateLimited(`media-init:${ctx.userUid}`, 20, 60_000)) return err('Limite de uploads excedido.', 429);
+      const data = await body(req);
+      const clientId = String(data.clientId || '');
+      if (!clientId || !(await tenantOwnsClient(clientId, ctx.tenantId))) return err('Cliente invÃ¡lido.', 403);
+      const intentId = randomBytes(24).toString('hex');
+      const initialized = await initDirectNextcloudUpload({
+        intentId,
+        tenantId: ctx.tenantId,
+        clientId,
+        postDate: data.postDate,
+        fileName: String(data.fileName || 'media'),
+        mimeType: String(data.mimeType || '').toLowerCase(),
+        size: Number(data.size || 0),
+      });
+      await exec(
+        'INSERT INTO upload_intents (id, tenant_id, user_uid, client_id, remote_path, stored_name, mime_type, size_bytes, upload_share_id, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))',
+        [intentId, ctx.tenantId, ctx.userUid, clientId, initialized.remotePath, initialized.storedName, String(data.mimeType || '').toLowerCase(), Number(data.size || 0), initialized.uploadShareId],
+      );
+      return ok({ intentId, uploadUrl: initialized.uploadUrl });
+    }
+    if (route === '/uploads/media/finalize' && method === 'POST') {
+      const data = await body(req);
+      const intent = (await rows(
+        'SELECT * FROM upload_intents WHERE id = ? AND tenant_id = ? AND user_uid = ? AND finalized_at IS NULL AND expires_at > NOW() LIMIT 1',
+        [String(data.intentId || ''), ctx.tenantId, ctx.userUid],
+      ))[0];
+      if (!intent) return err('Upload invÃ¡lido ou expirado.', 404);
+      const finalized = await finalizeDirectNextcloudUpload({
+        remotePath: intent.remote_path,
+        uploadShareId: intent.upload_share_id,
+        mimeType: intent.mime_type,
+        expectedSize: Number(intent.size_bytes),
+      });
+      await exec('UPDATE upload_intents SET finalized_at = NOW(), final_url = ? WHERE id = ?', [finalized.url, intent.id]);
+      return ok(finalized);
+    }
     if (route === '/uploads/media' && method === 'PUT') {
+      if (process.env.VERCEL) return err('Use o fluxo de upload direto.', 409);
       if (!req.body) return err('Arquivo obrigatório.', 400);
-      if (rateLimited(`media:${ctx.userUid}`, 20, 60_000)) return err('Limite de uploads excedido.', 429);
+      if (await rateLimited(`media:${ctx.userUid}`, 20, 60_000)) return err('Limite de uploads excedido.', 429);
       const clientId = String(req.headers.get('x-client-id') || '');
       if (!clientId || !(await tenantOwnsClient(clientId, ctx.tenantId))) return err('Cliente inválido.', 403);
       const size = Number(req.headers.get('content-length') || 0);
@@ -655,7 +810,7 @@ export async function handleApi(method: string, route: string, req: NextRequest,
       const data = await body(req);
       const message = String(data.message || '').trim().slice(0, 8000);
       if (!message) return err('Mensagem obrigatória.', 400);
-      if (rateLimited(`leia:${ctx.userUid}`, 30, 60_000)) return err('A LeIA recebeu muitas solicitações. Aguarde um instante.', 429);
+      if (await rateLimited(`leia:${ctx.userUid}`, 30, 60_000)) return err('A LeIA recebeu muitas solicitações. Aguarde um instante.', 429);
 
       let clientContext: Record<string, unknown> | null = null;
       const clientId = String(data.clientId || '');
