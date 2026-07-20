@@ -1,0 +1,240 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background-override, hsl(var(--background)));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: var(--surface-override, hsl(var(--card)));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-border: hsl(var(--border));
+  --color-primary: var(--tenant-primary);
+}
+
+@layer base {
+  :root {
+    --tenant-primary: #e3002f;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-display: 'Outfit', system-ui, sans-serif;
+    
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --border: 0 0% 90%;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --glass-bg: rgba(10, 10, 10, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  body {
+    background-color: var(--background-override, hsl(var(--background)));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Selection style without @apply */
+  ::selection {
+    background-color: var(--color-primary);
+    color: white;
+  }
+}
+
+@layer components {
+  .glass {
+    background: color-mix(in srgb, var(--glass-bg), transparent 20%);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid color-mix(in srgb, var(--glass-border), transparent 40%);
+    box-shadow: var(--glass-shadow);
+  }
+}
+
+/* Typography */
+.font-black { letter-spacing: -0.01em !important; font-weight: 900; }
+.font-bold { letter-spacing: -0.005em !important; font-weight: 700; }
+.font-display { font-family: var(--font-display); }
+.uppercase { letter-spacing: 0.12em; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--glass-bg), transparent 80%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-primary), transparent 40%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Layout Density: Compact */
+:root.density-compact {
+  font-size: 14px;
+}
+.density-compact .p-12 {
+  padding: 1.5rem !important;
+}
+.density-compact .p-8 {
+  padding: 1rem !important;
+}
+.density-compact .p-6 {
+  padding: 0.75rem !important;
+}
+.density-compact .gap-12 {
+  gap: 1.5rem !important;
+}
+.density-compact .gap-8 {
+  gap: 1rem !important;
+}
+.density-compact .gap-6 {
+  gap: 0.75rem !important;
+}
+.density-compact .mb-12 {
+  margin-bottom: 1.5rem !important;
+}
+.density-compact .space-y-12 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.5rem !important;
+}
+.density-compact .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+.density-compact .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem !important;
+}
+.density-compact .glass {
+  padding: 1.5rem !important;
+}
+.density-compact table th, 
+.density-compact table td {
+  padding: 0.5rem 0.75rem !important;
+}
+
+@media print {
+  body, html {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+  }
+  @page {
+    margin: 0;
+  }
+  .glass {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+  }
+  input, select, textarea, .print-hide {
+    display: none !important;
+  }
+  .print-header {
+    border-bottom: 2px solid black !important;
+    margin-bottom: 12px !important;
+    padding: 12px 0 !important;
+  }
+  .print-main {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+  }
+  /* Motion's whileInView is not triggered for off-screen sections during PDF capture. */
+  .print-main [style] {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .print-main > * {
+    margin-bottom: 8mm !important;
+  }
+  .print-main .space-y-32 > :not([hidden]) ~ :not([hidden]),
+  .print-main .space-y-12 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 16px !important;
+  }
+  .print-strategy > .glass,
+  .print-calendar,
+  .print-compact-section {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+  .print-strategy .glass {
+    padding: 16px !important;
+  }
+  .print-funnel {
+    break-before: auto !important;
+    page-break-before: auto !important;
+    break-inside: auto !important;
+  }
+  .print-strategy h2 {
+    font-size: 24px !important;
+    line-height: 1.1 !important;
+  }
+  .print-strategy p {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+  .print-calendar {
+    padding-top: 4mm !important;
+  }
+  .print-calendar .glass {
+    padding: 12px !important;
+  }
+  .print-posts-section {
+    break-inside: auto !important;
+    overflow: visible !important;
+  }
+  .post-export-block {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-bottom: 12px !important;
+  }
+  /* Ensure colors and background-images are preserved when printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+
+
+/* Prevent letter-by-letter wrapping in previews, exports, and PDF render. */
+:where(p, h1, h2, h3, h4, h5, h6, span, label, a, button, li) {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+:where(.tracking-widest, .tracking-\[0\.2em\], .tracking-\[0\.3em\]) {
+  word-break: normal;
+  overflow-wrap: normal;
+}
