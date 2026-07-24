@@ -98,6 +98,17 @@ function runSchemaSync() {
             birthday VARCHAR(50),
             ui_preferences JSON
         )`,
+        `CREATE TABLE IF NOT EXISTS user_dashboard_layouts (
+            id VARCHAR(128) PRIMARY KEY,
+            tenantId VARCHAR(50) NOT NULL,
+            userId VARCHAR(128) NOT NULL,
+            layoutVersion INT DEFAULT 1,
+            schemaVersion INT DEFAULT 1,
+            layoutJson JSON NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_tenant_user (tenantId, userId)
+        )`,
         `CREATE TABLE IF NOT EXISTS clients (
             id VARCHAR(50) PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
@@ -180,6 +191,35 @@ function runSchemaSync() {
             id VARCHAR(50) PRIMARY KEY,
             data LONGTEXT
         )`,
+        `CREATE TABLE IF NOT EXISTS oauth_integration_states (
+            state_hash VARCHAR(64) PRIMARY KEY,
+            provider VARCHAR(32) NOT NULL,
+            tenant_id VARCHAR(191) NOT NULL,
+            user_uid VARCHAR(191) NOT NULL,
+            client_id VARCHAR(191) NOT NULL,
+            return_origin VARCHAR(500) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            INDEX idx_oauth_integration_expiry (expires_at)
+        )`,
+        `CREATE TABLE IF NOT EXISTS social_connections (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            tenant_id VARCHAR(191) NOT NULL,
+            client_id VARCHAR(191) NOT NULL,
+            provider VARCHAR(32) NOT NULL,
+            external_account_id VARCHAR(191) NOT NULL,
+            account_name VARCHAR(255),
+            access_token_encrypted LONGTEXT NOT NULL,
+            token_expires_at DATETIME,
+            scopes TEXT,
+            page_id VARCHAR(191),
+            linked_account_id VARCHAR(191),
+            metadata_json LONGTEXT,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_social_connection (tenant_id, provider, external_account_id),
+            INDEX idx_social_connection_client (tenant_id, client_id, provider)
+        )`,
         `CREATE TABLE IF NOT EXISTS client_analytics (
             id INT AUTO_INCREMENT PRIMARY KEY,
             clientId VARCHAR(50) NOT NULL,
@@ -232,6 +272,31 @@ function runSchemaSync() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_upload_intent_owner (tenant_id, user_uid),
             INDEX idx_upload_intent_expiry (expires_at)
+        )`,
+        `CREATE TABLE IF NOT EXISTS media_assets (
+            id VARCHAR(64) PRIMARY KEY,
+            tenantId VARCHAR(50) NOT NULL,
+            clientId VARCHAR(50) NULL,
+            ownerType VARCHAR(50) NOT NULL,
+            ownerId VARCHAR(128) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            storageProvider VARCHAR(50) NOT NULL,
+            storageKey TEXT NOT NULL,
+            publicUrl TEXT NULL,
+            mimeType VARCHAR(100) NOT NULL,
+            sizeBytes BIGINT NOT NULL,
+            width INT NULL,
+            height INT NULL,
+            originalName VARCHAR(255) NOT NULL,
+            checksum VARCHAR(128) NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'active',
+            createdBy VARCHAR(128) NOT NULL,
+            createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            deletedAt DATETIME NULL,
+            INDEX idx_media_asset_owner (tenantId, ownerType, ownerId),
+            INDEX idx_media_asset_client (tenantId, clientId),
+            INDEX idx_media_asset_status (tenantId, status, deletedAt)
         )`,
         `CREATE TABLE IF NOT EXISTS deadline_alert_log (
             id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -311,6 +376,13 @@ function runColumnSync() {
         { table: 'posts', column: 'subhead', definition: 'TEXT' },
         { table: 'posts', column: 'funnelStage', definition: "VARCHAR(50) DEFAULT 'topo'" },
         { table: 'posts', column: 'videoUrl', definition: 'TEXT' },
+        { table: 'posts', column: 'storyImage', definition: 'TEXT' },
+        { table: 'posts', column: 'coverImage', definition: 'TEXT' },
+        { table: 'posts', column: 'linkedinCover', definition: 'TEXT' },
+        { table: 'upload_intents', column: 'owner_type', definition: "VARCHAR(50) DEFAULT 'post'" },
+        { table: 'upload_intents', column: 'owner_id', definition: 'VARCHAR(128)' },
+        { table: 'upload_intents', column: 'category', definition: "VARCHAR(50) DEFAULT 'media'" },
+        { table: 'upload_intents', column: 'original_name', definition: 'VARCHAR(255)' },
         
         { table: 'approval_tokens', column: 'createdAt', definition: 'BIGINT' },
         { table: 'approval_tokens', column: 'clientNote', definition: 'TEXT' }

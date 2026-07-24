@@ -31,7 +31,7 @@ async function downloadPdf(endpoint: string, fileName = 'planejamento.pdf'): Pro
         const contentType = String(response.headers['content-type'] || '');
         if (contentType.includes('application/json')) {
             const payload = JSON.parse(await response.data.text());
-            if (!payload.downloadUrl) throw new Error(payload.error || 'URL do PDF não retornada.');
+            if (!payload.downloadUrl) throw new Error(payload.error || 'URL do PDF nÃ£o retornada.');
             const directLink = document.createElement('a');
             directLink.href = payload.downloadUrl;
             directLink.rel = 'noopener';
@@ -63,22 +63,14 @@ async function downloadPdf(endpoint: string, fileName = 'planejamento.pdf'): Pro
     }
 }
 
-// API Request Interceptor
-axios.interceptors.request.use(config => {
-    const storedToken = localStorage.getItem('content_planner_token') || sessionStorage.getItem('content_planner_token');
-    const token = auth.currentUser?.session_token || storedToken;
-
-    if (auth.currentUser) {
-        config.headers['x-user-uid'] = auth.currentUser.uid;
-        config.headers['x-user-role'] = auth.currentUser.role || 'designer';
-        config.headers['x-tenant-id'] = auth.currentUser.tenant_id || 'default_agency';
+axios.interceptors.response.use(response => response, error => {
+    const status = error?.response?.status;
+    const url = String(error?.config?.url || '');
+    if (status === 401 && !url.includes('/auth/login') && !url.includes('/auth/validate-token')) {
+        auth.currentUser = null;
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('auth-expired'));
     }
-
-    if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    return config;
+    return Promise.reject(error);
 });
 
 export const api = {
@@ -103,8 +95,9 @@ export const api = {
         await axios.delete(`${API_URL}/clients/${clientId}`);
     },
 
-    async saveMetaAccount(clientId: string, token: string, pageId: string | null, igAccountId: string | null): Promise<void> {
-        await axios.post(`${API_URL}/clients/${clientId}/meta-account`, { token, pageId, igAccountId });
+    async saveMetaAccount(clientId: string, connectionId: string, pageId: string | null): Promise<any> {
+        const response = await axios.post(`${API_URL}/clients/${clientId}/meta-account`, { connectionId, pageId });
+        return response.data;
     },
 
     // Posts
@@ -129,7 +122,7 @@ export const api = {
         return posts;
     },
 
-    async savePost(clientId: string, date: string, post: PostData): Promise<void> {
+    async savePost(clientId: string, date: string, post: PostData): Promise<{ id: string; date: string; workVersion?: number }> {
         const dateStr = normalizeDate(date || post.date);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) throw new Error('Data de postagem invalida.');
         const data = {
@@ -138,8 +131,9 @@ export const api = {
             date: dateStr,
             feedImages: JSON.stringify(post.feedImages || [])
         };
-        await axios.post(`${API_URL}/posts`, data);
+        const response = await axios.post(`${API_URL}/posts`, data);
         notifyPostsUpdated();
+        return response.data;
     },
 
     async generatePostFields(clientId: string, post: PostData): Promise<any> {
@@ -170,9 +164,18 @@ export const api = {
         return response.data;
     },
 
-    // Usuários e Roles
+    // UsuÃ¡rios e Roles
     async getUsers(): Promise<UserProfile[]> {
         const response = await axios.get(`${API_URL}/users`);
+        return response.data;
+    },
+
+    async getTeamMembers(): Promise<UserProfile[]> {
+        const response = await axios.get(`${API_URL}/team/members`);
+        return response.data;
+    },
+    async getProductionGallery(): Promise<{ posts: PostData[]; clients: ClientData[]; members: UserProfile[] }> {
+        const response = await axios.get(`${API_URL}/production-gallery`);
         return response.data;
     },
 
@@ -180,6 +183,37 @@ export const api = {
         await axios.post(`${API_URL}/users`, user);
     },
 
+    async getOwnProfile(): Promise<UserProfile> {
+        const response = await axios.get(`${API_URL}/users/me`);
+        return response.data;
+    },
+
+    async updateOwnProfile(profile: Pick<UserProfile, 'displayName' | 'birthday' | 'githubUsername' | 'portfolioUrl' | 'photoURL'> & { photoAssetId?: string | null }): Promise<UserProfile> {
+        const response = await axios.patch(`${API_URL}/users/me`, {
+            displayName: profile.displayName?.trim(), birthday: profile.birthday || null,
+            githubUsername: profile.githubUsername?.trim() || null, portfolioUrl: profile.portfolioUrl?.trim() || null,
+            photoURL: profile.photoURL || null, ...(profile.photoAssetId ? { photoAssetId: profile.photoAssetId } : {}),
+        });
+        return response.data;
+    },
+
+    async getPlanningWorkflow(planningId: string): Promise<any> { return (await axios.get(`${API_URL}/plannings/${planningId}`)).data; },
+    async sendPlanningToDesign(planningId: string): Promise<any> { return (await axios.post(`${API_URL}/plannings/${planningId}/send-to-design`)).data; },
+    async completePlanning(planningId: string): Promise<any> { return (await axios.post(`${API_URL}/plannings/${planningId}/complete`)).data; },
+    async sendPlanningToApproval(planningId: string): Promise<any> { return (await axios.post(`${API_URL}/plannings/${planningId}/send-to-approval`)).data; },
+    async markPostAwaitingApproval(postId: string | number): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/mark-awaiting-approval`)).data; },
+    async requestPostChanges(postId: string | number, reason: string): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/request-changes`, { reason })).data; },
+    async overridePostAssignment(postId: string | number, payload: any): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/override-assignment`, payload)).data; },
+
+    async getPostWorkItem(postId: string | number): Promise<any> { return (await axios.get(`${API_URL}/work-items/posts/${postId}`)).data; },
+    async getPostActivity(postId: string | number): Promise<any[]> { return (await axios.get(`${API_URL}/work-items/posts/${postId}/activity`)).data; },
+    async getPostRevisions(postId: string | number): Promise<any[]> { return (await axios.get(`${API_URL}/work-items/posts/${postId}/revisions`)).data; },
+    async getPostAssignments(postId: string | number): Promise<any[]> { return (await axios.get(`${API_URL}/work-items/posts/${postId}/assignments`)).data; },
+    async assignPost(postId: string | number, assignedToUserId: string, reason?: string): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/assign`, { assignedToUserId, reason })).data; },
+    async transitionPost(postId: string | number, toStage: string, version?: number, reason?: string, assignedToUserId?: string): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/transition`, { toStage, version, reason, assignedToUserId })).data; },
+    async getArtworkVersions(postId: string | number): Promise<any[]> { return (await axios.get(`${API_URL}/work-items/posts/${postId}/artwork-versions`)).data; },
+    async createArtworkVersion(postId: string | number, mediaAssetIds: string[], notes?: string): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/artwork-versions`, { mediaAssetIds, notes })).data; },
+    async actOnArtworkVersion(postId: string | number, versionId: string | number, action: 'submit' | 'request-changes' | 'approve', reason?: string): Promise<any> { return (await axios.post(`${API_URL}/work-items/posts/${postId}/artwork-versions/${versionId}/${action}`, { reason })).data; },
     async getCustomRoles(): Promise<any[]> {
         const response = await axios.get(`${API_URL}/custom-roles`);
         return response.data;
@@ -199,8 +233,8 @@ export const api = {
         return res.data;
     },
 
-    async validateToken(token?: string) {
-        const res = await axios.post(`${API_URL}/auth/validate-token`, { token });
+    async validateToken() {
+        const res = await axios.post(`${API_URL}/auth/validate-token`, {});
         return res.data;
     },
 
@@ -270,24 +304,51 @@ export const api = {
         return res.data || {};
     },
 
-    async uploadImage(base64: string, fileName: string, subfolder?: string, clientName?: string, postDate?: string, designerName?: string): Promise<string> {
-        const res = await axios.post(`${API_URL}/upload-base64`, { base64, fileName, subfolder, clientName, postDate, designerName });
+    async uploadImage(base64: string, fileName: string, subfolder?: string, clientName?: string, postDate?: string, designerName?: string, clientId?: string, targetUserId?: string, ownerId?: string): Promise<string> {
+        const res = await axios.post(`${API_URL}/upload-base64`, { base64, fileName, subfolder, clientName, postDate, designerName, clientId, targetUserId, ownerId });
         return res.data.url;
     },
 
-    async uploadAudio(base64: string, fileName: string, subfolder?: string): Promise<string> {
-        const res = await axios.post(`${API_URL}/upload-audio`, { base64, fileName, subfolder });
+    async uploadProfileImage(base64: string, fileName: string): Promise<{ url: string; assetId: string; thumbnailUrl?: string | null; thumbnailAssetId?: string | null }> {
+        const res = await axios.post(`${API_URL}/upload-base64`, { base64, fileName, subfolder: 'avatars' });
+        return res.data;
+    },
+
+    async uploadPostImage(base64: string, fileName: string, clientName: string, postDate: string | undefined, clientId: string, postId: string): Promise<{ url: string; assetId: string; thumbnailUrl?: string | null; thumbnailAssetId?: string | null }> {
+        const res = await axios.post(`${API_URL}/upload-base64`, { base64, fileName, subfolder: 'posts', clientName, postDate, clientId, ownerId: postId });
+        return res.data;
+    },
+    async uploadAudio(base64: string, fileName: string, subfolder?: string, clientId?: string): Promise<string> {
+        const res = await axios.post(`${API_URL}/upload-audio`, { base64, fileName, subfolder, clientId });
         return res.data.url;
     },
 
-    async uploadMediaFile(file: File, clientId: string, postDate?: string): Promise<{ url: string; provider: string }> {
-        const initialized = await axios.post(`${API_URL}/uploads/media/init`, {
-            clientId,
-            postDate,
-            fileName: file.name,
-            mimeType: file.type,
-            size: file.size,
-        });
+    async uploadMediaFile(file: File, clientId: string, postDate?: string, ownerId?: string, category = 'media'): Promise<{ url: string; provider: string; assetId?: string }> {
+        let initialized;
+        try {
+            initialized = await axios.post(`${API_URL}/uploads/media/init`, {
+                clientId,
+                postDate,
+                fileName: file.name,
+                mimeType: file.type,
+                size: file.size,
+                ownerId,
+                category,
+            });
+        } catch (error: any) {
+            if ([401, 403, 429].includes(Number(error?.response?.status))) throw error;
+            const fallback = await axios.put(`${API_URL}/uploads/media`, file, {
+                headers: {
+                    'Content-Type': file.type,
+                    'X-Client-Id': clientId,
+                    'X-Post-Date': postDate || '',
+                    'X-File-Name': encodeURIComponent(file.name),
+                    'X-Owner-Id': ownerId || clientId,
+                    'X-Category': category,
+                },
+            });
+            return fallback.data;
+        }
         const upload = await fetch(initialized.data.uploadUrl, {
             method: 'PUT',
             headers: {
@@ -347,8 +408,8 @@ export const api = {
         return response.data;
     },
 
-    async getAnalyticsPosts(clientId: string): Promise<any[]> {
-        const response = await axios.get(`${API_URL}/analytics/${clientId}/posts`);
+    async getAnalyticsPosts(clientId: string, filters?: { startDate?: string; endDate?: string }): Promise<any[]> {
+        const response = await axios.get(`${API_URL}/analytics/${clientId}/posts`, { params: filters });
         return response.data;
     },
 
@@ -364,6 +425,31 @@ export const api = {
 
     async getWorkloadStats(): Promise<any[]> {
         const res = await axios.get(`${API_URL}/admin/workload-stats`);
+        return res.data;
+    },
+
+    async getDashboardData(): Promise<any> {
+        const res = await axios.get(`${API_URL}/dashboard`);
+        return res.data;
+    },
+
+    async getDashboardLayout(): Promise<{ layoutVersion: number; schemaVersion: number; layoutJson: any[]; updatedAt?: string }> {
+        const res = await axios.get(`${API_URL}/dashboard/layout`);
+        return res.data;
+    },
+
+    async saveDashboardLayout(layoutJson: any[], expectedLayoutVersion?: number): Promise<any> {
+        const res = await axios.put(`${API_URL}/dashboard/layout`, { layoutJson, expectedLayoutVersion });
+        return res.data;
+    },
+
+    async resetDashboardLayout(): Promise<any> {
+        const res = await axios.delete(`${API_URL}/dashboard/layout`);
+        return res.data;
+    },
+
+    async getPerformanceStats(userId?: string): Promise<any> {
+        const res = await axios.get(`${API_URL}/users/me/performance-stats`, { params: userId ? { userId, period: 'current_month' } : { period: 'current_month' } });
         return res.data;
     },
 
@@ -414,6 +500,8 @@ export const api = {
         await axios.post(`${API_URL}/public/review/${token}/send-whatsapp`);
     }
 };
+
+
 
 
 

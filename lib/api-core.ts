@@ -647,12 +647,11 @@ export async function handleApi(method: string, route: string, req: NextRequest,
       if (!previousPost) {
         filteredData.createdByUserId = ctx.userUid;
         const socialResponsible = (await clientResponsible(db(), ctx.tenantId, filteredData.clientId, 'social_media')).user;
-        const assignee = socialResponsible?.uid ? socialResponsible : (ctx.userUid ? { uid: ctx.userUid } : null);
-        if (!assignee) return err('Este cliente está sem Social Media responsável. Configure a equipe antes de criar postagens.', 422, 'MISSING_SOCIAL_MEDIA');
-        filteredData.currentAssigneeId = assignee.uid;
-        filteredData.assigneeId = assignee.uid;
+        if (!socialResponsible) return err('Este cliente está sem Social Media responsável configurado. Configure a equipe antes de criar postagens.', 422, 'CLIENT_SOCIAL_MEDIA_NOT_CONFIGURED');
+        filteredData.currentAssigneeId = socialResponsible.uid;
+        filteredData.assigneeId = socialResponsible.uid;
         filteredData.currentStage = 'copy'; filteredData.workflowStatus = 'in_progress';
-        filteredData.assignedAt = filteredData.currentAssigneeId ? new Date() : null; filteredData.stageEnteredAt = new Date(); filteredData.lastActivityAt = new Date(); filteredData.workVersion = 1;
+        filteredData.assignedAt = new Date(); filteredData.stageEnteredAt = new Date(); filteredData.lastActivityAt = new Date(); filteredData.workVersion = 1;
       } else filteredData.workVersion = Number(previousPost.workVersion || 1) + 1;
       const data = tablePayload(filteredData, ctx.tenantId);
       const result = await exec('INSERT INTO posts SET ? ON DUPLICATE KEY UPDATE ?', [data, data]);
@@ -931,6 +930,89 @@ export async function handleApi(method: string, route: string, req: NextRequest,
       if (serialized.length > 100_000) return err('PreferÃªncias acima do limite.', 413);
       await exec('UPDATE users SET ui_preferences = ? WHERE uid = ? AND tenant_id = ?', [serialized, ctx.userUid, ctx.tenantId]);
       return ok(current);
+    }
+
+    if (route === '/dashboard/layout' && method === 'GET') {
+      if (!ctx.userUid) return err('Não autenticado.', 401);
+      const rows_ = await rows('SELECT layoutVersion, schemaVersion, layoutJson, updatedAt FROM user_dashboard_layouts WHERE tenantId = ? AND userId = ? LIMIT 1', [ctx.tenantId, ctx.userUid]);
+      if (rows_[0]) {
+        const layoutJson = parseJson(rows_[0].layoutJson, []);
+        const filteredLayout = Array.isArray(layoutJson) ? layoutJson.filter((item: any) => {
+          if (!item || typeof item !== 'object') return false;
+          if (String(item.id) === 'production_bi' && !ctx.permissions.has('canViewProductionGallery')) return false;
+          return true;
+        }) : [];
+        return ok({
+          layoutVersion: Number(rows_[0].layoutVersion || 1),
+          schemaVersion: Number(rows_[0].schemaVersion || 1),
+          layoutJson: filteredLayout,
+          updatedAt: rows_[0].updatedAt
+        });
+      }
+      return ok({ layoutVersion: 1, schemaVersion: 1, layoutJson: null });
+    }
+
+    if (route === '/dashboard/layout' && method === 'PUT') {
+      if (!ctx.userUid) return err('Não autenticado.', 401);
+      const incoming = await body(req);
+      const existing = (await rows('SELECT layoutVersion FROM user_dashboard_layouts WHERE tenantId = ? AND userId = ? LIMIT 1', [ctx.tenantId, ctx.userUid]))[0];
+      const currentVersion = Number(existing?.layoutVersion || 1);
+      if (incoming.expectedLayoutVersion != null && Number(incoming.expectedLayoutVersion) < currentVersion) {
+        return err('O layout da dashboard foi alterado em outra aba ou sessão. Recarregue a página antes de salvar.', 409, 'LAYOUT_VERSION_CONFLICT');
+      }
+      const rawLayout = Array.isArray(incoming.layoutJson) ? incoming.layoutJson : [];
+      const widgetIds = new Set(['my_work','deadlines','production_bi','workload','productivity','recent_activity','client_grid','companion']);
+      const sizeMap: Record<string, Set<string>> = {
+        my_work: new Set(['medium', 'wide']),
+        deadlines: new Set(['compact', 'medium']),
+        production_bi: new Set(['medium', 'wide']),
+        workload: new Set(['compact', 'medium']),
+        productivity: new Set(['compact', 'medium']),
+        recent_activity: new Set(['medium', 'wide']),
+        client_grid: new Set(['medium', 'wide']),
+        companion: new Set(['compact', 'medium'])
+      };
+
+      const seen = new Set<string>();
+      const validatedLayout = rawLayout.filter((item: any) => {
+        if (!item || typeof item !== 'object') return false;
+        const id = String(item.id || '');
+        if (!widgetIds.has(id) || seen.has(id)) return false;
+        if (id === 'production_bi' && !ctx.permissions.has('canViewProductionGallery')) return false;
+        seen.add(id);
+        return true;
+      }).map((item: any, idx: number) => {
+        const id = String(item.id);
+        const allowedSizes = sizeMap[id] || new Set(['medium']);
+        const size = allowedSizes.has(String(item.size)) ? String(item.size) : Array.from(allowedSizes)[0];
+        return {
+          id,
+          position: idx,
+          size,
+          isHidden: Boolean(item.isHidden)
+        };
+      });
+
+      const nextVersion = existing ? currentVersion + 1 : 1;
+      const recordId = `${ctx.tenantId}_${ctx.userUid}`;
+      await exec(
+        'INSERT INTO user_dashboard_layouts (id, tenantId, userId, layoutVersion, schemaVersion, layoutJson) VALUES (?, ?, ?, ?, 1, ?) ON DUPLICATE KEY UPDATE layoutVersion = ?, layoutJson = ?, updatedAt = NOW()',
+        [recordId, ctx.tenantId, ctx.userUid, nextVersion, JSON.stringify(validatedLayout), nextVersion, JSON.stringify(validatedLayout)]
+      );
+
+      // Sync to users.ui_preferences for compatibility
+      const currentPrefs = parseJson((await rows('SELECT ui_preferences FROM users WHERE uid = ? AND tenant_id = ? LIMIT 1', [ctx.userUid, ctx.tenantId]))[0]?.ui_preferences, {});
+      currentPrefs.widgetLayouts = { ...(currentPrefs.widgetLayouts || {}), [ctx.userUid]: validatedLayout };
+      currentPrefs.dashboardLayoutVersion = nextVersion;
+      await exec('UPDATE users SET ui_preferences = ? WHERE uid = ? AND tenant_id = ?', [JSON.stringify(currentPrefs), ctx.userUid, ctx.tenantId]);
+
+      return ok({ success: true, layoutVersion: nextVersion, schemaVersion: 1, layoutJson: validatedLayout });
+    }
+
+    if (route === '/dashboard/layout' && method === 'DELETE') {
+      if (!ctx.userUid) return err('Não autenticado.', 401);
+      await exec('DELETE FROM user_dashboard_layouts WHERE tenantId = ? AND userId = ?', [ctx.tenantId, ctx.userUid]);
+      return ok({ success: true });
     }
     if (route === '/agency/settings' && method === 'POST') {
       const incoming = await body(req);
