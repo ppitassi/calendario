@@ -1,6 +1,15 @@
 import axios from "axios";
 import { API_URL } from "./core";
 
+export type WorkItemType="PROJECT"|"DEMAND"|"TASK";
+export async function listWorkItems(filters:Record<string,string>={}){return(await axios.get(`${API_URL}/work-items`,{params:filters})).data;}
+export async function getWorkItem(id:string){return(await axios.get(`${API_URL}/work-items/${id}`)).data;}
+export async function createWorkItem(input:{type:WorkItemType;title:string;description?:string;clientId?:string|null;parentId?:string|null;dueAt?:string|null;priority?:string}){return(await axios.post(`${API_URL}/work-items`,input)).data;}
+export async function updateWorkItem(id:string,patch:Record<string,unknown>){return(await axios.patch(`${API_URL}/work-items/${id}`,patch)).data;}
+export async function moveWorkItem(id:string,parentId:string|null,clientId?:string|null){return(await axios.post(`${API_URL}/work-items/${id}/move`,{parentId,clientId})).data;}
+export async function addWorkItemAssignee(id:string,userId:string,role?:string,isPrimary=false){return(await axios.post(`${API_URL}/work-items/${id}/assignees`,{userId,role,isPrimary})).data;}
+export async function getWorkItemEvents(id:string){return(await axios.get(`${API_URL}/work-items/${id}/events`)).data;}
+
 export async function getPlanningWorkflow(planningId: string): Promise<any> {
   return (await axios.get(`${API_URL}/plannings/${planningId}`)).data;
 }
@@ -23,11 +32,7 @@ export async function sendPlanningToApproval(planningId: string): Promise<any> {
 }
 
 export async function markPostAwaitingApproval(postId: string | number): Promise<any> {
-  return (
-    await axios.post(
-      `${API_URL}/work-items/posts/${postId}/mark-awaiting-approval`,
-    )
-  ).data;
+  return (await axios.post(`${API_URL}/work-items/${postId}/workflow`,{toStageKey:"WAITING_APPROVAL"})).data;
 }
 
 export async function requestPostChanges(
@@ -35,10 +40,7 @@ export async function requestPostChanges(
   reason: string,
 ): Promise<any> {
   return (
-    await axios.post(
-      `${API_URL}/work-items/posts/${postId}/request-changes`,
-      { reason },
-    )
+    await axios.post(`${API_URL}/work-items/${postId}/workflow`,{toStageKey:"CHANGES_REQUESTED",reason})
   ).data;
 }
 
@@ -46,31 +48,30 @@ export async function overridePostAssignment(
   postId: string | number,
   payload: any,
 ): Promise<any> {
-  return (
-    await axios.post(
-      `${API_URL}/work-items/posts/${postId}/override-assignment`,
-      payload,
-    )
-  ).data;
+  return (await axios.post(`${API_URL}/work-items/${postId}/assignees`, {
+    userId: payload.assignedToUserId || payload.userId,
+    role: payload.role,
+    isPrimary: true,
+  })).data;
 }
 
 export async function getPostWorkItem(postId: string | number): Promise<any> {
-  return (await axios.get(`${API_URL}/work-items/posts/${postId}`)).data;
+  return getWorkItem(String(postId));
 }
 
 export async function getPostActivity(postId: string | number): Promise<any[]> {
-  return (await axios.get(`${API_URL}/work-items/posts/${postId}/activity`))
+  return (await axios.get(`${API_URL}/work-items/${postId}/events`))
     .data;
 }
 
 export async function getPostRevisions(postId: string | number): Promise<any[]> {
-  return (await axios.get(`${API_URL}/work-items/posts/${postId}/revisions`))
+  return (await axios.get(`${API_URL}/work-items/${postId}/content-versions`))
     .data;
 }
 
 export async function getPostAssignments(postId: string | number): Promise<any[]> {
   return (
-    await axios.get(`${API_URL}/work-items/posts/${postId}/assignments`)
+    await axios.get(`${API_URL}/work-items/${postId}/assignees`)
   ).data;
 }
 
@@ -80,8 +81,9 @@ export async function assignPost(
   reason?: string,
 ): Promise<any> {
   return (
-    await axios.post(`${API_URL}/work-items/posts/${postId}/assign`, {
-      assignedToUserId,
+    await axios.post(`${API_URL}/work-items/${postId}/assignees`, {
+      userId: assignedToUserId,
+      isPrimary: true,
       reason,
     })
   ).data;
@@ -94,9 +96,10 @@ export async function transitionPost(
   reason?: string,
   assignedToUserId?: string,
 ): Promise<any> {
+  const stageKeys:Record<string,string>={aguardando_design:"WAITING_DESIGN",revisao_interna:"INTERNAL_REVIEW",aguardando_aprovacao:"WAITING_APPROVAL",alteracoes_solicitadas:"CHANGES_REQUESTED",aprovado:"APPROVED",agendado:"SCHEDULED",publicado:"PUBLISHED",arquivado:"ARCHIVED",cancelado:"CANCELLED"};
   return (
-    await axios.post(`${API_URL}/work-items/posts/${postId}/transition`, {
-      toStage,
+    await axios.post(`${API_URL}/work-items/${postId}/workflow`, {
+      toStageKey: stageKeys[toStage] || toStage.toUpperCase(),
       version,
       reason,
       assignedToUserId,

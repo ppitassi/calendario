@@ -1,10 +1,10 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { exec, rows } from "../db";
 import { ApiContext, ApiParams } from "../api-types";
 import { err, ok } from "../api-response";
-import { body, enrichUser, rateLimited } from "./context";
+import { body, enrichUser, rateLimited, sessionTokenHash } from "./context";
 import { createMetaOAuth, finishMetaOAuth } from "../meta";
 
 export async function handleAuthApi(
@@ -25,16 +25,13 @@ export async function handleAuthApi(
     const data = await body(req);
     const email = data.email || data.username;
     const password = data.password;
-    const found = await rows(
-      "SELECT * FROM users WHERE email = ? OR displayName = ?",
-      [email, email],
-    );
+    const found = await rows("SELECT * FROM users WHERE (email = ? OR name = ?) AND active=TRUE AND deleted_at IS NULL", [email, email]);
     const user = found[0];
     const dummyHash =
       "$2a$10$abcdefghijklmnopqrstuuCczjkjPQm7nU2EOVkP/4J3JdxkrALm";
     const valid = await bcrypt.compare(
       password || "",
-      user?.password || dummyHash,
+      user?.password_hash || dummyHash,
     );
     if (!user || !valid) return err("Credenciais invÃ¡lidas.", 401);
     const sessionToken = randomBytes(32).toString("hex");
@@ -48,17 +45,10 @@ export async function handleAuthApi(
       region: req.headers.get("x-vercel-ip-country-region") || null,
       country: req.headers.get("x-vercel-ip-country") || null,
     };
-    await exec(
-      "UPDATE users SET session_token = ?, session_expires_at = DATE_ADD(NOW(), INTERVAL ? HOUR), session_started_at = NOW(), last_activity_at = NOW(), foreground_seconds = 0, last_ip = ?, last_location = ? WHERE uid = ?",
-      [
-        sessionToken,
-        sessionHours,
-        sessionIp,
-        JSON.stringify(approximateLocation),
-        user.uid,
-      ],
-    );
-    delete user.password;
+    const sessionId = randomUUID();
+    await exec("INSERT INTO user_sessions (id,user_id,token_hash,ip_address,user_agent,location_json,last_activity_at,expires_at) VALUES (?,?,?,?,?,?,NOW(),DATE_ADD(NOW(),INTERVAL ? HOUR))", [sessionId, user.id, sessionTokenHash(sessionToken), sessionIp, req.headers.get("user-agent")?.slice(0,512) || null, JSON.stringify(approximateLocation), sessionHours]);
+    await exec("UPDATE users SET last_login_at=NOW() WHERE id=?", [user.id]);
+    delete user.password_hash;
     const response = ok({ success: true, user: await enrichUser(user) });
     const secureCookie =
       process.env.NODE_ENV === "production" &&
@@ -75,23 +65,17 @@ export async function handleAuthApi(
 
   if (route === "/auth/validate-token" && method === "POST") {
     const suppliedToken = req.cookies.get("cp_session")?.value;
-    const found = await rows(
-      "SELECT * FROM users WHERE session_token = ? AND session_expires_at > NOW()",
-      [suppliedToken],
-    );
+    if (!suppliedToken) return err("Token inválido.", 401);
+    const found = await rows("SELECT u.* FROM user_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>NOW() AND s.revoked_at IS NULL AND u.active=TRUE AND u.deleted_at IS NULL", [sessionTokenHash(suppliedToken)]);
     const user = found[0];
     if (!user) return err("Token invÃ¡lido.", 401);
-    delete user.password;
+    delete user.password_hash;
     return ok({ success: true, user: await enrichUser(user) });
   }
 
   if (route === "/auth/activity" && method === "POST") {
     if (!ctx.userUid) return err("NÃ£o autenticado.", 401);
     const data = await body(req);
-    const seconds = Math.max(
-      0,
-      Math.min(Number(data.foregroundSeconds) || 0, 120),
-    );
     const activityIp =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
@@ -103,19 +87,14 @@ export async function handleAuthApi(
       timezone: String(data.timezone || "").slice(0, 100),
       locale: String(data.locale || "").slice(0, 30),
     });
-    await exec(
-      "UPDATE users SET last_activity_at = NOW(), foreground_seconds = foreground_seconds + ?, last_ip = ?, last_location = ? WHERE uid = ?",
-      [seconds, activityIp, location, ctx.userUid],
-    );
+    const activeToken = req.cookies.get("cp_session")?.value;
+    if (activeToken) await exec("UPDATE user_sessions SET last_activity_at=NOW(),ip_address=?,location_json=? WHERE token_hash=? AND user_id=?", [activityIp, location, sessionTokenHash(activeToken), ctx.userUid]);
     return ok();
   }
 
   if (route === "/auth/logout" && method === "POST") {
-    if (ctx.userUid)
-      await exec(
-        "UPDATE users SET session_token = NULL, session_expires_at = NULL, last_activity_at = NOW() WHERE uid = ?",
-        [ctx.userUid],
-      );
+    const logoutToken = req.cookies.get("cp_session")?.value;
+    if (ctx.userUid && logoutToken) await exec("UPDATE user_sessions SET revoked_at=NOW() WHERE user_id=? AND token_hash=?", [ctx.userUid, sessionTokenHash(logoutToken)]);
     const response = ok();
     const secureCookie =
       process.env.NODE_ENV === "production" &&

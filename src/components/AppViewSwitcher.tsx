@@ -10,6 +10,7 @@ import { ClientSetupScreen } from "../screens/ClientSetupScreen";
 import { ClientStrategyScreen } from "../screens/ClientStrategyScreen";
 import { UserSetupScreen } from "../screens/UserSetupScreen";
 import { AgencySetupScreen } from "../screens/AgencySetupScreen";
+import { WorkManagementScreen } from "../screens/WorkManagementScreen";
 import { MainLayout } from "./MainLayout";
 import { auth } from "../lib/auth";
 import { rememberClientSelection, synchronizeClientUrl } from "../lib/client-selection";
@@ -95,6 +96,10 @@ export function AppViewSwitcher({
         }}
       />
     );
+  }
+
+  if (appState === "operations") {
+    return <WorkManagementScreen currentClient={currentClient} onNavigate={handleNavigate} />;
   }
 
   if (appState === "admin_roles") {

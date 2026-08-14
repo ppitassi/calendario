@@ -1,412 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { exec, getDbPool, parseJson, rows } from "../db";
+import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { exec, parseJson, rows } from "../db";
 import { ApiContext, ApiParams } from "../api-types";
 import { err, ok } from "../api-response";
 import { body } from "./context";
-import { removeLocalAssetIfUnreferenced } from "./media-utils";
-import { ensureNotificationPreferences } from "../notifications";
 
-function tablePayload(data: Record<string, any>) {
-  const out: Record<string, any> = { ...data };
-  for (const key of Object.keys(out)) {
-    if (Array.isArray(out[key]) || (out[key] && typeof out[key] === "object"))
-      out[key] = JSON.stringify(out[key]);
+const roleAlias:Record<string,string>={ADMIN:"admin",DIRECTOR:"diretoria",MANAGEMENT:"gerente",ACCOUNT:"atendimento",SOCIAL_MEDIA:"socialmedia",DESIGNER:"designer",VIDEOMAKER:"videomaker",PHOTOGRAPHER:"fotografo",COPYWRITER:"copywriter"};
+const roleKey=(value:unknown)=>({admin:"ADMIN",diretoria:"DIRECTOR",gerente:"MANAGEMENT",atendimento:"ACCOUNT",socialmedia:"SOCIAL_MEDIA",designer:"DESIGNER",videomaker:"VIDEOMAKER",fotografo:"PHOTOGRAPHER",copywriter:"COPYWRITER"}[String(value||"").toLowerCase()]||String(value||"ACCOUNT").toUpperCase());
+async function userView(id:string){const user=(await rows("SELECT * FROM users WHERE id=? AND deleted_at IS NULL",[id]))[0];if(!user)return null;const userRoles=await rows(`SELECT r.id,r.key_name,r.name FROM user_roles ur JOIN roles r ON r.id=ur.role_id WHERE ur.user_id=? ORDER BY r.system_role DESC,r.name`,[id]);const settings=(await rows("SELECT settings_json FROM user_settings WHERE user_id=?",[id]))[0];return {uid:user.id,id:user.id,email:user.email,displayName:user.name,name:user.name,photoURL:user.avatar,avatar:user.avatar,whatsapp:user.phone,phoneNumber:user.phone,birthday:user.birthday,githubUsername:user.github_username,portfolioUrl:user.portfolio_url,active:Boolean(user.active),role:roleAlias[userRoles[0]?.key_name]||String(userRoles[0]?.key_name||"").toLowerCase(),roles:userRoles,ui_preferences:parseJson(settings?.settings_json,{})};}
+
+export async function handleAdminApi(method:string,route:string,req:NextRequest,params:ApiParams,ctx:ApiContext):Promise<NextResponse|null>{
+  if(route==="/team/members"&&method==="GET"||route==="/users"&&method==="GET"){
+    const found=await rows("SELECT id FROM users WHERE deleted_at IS NULL ORDER BY name,email");return ok((await Promise.all(found.map((entry)=>userView(entry.id)))).filter(Boolean));
   }
-  return out;
-}
-
-export async function handleAdminApi(
-  method: string,
-  route: string,
-  req: NextRequest,
-  params: ApiParams,
-  ctx: ApiContext,
-): Promise<NextResponse | null> {
-  if (route === "/team/members" && method === "GET")
-    return ok(
-      await rows(
-        "SELECT uid, displayName, email, photoURL, role FROM users ORDER BY displayName, email",
-      ),
-    );
-
-  if (route === "/users/me" && method === "GET") {
-    const result = await rows(
-      "SELECT uid,email,displayName,photoURL,role,birthday,githubUsername,portfolioUrl FROM users WHERE uid = ? LIMIT 1",
-      [ctx.userUid],
-    );
-    return result[0]
-      ? ok(result[0])
-      : err("Usuário não encontrado.", 404, "PROFILE_NOT_FOUND");
+  if(route==="/users/me"&&method==="GET"){const user=ctx.userUid?await userView(ctx.userUid):null;return user?ok(user):err("Usuário não encontrado.",404,"PROFILE_NOT_FOUND");}
+  if(route==="/users/me"&&method==="PATCH"){
+    if(!ctx.userUid)return err("Sessão expirada.",401);const input=await body(req);const name=String(input.displayName||"").trim();if(!name||name.length>255)return err("Nome inválido.",422);
+    const birthday=input.birthday?String(input.birthday):null;if(birthday&&!/^\d{4}-\d{2}-\d{2}$/.test(birthday))return err("Data inválida.",422);
+    let portfolio=input.portfolioUrl?String(input.portfolioUrl).trim():null;if(portfolio&&!/^https:\/\//i.test(portfolio))portfolio=`https://${portfolio}`;
+    await exec("UPDATE users SET name=?,birthday=?,github_username=?,portfolio_url=?,avatar=? WHERE id=?",[name,birthday,input.githubUsername||null,portfolio,input.photoURL||null,ctx.userUid]);return ok(await userView(ctx.userUid));
   }
-
-  if (route === "/users/me" && method === "PATCH") {
-    if (!ctx.userUid) return err("Sessão expirada.", 401, "UNAUTHORIZED");
-    const incoming = await body(req);
-    const allowed = new Set([
-      "displayName",
-      "birthday",
-      "githubUsername",
-      "portfolioUrl",
-      "photoURL",
-      "photoAssetId",
-    ]);
-    const unknown = Object.keys(incoming || {}).filter(
-      (key) => !allowed.has(key),
-    );
-    if (unknown.length)
-      return err(
-        "O perfil contém campos não permitidos.",
-        400,
-        "INVALID_PROFILE_DATA",
-      );
-    const displayName = String(incoming.displayName ?? "").trim();
-    if (!displayName || displayName.length > 255)
-      return err(
-        "Informe um nome de exibição válido.",
-        422,
-        "INVALID_PROFILE_DATA",
-        { displayName: "Nome obrigatório, com até 255 caracteres." },
-      );
-    const birthdayValue =
-      incoming.birthday === null ||
-        incoming.birthday === "" ||
-        incoming.birthday === undefined
-        ? null
-        : String(incoming.birthday);
-    if (birthdayValue) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdayValue))
-        return err(
-          "Data de nascimento inválida.",
-          422,
-          "INVALID_BIRTH_DATE",
-          { birthday: "Use o formato YYYY-MM-DD." },
-        );
-      const [year, month, day] = birthdayValue.split("-").map(Number);
-      const parsed = new Date(Date.UTC(year, month - 1, day));
-      if (
-        parsed.getUTCFullYear() !== year ||
-        parsed.getUTCMonth() !== month - 1 ||
-        parsed.getUTCDate() !== day
-      )
-        return err(
-          "Data de nascimento inválida.",
-          422,
-          "INVALID_BIRTH_DATE",
-          { birthday: "Informe uma data existente." },
-        );
-    }
-    const githubUsername =
-      incoming.githubUsername == null
-        ? null
-        : String(incoming.githubUsername).trim().replace(/^@/, "") || null;
-    if (
-      githubUsername &&
-      !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(githubUsername)
-    )
-      return err("Usuário do GitHub inválido.", 422, "INVALID_PROFILE_DATA", {
-        githubUsername: "Use apenas letras, números e hífens.",
-      });
-    let portfolioUrl: string | null =
-      incoming.portfolioUrl == null
-        ? null
-        : String(incoming.portfolioUrl).trim() || null;
-    if (portfolioUrl && !/^[a-z][a-z0-9+.-]*:/i.test(portfolioUrl))
-      portfolioUrl = `https://${portfolioUrl}`;
-    if (portfolioUrl) {
-      try {
-        const parsed = new URL(portfolioUrl);
-        if (parsed.protocol !== "https:") throw new Error();
-        portfolioUrl = parsed.toString();
-      } catch {
-        return err(
-          "URL do portfólio inválida.",
-          422,
-          "INVALID_PORTFOLIO_URL",
-          { portfolioUrl: "Informe uma URL HTTPS válida." },
-        );
-      }
-    }
-    const previous = (
-      await rows(
-        "SELECT photoURL FROM users WHERE uid = ? LIMIT 1",
-        [ctx.userUid],
-      )
-    )[0];
-    let photoURL: string | null =
-      incoming.photoURL === undefined
-        ? previous?.photoURL || null
-        : String(incoming.photoURL || "").trim() || null;
-    if (photoURL && !photoURL.startsWith("/uploads/"))
-      return err(
-        "A referência da foto é inválida.",
-        422,
-        "INVALID_PROFILE_DATA",
-        { photoURL: "Use uma imagem enviada pelo aplicativo." },
-      );
-    if (incoming.photoAssetId) {
-      const ownedAsset = (
-        await rows(
-          "SELECT id,publicUrl FROM media_assets WHERE id=? AND ownerType='user' AND ownerId=? AND category IN ('avatar','avatar_thumbnail') AND status='active' LIMIT 1",
-          [String(incoming.photoAssetId), ctx.userUid],
-        )
-      )[0];
-      if (!ownedAsset || ownedAsset.publicUrl !== photoURL)
-        return err(
-          "A foto não pertence ao usuário autenticado.",
-          403,
-          "FORBIDDEN",
-        );
-    }
-    await exec(
-      "UPDATE users SET displayName=?,birthday=?,githubUsername=?,portfolioUrl=?,photoURL=? WHERE uid=?",
-      [
-        displayName,
-        birthdayValue,
-        githubUsername,
-        portfolioUrl,
-        photoURL,
-        ctx.userUid,
-        ],
-    );
-    const updated = (
-      await rows(
-        "SELECT uid,email,displayName,photoURL,role,birthday,githubUsername,portfolioUrl FROM users WHERE uid=? LIMIT 1",
-        [ctx.userUid],
-      )
-    )[0];
-    if (previous?.photoURL && previous.photoURL !== photoURL)
-      await removeLocalAssetIfUnreferenced(previous.photoURL);
-    return ok(updated);
+  if(route==="/users/[uid]"&&method==="GET"){const user=await userView(params.uid);return user?ok(user):err("Usuário não encontrado.",404);}
+  if(route==="/users"&&method==="POST"){
+    const input=await body(req);const id=String(input.uid||input.id||randomUUID());const existing=(await rows("SELECT id FROM users WHERE id=? OR email=?",[id,input.email]))[0];if(!existing&&String(input.password||"").length<8)return err("Defina uma senha com pelo menos 8 caracteres.",422);
+    if(existing){const values=[String(input.displayName||input.name||"").trim(),input.email,input.photoURL||input.avatar||null,input.whatsapp||input.phoneNumber||null,input.active!==false];let sql="UPDATE users SET name=?,email=?,avatar=?,phone=?,active=?";if(input.password){sql+=",password_hash=?";values.push(await bcrypt.hash(String(input.password),12));}values.push(existing.id);await exec(`${sql} WHERE id=?`,values);}
+    else await exec("INSERT INTO users (id,name,email,password_hash,avatar,phone,active) VALUES (?,?,?,?,?,?,?)",[id,String(input.displayName||input.name||input.email).trim(),input.email,await bcrypt.hash(String(input.password),12),input.photoURL||input.avatar||null,input.whatsapp||input.phoneNumber||null,input.active!==false]);
+    const targetId=existing?.id||id;const selectedRoles=Array.isArray(input.roles)?input.roles.map((entry:any)=>entry.key_name||entry.key||entry):[roleKey(input.role)];await exec("DELETE FROM user_roles WHERE user_id=?",[targetId]);for(const key of selectedRoles){const role=(await rows("SELECT id FROM roles WHERE key_name=?",[roleKey(key)]))[0];if(role)await exec("INSERT IGNORE INTO user_roles (user_id,role_id,assigned_by) VALUES (?,?,?)",[targetId,role.id,ctx.userUid]);}return ok({id:targetId});
   }
-
-  if (route === "/users" && method === "GET")
-    return ok(
-      await rows(
-        "SELECT uid, email, displayName, photoURL, role, whatsapp, clientId, birthday FROM users",
-      ),
-    );
-
-  if (route === "/users/[uid]" && method === "GET") {
-    const result = await rows(
-      "SELECT uid, email, displayName, photoURL, role, whatsapp, clientId, birthday FROM users WHERE uid = ?",
-      [params.uid],
-    );
-    return result[0] ? ok(result[0]) : err("Usuário não encontrado.", 404);
+  if(route==="/users/[uid]"&&method==="DELETE"){if(params.uid===ctx.userUid)return err("Não é possível desativar o próprio usuário.",422);await exec("UPDATE users SET active=FALSE,deleted_at=NOW() WHERE id=?",[params.uid]);await exec("UPDATE user_sessions SET revoked_at=NOW() WHERE user_id=? AND revoked_at IS NULL",[params.uid]);return ok({success:true});}
+  if(route==="/users/change-password"&&method==="POST"){
+    if(!ctx.userUid)return err("Não autenticado.",401);const input=await body(req);if(String(input.newPassword||"").length<8)return err("A nova senha deve ter pelo menos 8 caracteres.",422);const user=(await rows("SELECT password_hash FROM users WHERE id=?",[ctx.userUid]))[0];if(!user||!await bcrypt.compare(String(input.currentPassword||""),user.password_hash))return err("Senha atual inválida.",401);await exec("UPDATE users SET password_hash=? WHERE id=?",[await bcrypt.hash(String(input.newPassword),12),ctx.userUid]);return ok({success:true});
   }
-
-  if (route === "/users" && method === "POST") {
-    const incoming = await body(req);
-    if (!incoming.uid || typeof incoming.uid !== "string")
-      return err("Identificador do usuario obrigatorio.", 400);
-    const previous = incoming.uid
-      ? (
-        await rows(
-          "SELECT uid, photoURL FROM users WHERE uid = ?",
-          [incoming.uid],
-        )
-      )[0]
-      : null;
-    if (
-      !previous &&
-      (typeof incoming.password !== "string" || incoming.password.length < 8)
-    ) {
-      return err("Defina uma senha com pelo menos 8 caracteres.", 400);
-    }
-    if (
-      incoming.password !== undefined &&
-      incoming.password !== "" &&
-      String(incoming.password).length < 8
-    ) {
-      return err("A senha deve possuir pelo menos 8 caracteres.", 400);
-    }
-    if (incoming.password === "") delete incoming.password;
-    const allowedUserFields = [
-      "uid",
-      "email",
-      "displayName",
-      "photoURL",
-      "role",
-      "whatsapp",
-      "clientId",
-      "birthday",
-      "password",
-    ];
-    const filteredUser = Object.fromEntries(
-      allowedUserFields
-        .filter((key) => incoming[key] !== undefined)
-        .map((key) => [key, incoming[key]]),
-    );
-    const data = tablePayload(filteredUser);
-    if (data.password) data.password = await bcrypt.hash(data.password, 10);
-    if (previous) {
-      const update = { ...data };
-      delete update.uid;
-      
-      await exec("UPDATE users SET ? WHERE uid = ?", [
-        update,
-        incoming.uid,
-        ]);
-    } else {
-      const collision = await rows("SELECT uid FROM users WHERE uid = ? LIMIT 1", [incoming.uid]);
-      if (collision[0]) return err("Identificador de usuario ja utilizado.", 409);
-      await exec("INSERT INTO users SET ?", [data]);
-    }
-    await ensureNotificationPreferences(data.uid);
-    if (previous?.photoURL && previous.photoURL !== data.photoURL)
-      await removeLocalAssetIfUnreferenced(previous.photoURL);
-    return ok();
+  if(route==="/agencies"&&method==="GET"){const agency=(await rows("SELECT * FROM agency_profile WHERE singleton_id=1"))[0];return ok(agency?[{id:"agency",...agency,logo_url:agency.logo,logo_dark_url:agency.logo_dark,theme_config:parseJson(agency.theme_json,{})}]:[]);}
+  if((route==="/agency/settings"&&method==="POST")||(route==="/agency/settings/[id]"&&method==="GET")){
+    if(method==="GET"){const agency=(await rows("SELECT * FROM agency_profile WHERE singleton_id=1"))[0];return agency?ok({id:"agency",...agency,logo_url:agency.logo,logo_dark_url:agency.logo_dark,theme_config:parseJson(agency.theme_json,{})}):err("Agência não encontrada.",404);}
+    const input=await body(req);await exec(`INSERT INTO agency_profile (singleton_id,name,slogan,logo,logo_dark,email,phone,website,timezone,planning_month,deadline,deadline_pre,deadline_final,theme_json) VALUES (1,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name=VALUES(name),slogan=VALUES(slogan),logo=VALUES(logo),logo_dark=VALUES(logo_dark),email=VALUES(email),phone=VALUES(phone),website=VALUES(website),timezone=VALUES(timezone),planning_month=VALUES(planning_month),deadline=VALUES(deadline),deadline_pre=VALUES(deadline_pre),deadline_final=VALUES(deadline_final),theme_json=VALUES(theme_json)`,[input.name||"Agência",input.slogan||null,input.logo_url||null,input.logo_dark_url||null,input.email||null,input.phone||null,input.website||null,input.timezone||"America/Sao_Paulo",input.planning_month||null,input.deadline||null,input.deadline_pre||null,input.deadline_final||null,JSON.stringify(input.theme_config||{})]);return ok({id:"agency"});
   }
-
-  if (route === "/users/[uid]" && method === "DELETE") {
-    const previous = (
-      await rows(
-        "SELECT photoURL FROM users WHERE uid = ?",
-        [params.uid],
-      )
-    )[0];
-    await exec("DELETE FROM users WHERE uid = ?", [
-      params.uid,
-      ]);
-    if (previous?.photoURL)
-      await removeLocalAssetIfUnreferenced(previous.photoURL);
-    return ok();
+  if(route==="/custom-roles"&&method==="GET"||route==="/roles"&&method==="GET"){
+    const result=await rows(`SELECT r.*,COALESCE(JSON_ARRAYAGG(p.key_name),JSON_ARRAY()) permissions FROM roles r LEFT JOIN role_permissions rp ON rp.role_id=r.id LEFT JOIN permissions p ON p.id=rp.permission_id GROUP BY r.id ORDER BY r.name`);return ok(result.map((role)=>({id:role.id,key:role.key_name,label:role.name,permissions:parseJson(role.permissions,[])})));
   }
-
-  if (route === "/users/change-password" && method === "POST") {
-    const data = await body(req);
-    if (!ctx.userUid) return err("Não autenticado.", 401);
-    if (!data.newPassword || String(data.newPassword).length < 8)
-      return err("A nova senha deve ter pelo menos 8 caracteres.", 400);
-    const found = await rows(
-      "SELECT password FROM users WHERE uid = ?",
-      [ctx.userUid],
-    );
-    if (
-      !found[0] ||
-      !(await bcrypt.compare(data.currentPassword, found[0].password))
-    )
-      return err("Senha atual inválida.", 401);
-    await exec(
-      "UPDATE users SET password = ? WHERE uid = ?",
-      [await bcrypt.hash(data.newPassword, 10), ctx.userUid],
-    );
-    return ok();
+  if(route==="/custom-roles"&&method==="POST"){
+    const input=await body(req);const id=String(input.id||randomUUID());const key=String(input.key||input.key_name||input.label||"").toUpperCase().replace(/[^A-Z0-9]+/g,"_");await exec("INSERT INTO roles (id,key_name,name,description) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE name=VALUES(name),description=VALUES(description)",[id,key,input.label||input.name||key,input.description||null]);if(Array.isArray(input.permissions)){await exec("DELETE FROM role_permissions WHERE role_id=?",[id]);for(const permission of input.permissions){const found=(await rows("SELECT id FROM permissions WHERE key_name=?",[permission]))[0];if(found)await exec("INSERT IGNORE INTO role_permissions (role_id,permission_id) VALUES (?,?)",[id,found.id]);}}return ok({id});
   }
-
-  if (route === "/agencies" && method === "GET")
-    return ok(await rows("SELECT * FROM agencies ORDER BY createdAt, id"));
-
-  if (route === "/agency/settings/[id]" && method === "GET") {
-    const agency = (await rows("SELECT * FROM agencies WHERE id = ? LIMIT 1", [params.id]))[0];
-    return agency ? ok(agency) : err("Agência não encontrada.", 404);
-  }
-
-  if (route === "/agency/settings" && method === "POST") {
-    const input = await body(req);
-    const existing = input.id
-      ? { id: String(input.id) }
-      : (await rows("SELECT id FROM agencies ORDER BY createdAt, id LIMIT 1"))[0];
-    const id = existing?.id || "default_agency";
-    const allowed = [
-      "name", "slogan", "logo_url", "logo_dark_url", "planning_month",
-      "deadline", "deadline_pre", "deadline_final", "theme_config",
-    ];
-    const payload: Record<string, any> = { id };
-    for (const key of allowed) {
-      if (Object.prototype.hasOwnProperty.call(input, key)) payload[key] = input[key];
-    }
-    if (!existing && !payload.name) payload.name = "Agency";
-    const data = tablePayload(payload);
-    const columns = Object.keys(data);
-    const updates = columns.filter((key) => key !== "id").map((key) => `${key}=VALUES(${key})`);
-    if (!updates.length) return ok({ id });
-    await exec(
-      `INSERT INTO agencies (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON DUPLICATE KEY UPDATE ${updates.join(",")}`,
-      columns.map((key) => data[key]),
-    );
-    return ok({ id });
-  }
-
-  if (route === "/custom-roles" && method === "GET")
-    return ok(
-      await rows("SELECT * FROM custom_roles", [
-        ]),
-    );
-
-  if (route === "/custom-roles" && method === "POST") {
-    const data = tablePayload(await body(req));
-    await exec("REPLACE INTO custom_roles SET ?", [data]);
-    return ok();
-  }
-
-  if (route === "/custom-roles/[id]" && method === "DELETE") {
-    await exec("DELETE FROM custom_roles WHERE id = ?", [
-      params.id,
-      ]);
-    return ok();
-  }
-
-  if (route === "/settings/[id]" && method === "GET") {
-    const result = await rows(
-      "SELECT data FROM settings WHERE id = ? LIMIT 1",
-      [params.id],
-    );
-    return ok(parseJson(result[0]?.data, {}));
-  }
-
-  if (route === "/settings/[id]" && method === "POST") {
-    await exec("REPLACE INTO settings SET ?", [
-      {
-        id: params.id,
-        data: JSON.stringify(await body(req)),
-      },
-    ]);
-    return ok();
-  }
-
-  if (route === "/users/preferences" && method === "GET") {
-    const result = await rows(
-      "SELECT ui_preferences FROM users WHERE uid = ? LIMIT 1",
-      [ctx.userUid],
-    );
-    return ok(parseJson(result[0]?.ui_preferences, {}));
-  }
-
-  if (route === "/users/preferences" && method === "POST") {
-    if (!ctx.userUid) return err("Não autenticado.", 401);
-    const incoming = await body(req);
-    if (!incoming || typeof incoming !== "object" || Array.isArray(incoming))
-      return err("Preferências inválidas.", 400);
-    const patch = Object.fromEntries(
-      Object.entries(incoming).filter(
-        ([key]) => !["__proto__", "constructor", "prototype"].includes(key),
-      ),
-    );
-    if (JSON.stringify(patch).length > 64 * 1024)
-      return err("Preferências excedem o limite permitido.", 413);
-    const connection = await getDbPool().getConnection();
-    try {
-      await connection.beginTransaction();
-      const [result] = await connection.query(
-        "SELECT ui_preferences FROM users WHERE uid = ? FOR UPDATE",
-        [ctx.userUid],
-      );
-      const current = parseJson((result as any[])[0]?.ui_preferences, {});
-      const next = { ...current, ...patch };
-      await connection.execute(
-        "UPDATE users SET ui_preferences = ? WHERE uid = ?",
-        [JSON.stringify(next), ctx.userUid],
-      );
-      await connection.commit();
-      return ok(next);
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
-  }
-
+  if(route==="/custom-roles/[id]"&&method==="DELETE"){const role=(await rows("SELECT system_role FROM roles WHERE id=?",[params.id]))[0];if(role?.system_role)return err("Role de sistema não pode ser removida.",422);await exec("DELETE FROM roles WHERE id=?",[params.id]);return ok({success:true});}
+  if(route==="/settings/[id]"&&method==="GET"){const result=(await rows("SELECT value_json FROM system_settings WHERE key_name=?",[params.id]))[0];return ok(parseJson(result?.value_json,{}));}
+  if(route==="/settings/[id]"&&method==="POST"){await exec("INSERT INTO system_settings (key_name,value_json,updated_by) VALUES (?,?,?) ON DUPLICATE KEY UPDATE value_json=VALUES(value_json),updated_by=VALUES(updated_by)",[params.id,JSON.stringify(await body(req)),ctx.userUid]);return ok({success:true});}
+  if(route==="/users/preferences"&&method==="GET"){const result=(await rows("SELECT settings_json FROM user_settings WHERE user_id=?",[ctx.userUid]))[0];return ok(parseJson(result?.settings_json,{}));}
+  if(route==="/users/preferences"&&method==="POST"){if(!ctx.userUid)return err("Não autenticado.",401);const patch=await body(req);const current=parseJson((await rows("SELECT settings_json FROM user_settings WHERE user_id=?",[ctx.userUid]))[0]?.settings_json,{});const next={...current,...patch};await exec("INSERT INTO user_settings (user_id,settings_json) VALUES (?,?) ON DUPLICATE KEY UPDATE settings_json=VALUES(settings_json)",[ctx.userUid,JSON.stringify(next)]);return ok(next);}
   return null;
 }

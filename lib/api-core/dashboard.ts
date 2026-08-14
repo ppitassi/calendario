@@ -15,7 +15,7 @@ export async function handleDashboardApi(
   if (route === "/dashboard/layout" && method === "GET") {
     if (!ctx.userUid) return err("Não autenticado.", 401);
     const result = await rows(
-      "SELECT ui_preferences FROM users WHERE uid = ? LIMIT 1",
+      "SELECT settings_json ui_preferences FROM user_settings WHERE user_id = ? LIMIT 1",
       [ctx.userUid],
     );
     const preferences = parseJson(result[0]?.ui_preferences, {});
@@ -45,7 +45,7 @@ export async function handleDashboardApi(
     const currentPrefs = parseJson(
       (
         await rows(
-          "SELECT ui_preferences FROM users WHERE uid = ? LIMIT 1",
+          "SELECT settings_json ui_preferences FROM user_settings WHERE user_id = ? LIMIT 1",
           [ctx.userUid],
         )
       )[0]?.ui_preferences,
@@ -109,8 +109,8 @@ export async function handleDashboardApi(
     currentPrefs.dashboardLayoutSchemaVersion = 2;
     currentPrefs.dashboardLayoutUpdatedAt = new Date().toISOString();
     await exec(
-      "UPDATE users SET ui_preferences = ? WHERE uid = ?",
-      [JSON.stringify(currentPrefs), ctx.userUid],
+      "INSERT INTO user_settings (user_id,settings_json) VALUES (?,?) ON DUPLICATE KEY UPDATE settings_json=VALUES(settings_json)",
+      [ctx.userUid, JSON.stringify(currentPrefs)],
     );
 
     return ok({
@@ -127,7 +127,7 @@ export async function handleDashboardApi(
     const currentPrefs = parseJson(
       (
         await rows(
-          "SELECT ui_preferences FROM users WHERE uid = ? LIMIT 1",
+          "SELECT settings_json ui_preferences FROM user_settings WHERE user_id = ? LIMIT 1",
           [ctx.userUid],
         )
       )[0]?.ui_preferences,
@@ -143,8 +143,8 @@ export async function handleDashboardApi(
     currentPrefs.dashboardLayoutSchemaVersion = 2;
     currentPrefs.dashboardLayoutUpdatedAt = new Date().toISOString();
     await exec(
-      "UPDATE users SET ui_preferences = ? WHERE uid = ?",
-      [JSON.stringify(currentPrefs), ctx.userUid],
+      "INSERT INTO user_settings (user_id,settings_json) VALUES (?,?) ON DUPLICATE KEY UPDATE settings_json=VALUES(settings_json)",
+      [ctx.userUid, JSON.stringify(currentPrefs)],
     );
     return ok({ success: true });
   }
@@ -167,7 +167,7 @@ export async function handleDashboardApi(
       "SELECT COUNT(*) as total FROM clients",
     );
     const posts = await rows(
-      "SELECT COUNT(*) as total FROM posts",
+      "SELECT COUNT(*) as total FROM work_items WHERE type='TASK' AND deleted_at IS NULL",
     );
     const users = await rows(
       "SELECT COUNT(*) as total FROM users",
@@ -182,7 +182,7 @@ export async function handleDashboardApi(
   if (route === "/admin/workload-stats" && method === "GET")
     return ok(
       await rows(
-        "SELECT u.uid, u.displayName, COUNT(p.id) as total FROM users u LEFT JOIN posts p ON p.assigneeId = u.uid GROUP BY u.uid, u.displayName",
+        "SELECT u.id uid,u.name displayName,COUNT(a.id) total FROM users u LEFT JOIN work_item_assignees a ON a.user_id=u.id AND a.removed_at IS NULL GROUP BY u.id,u.name",
       ),
     );
 

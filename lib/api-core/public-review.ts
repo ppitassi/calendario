@@ -1,5 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
-import { randomBytes } from "crypto";
+import { createHash, randomBytes, randomUUID } from "crypto";
 import { exec, rows } from "../db";
 import { ApiContext, ApiParams } from "../api-types";
 import { err, ok } from "../api-response";
@@ -23,15 +23,6 @@ async function sendWAMessage(to: string, text: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ to, text }),
   }).catch(() => undefined);
-}
-
-function tablePayload(data: Record<string, any>) {
-  const out: Record<string, any> = { ...data };
-  for (const key of Object.keys(out)) {
-    if (Array.isArray(out[key]) || (out[key] && typeof out[key] === "object"))
-      out[key] = JSON.stringify(out[key]);
-  }
-  return out;
 }
 
 export async function handlePublicReviewApi(
@@ -87,52 +78,33 @@ export async function handlePublicReviewApi(
   }
 
   if (route === "/tokens" && method === "POST") {
-    const payload = await body(req);
-    if (!payload.clientId || !(await clientExists(String(payload.clientId))))
-      return err("Cliente invalido.", 403);
-    payload.id = randomBytes(32).toString("hex");
-    payload.expiresAt = toMysqlDateTime(payload.expiresAt);
-    if (!payload.expiresAt)
-      return err("ExpiraÃ§Ã£o do token invÃ¡lida.", 400);
-    const data = tablePayload(payload);
-    await exec("INSERT INTO approval_tokens SET ?", [data]);
-    return ok({ id: data.id });
+    const payload=await body(req);const clientId=String(payload.clientId||"");if(!clientId||!await clientExists(clientId)||!ctx.userUid)return err("Cliente inválido.",403);const period=/^\d{4}-\d{2}$/.test(payload.month||"")?payload.month:new Date().toISOString().slice(0,7);let workItemId=payload.workItemId?String(payload.workItemId):null;if(!workItemId){const calendar=(await rows("SELECT id FROM work_items WHERE client_id=? AND type='DEMAND' AND title=? AND deleted_at IS NULL LIMIT 1",[clientId,`Calendário ${period}`]))[0];workItemId=calendar?.id||randomUUID();if(!calendar)await exec("INSERT INTO work_items (id,type,title,client_id,status,priority,created_by,due_at) VALUES (?,'DEMAND',?,?,'TODO','NORMAL',?,LAST_DAY(?))",[workItemId,`Calendário ${period}`,clientId,ctx.userUid,`${period}-01`]);}const expiresAt=toMysqlDateTime(payload.expiresAt)||toMysqlDateTime(new Date(Date.now()+30*86400000));const raw=randomBytes(32).toString("base64url");const id=randomUUID();await exec("INSERT INTO public_approval_tokens (id,token_hash,client_id,work_item_id,content_version_id,approval_flow_id,period_key,status,expires_at,created_by) VALUES (?,?,?,?,?,?,?,'PENDING',?,?)",[id,createHash("sha256").update(raw).digest("hex"),clientId,workItemId,payload.contentVersionId||null,payload.approvalFlowId||null,period,expiresAt,ctx.userUid]);return ok({id:raw,token:raw,recordId:id,clientId,workItemId,month:period,status:"pending",expiresAt},201);
   }
 
   if (route === "/tokens/[id]" && method === "GET") {
-    const result = await rows(
-      "SELECT * FROM approval_tokens WHERE id = ?",
-      [params.id],
-    );
+    const result = await rows("SELECT id recordId,client_id clientId,work_item_id workItemId,period_key month,status,created_at createdAt,expires_at expiresAt,client_note clientNote,revoked_at revokedAt FROM public_approval_tokens WHERE id=?",[params.id]);
     return result[0] ? ok(result[0]) : err("Token nÃ£o encontrado.", 404);
   }
 
   if (route === "/tokens" && method === "GET") {
     const where: string[] = [];
     const vals: any[] = [];
-    for (const key of ["clientId", "month", "status"]) {
+    const columns:Record<string,string>={clientId:"client_id",month:"period_key",status:"status"};for (const key of ["clientId", "month", "status"]) {
       const val = url.searchParams.get(key);
       if (val) {
-        where.push(`${key} = ?`);
-        vals.push(val);
+        where.push(`${columns[key]} = ?`); vals.push(key==="status"?val.toUpperCase():val);
       }
     }
     return ok(
       await rows(
-        `SELECT * FROM approval_tokens${where.length ? ` WHERE ${where.join(" AND ")}` : ""}`,
+        `SELECT id recordId,client_id clientId,work_item_id workItemId,period_key month,LOWER(status) status,created_at createdAt,expires_at expiresAt,client_note clientNote,revoked_at revokedAt FROM public_approval_tokens${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY created_at DESC`,
         vals,
       ),
     );
   }
 
   if (route === "/tokens/[id]" && method === "PATCH") {
-    const patch = await body(req);
-    delete patch.clientId;
-    delete patch.id;
-    await exec(
-      "UPDATE approval_tokens SET ? WHERE id = ?",
-      [patch, params.id],
-    );
+    const patch=await body(req);if(patch.revoked===true||String(patch.status||"").toUpperCase()==="REVOKED")await exec("UPDATE public_approval_tokens SET revoked_at=NOW(),status='REVOKED' WHERE id=?",[params.id]);else if(patch.expiresAt)await exec("UPDATE public_approval_tokens SET expires_at=? WHERE id=?",[toMysqlDateTime(patch.expiresAt),params.id]);
     return ok();
   }
 
@@ -149,11 +121,7 @@ export async function handlePublicReviewApi(
     if (data.action !== "approve" && data.action !== "request_changes") {
       return err("AÃ§Ã£o de revisÃ£o invÃ¡lida.", 400);
     }
-    const status = data.action === "approve" ? "approved" : "waiting";
-    await exec(
-      "UPDATE approval_tokens SET status = ?, clientNote = ? WHERE id = ?",
-      [status, data.note || null, params.token],
-    );
+    const status=data.action==="approve"?"APPROVED":"CHANGES_REQUESTED";await exec("UPDATE public_approval_tokens SET status=?,client_note=? WHERE token_hash=?",[status,data.note||null,createHash("sha256").update(params.token).digest("hex")]);if((tokenData as any).approval_flow_id)await exec("UPDATE approval_flows SET status=?,completed_at=NOW() WHERE id=?",[status,(tokenData as any).approval_flow_id]);
     return ok();
   }
 

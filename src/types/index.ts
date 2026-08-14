@@ -12,7 +12,8 @@ export type AppViewState =
   | "client_strategy"
   | "client_management"
   | "leia_chat"
-  | "production_gallery";
+  | "production_gallery"
+  | "operations";
 
 export type PostType =
   | "post"

@@ -10,6 +10,7 @@ import {
   Eye,
   Settings,
   Palette,
+  ListTodo,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { ClientData, ROLE_PERMISSIONS, UserRole } from "../../types";
@@ -120,6 +121,16 @@ export function MainLayoutSidebar({
           >
             <Users />
             {isOpen && <span>Clientes</span>}
+          </SidebarButton>
+
+          <SidebarButton
+            onClick={() => onNavigate("operations")}
+            className={navClass(activeScreen === "operations")}
+            aria-label="Operações"
+            data-sidebar-tooltip="Operações"
+          >
+            <ListTodo />
+            {isOpen && <span>Operações</span>}
           </SidebarButton>
 
           {canViewProductionGallery && (

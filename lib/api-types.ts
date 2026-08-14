@@ -1,6 +1,6 @@
 export type ApiParams = Record<string, string>;
 
-export type Permission =
+export type LegacyPermission =
   | "canCreatePosts"
   | "canEditAssignedPosts"
   | "canEditCalendar"
@@ -11,6 +11,8 @@ export type Permission =
   | "canViewPresentation"
   | "canViewProductionGallery"
   | "canComment";
+
+export type Permission = LegacyPermission | Uppercase<string>;
 
 export type ApiContext = {
   userUid: string | null;

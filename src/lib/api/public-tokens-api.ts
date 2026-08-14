@@ -3,8 +3,8 @@ import { format, addDays } from "date-fns";
 import { ApprovalToken } from "../../types";
 import { API_URL, downloadPdf } from "./core";
 
-export async function createToken(token: ApprovalToken): Promise<void> {
-  await axios.post(`${API_URL}/tokens`, token);
+export async function createToken(token: ApprovalToken): Promise<ApprovalToken> {
+  return (await axios.post(`${API_URL}/tokens`, token)).data;
 }
 
 export async function getTokens(params: {
@@ -36,24 +36,8 @@ export async function createApprovalToken(
   date: Date,
 ): Promise<ApprovalToken> {
   const monthStr = format(date, "yyyy-MM");
-  const existingTokens = await getTokens({
-    clientId,
-    month: monthStr,
-    status: "pending",
-  });
-
-  if (existingTokens.length > 0 && existingTokens[0].expiresAt > Date.now()) {
-    return existingTokens[0];
-  }
-
-  const clientPrefix = clientId.substring(0, 3).toUpperCase();
-  const randomPart =
-    Math.random().toString(36).substring(2, 10) +
-    Math.random().toString(36).substring(2, 10);
-  const tokenId = `${clientPrefix}-${randomPart}`;
-
   const newToken: ApprovalToken = {
-    id: tokenId,
+    id: "",
     clientId,
     month: monthStr,
     status: "pending",
@@ -61,8 +45,7 @@ export async function createApprovalToken(
     expiresAt: addDays(new Date(), 30).getTime(),
   };
 
-  await createToken(newToken);
-  return newToken;
+  return createToken(newToken);
 }
 
 export async function getPublicPostComments(token: string, postId: number): Promise<any[]> {
