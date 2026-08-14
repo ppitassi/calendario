@@ -29,7 +29,7 @@ export async function resolvePresentationMedia(model: PresentationViewModel) {
   for(const post of model.posts)for(const item of post.midias)if(!item.assetId&&item.url?.startsWith("/")&&!(await localExists(item.url)))item.state="missing";
   if(model.cliente.logoUrl&&!model.cliente.logoAssetId&&model.cliente.logoUrl.startsWith("/")&&!(await localExists(model.cliente.logoUrl)))model.cliente.logoState="missing";
   if(!ids.length)return;
-  const assets=await rows("SELECT id,COALESCE(sha256,checksum) checksum,status FROM media_assets WHERE id IN (?)",[ids]);
+  const assets=await rows("SELECT id,checksum_sha256 checksum,IF(deleted_at IS NULL,'active','deleted') status FROM media_assets WHERE id IN (?)",[ids]);
   const byId=new Map(assets.map(asset=>[String(asset.id),asset]));
   for(const post of model.posts)for(const item of post.midias)if(item.assetId){const asset=byId.get(item.assetId);item.checksum=asset?.checksum?String(asset.checksum):null;item.state=asset?.status==="active"?"ready":"missing";}
   if(model.cliente.logoAssetId){const asset=byId.get(model.cliente.logoAssetId);model.cliente.logoChecksum=asset?.checksum?String(asset.checksum):null;model.cliente.logoState=asset?.status==="active"?"ready":"missing"}
@@ -42,45 +42,45 @@ export async function createPdfJob(input: { clientId: string; month: string; use
   if (input.reviewToken) model.responsaveis = [];
   const source = input.reviewToken ? "review" : "internal";
   const modelDigest=presentationDigest(model);const digest=input.reviewToken?hash(`${modelDigest}:${input.reviewToken}`):modelDigest;
-  const existing = await rows(`SELECT j.id jobId,j.snapshotId,j.status,j.progress,s.version FROM presentation_pdf_jobs j JOIN presentation_snapshots s ON s.id=j.snapshotId
-    WHERE s.clientId=? AND s.month=? AND s.sourceType=? AND s.contentHash=? AND j.rendererVersion=? AND j.status IN ('queued','processing','ready') ORDER BY j.createdAt DESC LIMIT 1`,
+  const existing = await rows(`SELECT j.id jobId,j.snapshot_id snapshotId,j.status,j.progress,s.version FROM presentation_pdf_jobs j JOIN presentation_snapshots s ON s.id=j.snapshot_id
+    WHERE s.client_id=? AND s.period_key=? AND s.source_type=? AND s.content_hash=? AND j.renderer_version=? AND j.status IN ('queued','processing','ready') ORDER BY j.created_at DESC LIMIT 1`,
     [input.clientId, input.month, source, digest, PDF_RENDERER_VERSION]);
   const approved=raw.tokenData?.status === "approved";
-  if (existing[0]) {if(approved)await exec("UPDATE presentation_snapshots s JOIN presentation_pdf_jobs j ON j.snapshotId=s.id SET s.approvalStatus='approved',j.expiresAt=NULL WHERE j.id=?",[existing[0].jobId]);return existing[0]}
+  if (existing[0]) {if(approved)await exec("UPDATE presentation_snapshots s JOIN presentation_pdf_jobs j ON j.snapshot_id=s.id SET s.approval_status='approved',j.expires_at=NULL WHERE j.id=?",[existing[0].jobId]);return existing[0]}
   const connection=await getDbPool().getConnection();const lockName=`pdf:${hash(`${input.clientId}:${input.month}:${source}`).slice(0,48)}`;
   try{
     const [locks]:any=await connection.query("SELECT GET_LOCK(?,10) acquired",[lockName]);if(Number(locks[0]?.acquired)!==1)throw new Error("PDF_SNAPSHOT_LOCK_TIMEOUT");
-    const [rechecked]:any=await connection.query(`SELECT j.id jobId,j.snapshotId,j.status,j.progress,s.version FROM presentation_pdf_jobs j JOIN presentation_snapshots s ON s.id=j.snapshotId WHERE s.clientId=? AND s.month=? AND s.sourceType=? AND s.contentHash=? AND j.rendererVersion=? AND j.status IN ('queued','processing','ready') ORDER BY j.createdAt DESC LIMIT 1`,[input.clientId,input.month,source,digest,PDF_RENDERER_VERSION]);
-    if(rechecked[0]){if(approved)await connection.query("UPDATE presentation_snapshots s JOIN presentation_pdf_jobs j ON j.snapshotId=s.id SET s.approvalStatus='approved',j.expiresAt=NULL WHERE j.id=?",[rechecked[0].jobId]);return rechecked[0]}
+    const [rechecked]:any=await connection.query(`SELECT j.id jobId,j.snapshot_id snapshotId,j.status,j.progress,s.version FROM presentation_pdf_jobs j JOIN presentation_snapshots s ON s.id=j.snapshot_id WHERE s.client_id=? AND s.period_key=? AND s.source_type=? AND s.content_hash=? AND j.renderer_version=? AND j.status IN ('queued','processing','ready') ORDER BY j.created_at DESC LIMIT 1`,[input.clientId,input.month,source,digest,PDF_RENDERER_VERSION]);
+    if(rechecked[0]){if(approved)await connection.query("UPDATE presentation_snapshots s JOIN presentation_pdf_jobs j ON j.snapshot_id=s.id SET s.approval_status='approved',j.expires_at=NULL WHERE j.id=?",[rechecked[0].jobId]);return rechecked[0]}
     await connection.beginTransaction();
-    const [snapshots]:any=await connection.query("SELECT id,version FROM presentation_snapshots WHERE clientId=? AND month=? AND sourceType=? AND contentHash=? LIMIT 1",[input.clientId,input.month,source,digest]);
+    const [snapshots]:any=await connection.query("SELECT id,version FROM presentation_snapshots WHERE client_id=? AND period_key=? AND source_type=? AND content_hash=? LIMIT 1",[input.clientId,input.month,source,digest]);
     let snapshotId=String(snapshots[0]?.id||""),version=Number(snapshots[0]?.version||0);const jobId=randomUUID();
-    if(!snapshotId){const [latest]:any=await connection.query("SELECT COALESCE(MAX(version),0) version FROM presentation_snapshots WHERE clientId=? AND month=? AND sourceType=?",[input.clientId,input.month,source]);snapshotId=randomUUID();version=Number(latest[0]?.version||0)+1;await connection.query(`INSERT INTO presentation_snapshots (id,clientId,month,version,sourceType,sourceTokenId,contentHash,payload,createdByUserId,approvalStatus) VALUES (?,?,?,?,?,?,?,?,?,?)`,[snapshotId,input.clientId,input.month,version,source,input.reviewToken||null,digest,JSON.stringify(model),input.userUid||null,approved?"approved":"draft"])}else if(approved){await connection.query("UPDATE presentation_snapshots SET approvalStatus='approved' WHERE id=?",[snapshotId])}
-    await connection.query(`INSERT INTO presentation_pdf_jobs (id,snapshotId,requestedByUserId,reviewTokenId,status,progress,rendererVersion,expiresAt) VALUES (?,?,?,?, 'queued',0,?,IF(?,NULL,DATE_ADD(NOW(),INTERVAL ? DAY)))`,[jobId,snapshotId,input.userUid||null,input.reviewToken||null,PDF_RENDERER_VERSION,approved?1:0,Math.max(1,Number(process.env.PDF_DRAFT_RETENTION_DAYS||30))]);
+    if(!snapshotId){const [latest]:any=await connection.query("SELECT COALESCE(MAX(version),0) version FROM presentation_snapshots WHERE client_id=? AND period_key=? AND source_type=?",[input.clientId,input.month,source]);snapshotId=randomUUID();version=Number(latest[0]?.version||0)+1;await connection.query(`INSERT INTO presentation_snapshots (id,client_id,period_key,version,source_type,source_token_id,content_hash,snapshot_json,created_by,approval_status) VALUES (?,?,?,?,?,?,?,?,?,?)`,[snapshotId,input.clientId,input.month,version,source,input.reviewToken||null,digest,JSON.stringify(model),input.userUid||null,approved?"approved":"draft"])}else if(approved){await connection.query("UPDATE presentation_snapshots SET approval_status='approved' WHERE id=?",[snapshotId])}
+    await connection.query(`INSERT INTO presentation_pdf_jobs (id,snapshot_id,requested_by,review_token_id,status,progress,renderer_version,expires_at) VALUES (?,?,?,?, 'queued',0,?,IF(?,NULL,DATE_ADD(NOW(),INTERVAL ? DAY)))`,[jobId,snapshotId,input.userUid||null,input.reviewToken||null,PDF_RENDERER_VERSION,approved?1:0,Math.max(1,Number(process.env.PDF_DRAFT_RETENTION_DAYS||30))]);
     await connection.commit();return{jobId,snapshotId,status:"queued",progress:0,version};
   }catch(error){await connection.rollback().catch(()=>undefined);throw error}finally{await connection.query("SELECT RELEASE_LOCK(?)",[lockName]).catch(()=>undefined);connection.release()}
 }
-export async function pdfJob(jobId: string) { return (await rows(`SELECT j.*,s.clientId,s.month,s.version,s.sourceType FROM presentation_pdf_jobs j JOIN presentation_snapshots s ON s.id=j.snapshotId WHERE j.id=? LIMIT 1`, [jobId]))[0] || null; }
-export async function snapshotModel(snapshotId: string): Promise<PresentationViewModel | null> { const item = (await rows("SELECT payload FROM presentation_snapshots WHERE id=? LIMIT 1", [snapshotId]))[0]; return item ? (typeof item.payload === "string" ? JSON.parse(item.payload) : item.payload) : null; }
+export async function pdfJob(jobId: string) { return (await rows(`SELECT j.id,j.snapshot_id snapshotId,j.requested_by requestedByUserId,j.review_token_id reviewTokenId,j.status,j.progress,j.renderer_version rendererVersion,j.attempts,j.last_error lastError,j.render_token_hash renderTokenHash,j.render_token_expires_at renderTokenExpiresAt,j.expires_at expiresAt,j.output_url outputUrl,j.output_provider outputProvider,j.output_storage_key outputStorageKey,j.output_checksum outputChecksum,j.output_size outputSize,j.page_count pageCount,j.warnings,j.created_at createdAt,j.completed_at completedAt,s.client_id clientId,s.period_key month,s.version,s.source_type sourceType FROM presentation_pdf_jobs j JOIN presentation_snapshots s ON s.id=j.snapshot_id WHERE j.id=? LIMIT 1`, [jobId]))[0] || null; }
+export async function snapshotModel(snapshotId: string): Promise<PresentationViewModel | null> { const item = (await rows("SELECT snapshot_json payload FROM presentation_snapshots WHERE id=? LIMIT 1", [snapshotId]))[0]; return item ? (typeof item.payload === "string" ? JSON.parse(item.payload) : item.payload) : null; }
 export function validRenderToken(job: any, token: string) {
   if (!job?.renderTokenHash || !token || new Date(job.renderTokenExpiresAt).getTime() < Date.now()) return false;
   const a = Buffer.from(job.renderTokenHash, "hex"), b = Buffer.from(hash(token), "hex"); return a.length === b.length && timingSafeEqual(a, b);
 }
 export async function maintainPdfJobs() {
-  const expired=await rows("SELECT id,outputProvider,outputStorageKey FROM presentation_pdf_jobs WHERE status='ready' AND expiresAt IS NOT NULL AND expiresAt<=NOW() ORDER BY expiresAt LIMIT 5");
-  for(const job of expired){try{if(job.outputProvider&&job.outputStorageKey)await deleteStoredAsset(String(job.outputProvider),String(job.outputStorageKey));await exec("UPDATE presentation_pdf_jobs SET status='expired',progress=0,outputUrl=NULL,outputStorageKey=NULL WHERE id=? AND status='ready'",[job.id])}catch(error){console.error("[pdf-retention]",{jobId:job.id,message:error instanceof Error?error.message:String(error)})}}
+  const expired=await rows("SELECT id,output_provider outputProvider,output_storage_key outputStorageKey FROM presentation_pdf_jobs WHERE status='ready' AND expires_at IS NOT NULL AND expires_at<=NOW() ORDER BY expires_at LIMIT 5");
+  for(const job of expired){try{if(job.outputProvider&&job.outputStorageKey)await deleteStoredAsset(String(job.outputProvider),String(job.outputStorageKey));await exec("UPDATE presentation_pdf_jobs SET status='expired',progress=0,output_url=NULL,output_storage_key=NULL WHERE id=? AND status='ready'",[job.id])}catch(error){console.error("[pdf-retention]",{jobId:job.id,message:error instanceof Error?error.message:String(error)})}}
   return expired.length;
 }
 export async function processNextPdfJob() {
   await maintainPdfJobs();
-  const candidates = await rows("SELECT id,status FROM presentation_pdf_jobs WHERE (status='queued' AND availableAt<=NOW()) OR (status='processing' AND startedAt<DATE_SUB(NOW(),INTERVAL 10 MINUTE)) ORDER BY createdAt LIMIT 1");
+  const candidates = await rows("SELECT id,status FROM presentation_pdf_jobs WHERE (status='queued' AND available_at<=NOW()) OR (status='processing' AND started_at<DATE_SUB(NOW(),INTERVAL 10 MINUTE)) ORDER BY created_at LIMIT 1");
   if (!candidates[0]) return null;
   const id = String(candidates[0].id);
   const maxAttempts=Math.max(1,Number(process.env.PDF_JOB_MAX_ATTEMPTS||3));
-  const claimed: any = await exec("UPDATE presentation_pdf_jobs SET status='processing',progress=10,attempts=attempts+1,startedAt=NOW(),lastError=NULL WHERE id=? AND attempts<? AND ((status='queued' AND availableAt<=NOW()) OR (status='processing' AND startedAt<DATE_SUB(NOW(),INTERVAL 10 MINUTE)))", [id,maxAttempts]);
+  const claimed: any = await exec("UPDATE presentation_pdf_jobs SET status='processing',progress=10,attempts=attempts+1,started_at=NOW(),last_error=NULL WHERE id=? AND attempts<? AND ((status='queued' AND available_at<=NOW()) OR (status='processing' AND started_at<DATE_SUB(NOW(),INTERVAL 10 MINUTE)))", [id,maxAttempts]);
   if (!claimed.affectedRows) return null;
   const token = randomBytes(32).toString("hex");
-  await exec("UPDATE presentation_pdf_jobs SET renderTokenHash=?,renderTokenExpiresAt=DATE_ADD(NOW(),INTERVAL 5 MINUTE),progress=25 WHERE id=?", [hash(token), id]);
+  await exec("UPDATE presentation_pdf_jobs SET render_token_hash=?,render_token_expires_at=DATE_ADD(NOW(),INTERVAL 5 MINUTE),progress=25 WHERE id=?", [hash(token), id]);
   try {
     const claimedJob=await pdfJob(id); const claimedModel=await snapshotModel(claimedJob.snapshotId); const missing=claimedModel?.posts.flatMap(post=>post.midias.filter(item=>item.required&&item.state!=="ready").map(item=>`${post.id}/peça-${item.ordem}`))||[];
     if(missing.length)throw new Error(`PDF_REQUIRED_MEDIA_MISSING:${missing.join(", ")}`);
@@ -91,12 +91,12 @@ export async function processNextPdfJob() {
     const pageCount=Math.max(1,(pdf.toString("latin1").match(/\/Type\s*\/Page\b/g)||[]).length);const minimumPages=(model?.posts.length||0)+3;if(pageCount<minimumPages)throw new Error(`PDF_PAGE_COUNT_INVALID:${pageCount}/${minimumPages}`);
     const name = `Planejamento - ${model?.cliente.nome || "Cliente"} - ${model?.competenciaLabel || job.month} - versão ${job.version}.pdf`;
     const stored = await storeAssetBuffer({ buffer: pdf, folder: "pdfs", fileName: name, mimeType: "application/pdf" });
-    await exec("UPDATE presentation_pdf_jobs SET status='ready',progress=100,outputUrl=?,outputProvider=?,outputStorageKey=?,outputChecksum=?,outputSize=?,pageCount=?,warnings=?,completedAt=NOW(),renderTokenHash=NULL WHERE id=?", [stored.url, stored.provider, stored.storageKey, checksum, pdf.length,pageCount,JSON.stringify(model?.avisos||[]), id]);
+    await exec("UPDATE presentation_pdf_jobs SET status='ready',progress=100,output_url=?,output_provider=?,output_storage_key=?,output_checksum=?,output_size=?,page_count=?,warnings=?,completed_at=NOW(),render_token_hash=NULL WHERE id=?", [stored.url, stored.provider, stored.storageKey, checksum, pdf.length,pageCount,JSON.stringify(model?.avisos||[]), id]);
     return { id, status: "ready" };
   } catch (error) {
     console.error("[presentation-pdf]",{jobId:id,code:error instanceof Error?error.message:String(error)});
     const job = await pdfJob(id); const retry = Number(job?.attempts || 0) < maxAttempts;
-    await exec(`UPDATE presentation_pdf_jobs SET status=?,progress=0,lastError=?,renderTokenHash=NULL,availableAt=IF(?,DATE_ADD(NOW(),INTERVAL attempts MINUTE),availableAt) WHERE id=?`, [retry ? "queued" : "failed", safePdfError(error), retry ? 1 : 0, id]);
+    await exec(`UPDATE presentation_pdf_jobs SET status=?,progress=0,last_error=?,render_token_hash=NULL,available_at=IF(?,DATE_ADD(NOW(),INTERVAL attempts MINUTE),available_at) WHERE id=?`, [retry ? "queued" : "failed", safePdfError(error), retry ? 1 : 0, id]);
     return { id, status: retry ? "queued" : "failed" };
   }
 }

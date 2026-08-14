@@ -5,8 +5,7 @@ export async function canAccessPresentationClient(ctx: ApiContext, clientId: str
   if (!ctx.userUid || !ctx.permissions.has("canViewPresentation")) return false;
   if (["admin", "gerente", "atendimento"].includes(ctx.userRole || "")) return Boolean((await rows("SELECT 1 FROM clients WHERE id=? LIMIT 1", [clientId]))[0]);
   return Boolean((await rows(`SELECT 1 FROM clients c WHERE c.id=? AND (
-    JSON_CONTAINS(CASE WHEN JSON_VALID(c.owners) THEN c.owners ELSE JSON_ARRAY() END,JSON_QUOTE(?)) OR
-    EXISTS(SELECT 1 FROM posts p WHERE p.clientId=c.id AND (p.currentAssigneeId=? OR p.actionAssigneeId=? OR p.assigneeId=?)) OR
-    EXISTS(SELECT 1 FROM users u WHERE u.uid=? AND u.clientId=c.id)) LIMIT 1`,
-    [clientId, ctx.userUid, ctx.userUid, ctx.userUid, ctx.userUid, ctx.userUid]))[0]);
+    EXISTS(SELECT 1 FROM client_members cm WHERE cm.client_id=c.id AND cm.user_id=? AND cm.removed_at IS NULL) OR
+    EXISTS(SELECT 1 FROM work_items w JOIN work_item_assignees a ON a.work_item_id=w.id AND a.removed_at IS NULL WHERE w.client_id=c.id AND a.user_id=? AND w.deleted_at IS NULL)) LIMIT 1`,
+    [clientId, ctx.userUid, ctx.userUid]))[0]);
 }

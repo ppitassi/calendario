@@ -1,0 +1,30 @@
+ALTER TABLE presentation_snapshots
+  ADD COLUMN version INT UNSIGNED NOT NULL DEFAULT 1 AFTER period_key,
+  ADD COLUMN source_type VARCHAR(30) NOT NULL DEFAULT 'internal' AFTER version,
+  ADD COLUMN source_token_id VARCHAR(255) NULL AFTER source_type,
+  ADD COLUMN content_hash CHAR(64) NULL AFTER source_token_id,
+  ADD COLUMN approval_status VARCHAR(30) NOT NULL DEFAULT 'draft' AFTER content_hash,
+  ADD UNIQUE KEY uq_presentation_snapshot (client_id,period_key,source_type,content_hash);
+
+ALTER TABLE presentation_pdf_jobs
+  MODIFY COLUMN status VARCHAR(30) NOT NULL DEFAULT 'queued',
+  ADD COLUMN requested_by CHAR(36) NULL AFTER snapshot_id,
+  ADD COLUMN review_token_id VARCHAR(255) NULL AFTER requested_by,
+  ADD COLUMN progress INT UNSIGNED NOT NULL DEFAULT 0 AFTER status,
+  ADD COLUMN renderer_version VARCHAR(30) NOT NULL DEFAULT '2.5.0' AFTER progress,
+  ADD COLUMN available_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) AFTER renderer_version,
+  ADD COLUMN attempts INT UNSIGNED NOT NULL DEFAULT 0 AFTER available_at,
+  ADD COLUMN started_at DATETIME(3) NULL AFTER attempts,
+  ADD COLUMN last_error TEXT NULL AFTER started_at,
+  ADD COLUMN render_token_hash CHAR(64) NULL AFTER last_error,
+  ADD COLUMN render_token_expires_at DATETIME(3) NULL AFTER render_token_hash,
+  ADD COLUMN expires_at DATETIME(3) NULL AFTER render_token_expires_at,
+  ADD COLUMN output_url VARCHAR(2048) NULL AFTER expires_at,
+  ADD COLUMN output_provider VARCHAR(40) NULL AFTER output_url,
+  ADD COLUMN output_storage_key VARCHAR(1024) NULL AFTER output_provider,
+  ADD COLUMN output_checksum CHAR(64) NULL AFTER output_storage_key,
+  ADD COLUMN output_size BIGINT UNSIGNED NULL AFTER output_checksum,
+  ADD COLUMN page_count INT UNSIGNED NULL AFTER output_size,
+  ADD COLUMN warnings JSON NULL AFTER page_count,
+  ADD CONSTRAINT fk_pdf_requested_by FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL,
+  ADD INDEX idx_pdf_jobs_processing (status,available_at,created_at);
