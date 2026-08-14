@@ -1,25 +1,825 @@
 "use client";
-import {FormEvent,useEffect,useState} from "react";
-import {Camera,CheckCircle2,FileUp,MapPin,MessageSquare,Play,Save,Trash2} from "lucide-react";
-import {Button} from "../../components/ui/Button/Button";
+import { FormEvent, useEffect, useState } from "react";
+import {
+  Camera,
+  CheckCircle2,
+  FileUp,
+  MapPin,
+  MessageSquare,
+  Play,
+  Save,
+  Trash2,
+} from "lucide-react";
+import { Button } from "../../components/ui/Button/Button";
 import * as api from "../../lib/api/work-items-api";
 import styles from "../WorkManagementScreen.module.css";
 
-const externalNext:Record<string,string|undefined>={PLANNING:"READY",READY:"DEPARTED",DEPARTED:"IN_TRANSIT",IN_TRANSIT:"ARRIVED",ARRIVED:"IN_PROGRESS",IN_PROGRESS:"FINISHING",FINISHING:"RETURNING",RETURNING:"COMPLETED"};
-export function WorkItemCapabilitiesPanel({item,onRefresh}:{item:any;onRefresh:()=>Promise<void>}){
-  const[content,setContent]=useState<any>(null),[photo,setPhoto]=useState<any>(null),[external,setExternal]=useState<any>(null),[externalSummary,setExternalSummary]=useState<any>(null),[planItems,setPlanItems]=useState<any[]>([]),[incidents,setIncidents]=useState<any[]>([]),[events,setEvents]=useState<any[]>([]),[assets,setAssets]=useState<any[]>([]),[users,setUsers]=useState<any[]>([]),[allItems,setAllItems]=useState<any[]>([]),[assignees,setAssignees]=useState<any[]>([]),[timeEntries,setTimeEntries]=useState<any[]>([]),[tags,setTags]=useState<any[]>([]),[dependencies,setDependencies]=useState<any[]>([]),[comment,setComment]=useState(""),[checkTitle,setCheckTitle]=useState(""),[busy,setBusy]=useState(false);
-  const load=async()=>{const results=await Promise.allSettled([api.getWorkItemEvents(item.id),item.type==="TASK"?api.getCapability(item.id,"content"):Promise.resolve(null),api.getCapability(item.id,"photo-job"),api.getCapability(item.id,"external-operation"),api.listWorkItemAssets(item.id),api.listUsers(),api.listWorkItems(),api.listWorkItemAssignees(item.id),api.listTimeEntries(item.id),api.listTags(item.id),api.listDependencies(item.id)]);if(results[0].status==="fulfilled")setEvents(results[0].value);if(results[1].status==="fulfilled")setContent(results[1].value);if(results[2].status==="fulfilled")setPhoto(results[2].value);if(results[3].status==="fulfilled"){setExternal(results[3].value);if(results[3].value){const detail=await Promise.allSettled([api.getExternalOperationAction(item.id,"summary"),api.getExternalOperationAction(item.id,"plan-items"),api.getExternalOperationAction(item.id,"incidents")]);if(detail[0].status==="fulfilled")setExternalSummary(detail[0].value);if(detail[1].status==="fulfilled")setPlanItems(detail[1].value);if(detail[2].status==="fulfilled")setIncidents(detail[2].value)}}if(results[4].status==="fulfilled")setAssets(results[4].value);if(results[5].status==="fulfilled")setUsers(results[5].value);if(results[6].status==="fulfilled")setAllItems(results[6].value);if(results[7].status==="fulfilled")setAssignees(results[7].value);if(results[8].status==="fulfilled")setTimeEntries(results[8].value);if(results[9].status==="fulfilled")setTags(results[9].value);if(results[10].status==="fulfilled")setDependencies(results[10].value)};
-  useEffect(()=>{void load()},[item.id]);
-  const run=async(action:()=>Promise<unknown>)=>{setBusy(true);try{await action();await onRefresh();await load()}finally{setBusy(false)}};
-  const submitData=(event:FormEvent<HTMLFormElement>,capability:string)=>{event.preventDefault();const data=Object.fromEntries(new FormData(event.currentTarget).entries());void run(()=>api.saveCapability(item.id,capability,data))};
-  return <div className={styles.capabilities}>
-    <section><h3>Checklist</h3><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();if(checkTitle.trim())void run(()=>api.addChecklistItem(item.id,{title:checkTitle.trim()})).then(()=>setCheckTitle(""))}}><input value={checkTitle} onChange={event=>setCheckTitle(event.target.value)} placeholder="Nova microação"/><Button size="small">Adicionar</Button></form>{item.checklist?.map((entry:any)=><label className={styles.check} key={entry.id}><input type="checkbox" checked={Boolean(entry.completed_at)} onChange={event=>void run(()=>api.toggleChecklistItem(item.id,entry.id,event.target.checked))}/><span>{entry.title}</span></label>)}</section>
-    <section><h3>Execução e produtividade</h3><h4>Responsáveis</h4><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();const form=event.currentTarget,data=Object.fromEntries(new FormData(form).entries());if(data.userId)void run(()=>api.addWorkItemAssignee(item.id,String(data.userId),String(data.role||""),data.isPrimary==="on"))}}><select name="userId" required defaultValue=""><option value="" disabled>Selecionar colaborador</option>{users.map(user=><option key={user.uid||user.id} value={user.uid||user.id}>{user.displayName||user.name}</option>)}</select><input name="role" placeholder="Função"/><label className={styles.compactCheck}><input name="isPrimary" type="checkbox"/>Principal</label><Button size="small">Atribuir</Button></form><div className={styles.pills}>{assignees.map(person=><button key={person.id} onClick={()=>void run(()=>api.removeWorkItemAssignee(item.id,person.user_id))}>{person.name}{person.is_primary?" ★":""} ×</button>)}</div><h4>Tempo</h4><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();const form=event.currentTarget,data=Object.fromEntries(new FormData(form).entries()),minutes=Math.max(1,Number(data.minutes||0)),endedAt=new Date(),startedAt=new Date(endedAt.getTime()-minutes*60000);void run(()=>api.addTimeEntry(item.id,{startedAt:startedAt.toISOString(),endedAt:endedAt.toISOString(),notes:String(data.notes||"")})).then(()=>form.reset())}}><input name="minutes" type="number" min="1" required placeholder="Minutos"/><input name="notes" placeholder="Atividade realizada"/><Button size="small">Apontar</Button></form><small>{Math.round(timeEntries.reduce((total,entry)=>total+Number(entry.duration_seconds||0),0)/36)/100} h registradas</small><h4>Tags e dependências</h4><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();const form=event.currentTarget,name=String(new FormData(form).get("tag")||"").trim();if(name)void run(()=>api.addTag(item.id,name)).then(()=>form.reset())}}><input name="tag" placeholder="Nova tag"/><Button size="small">Adicionar tag</Button></form><div className={styles.pills}>{tags.map(tag=><button key={tag.id} onClick={()=>void run(()=>api.removeTag(item.id,tag.id))}>{tag.name} ×</button>)}</div><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();const target=String(new FormData(event.currentTarget).get("dependency")||"");if(target)void run(()=>api.addDependency(item.id,target))}}><select name="dependency" defaultValue=""><option value="">Bloqueada por...</option>{allItems.filter(candidate=>candidate.id!==item.id).map(candidate=><option key={candidate.id} value={candidate.id}>{candidate.title}</option>)}</select><Button size="small">Vincular</Button></form>{dependencies.map(dependency=><div className={styles.dependency} key={dependency.id}><span>Bloqueada por {dependency.title}</span><button onClick={()=>void run(()=>api.removeDependency(item.id,dependency.id))}>×</button></div>)}</section>
-    {item.type==="TASK"&&<section><h3>Conteúdo editorial</h3><form className={styles.stackForm} onSubmit={event=>submitData(event,"content")}><input name="head" defaultValue={content?.head||""} placeholder="Head"/><textarea name="caption" defaultValue={content?.caption||""} placeholder="Legenda"/><div className={styles.formGrid}><select name="channel" defaultValue={content?.channel||"INSTAGRAM"}><option>INSTAGRAM</option><option>FACEBOOK</option><option>TIKTOK</option><option>LINKEDIN</option><option>YOUTUBE</option></select><select name="format" defaultValue={content?.format||"FEED"}><option>FEED</option><option>STORY</option><option>FEED_STORY</option><option>REEL</option><option>CAROUSEL</option><option>VIDEO</option><option>SHORT</option></select></div><Button type="submit" size="small" icon={<Save/>} loading={busy}>Salvar conteúdo</Button></form></section>}
-    <section><h3><FileUp/> Arquivos</h3><label className={styles.upload}><FileUp/><span>{busy?"Enviando...":"Adicionar arquivo"}</span><input type="file" disabled={busy} onChange={event=>{const file=event.target.files?.[0];if(file)void run(()=>api.uploadWorkItemAsset(item.id,file));event.currentTarget.value=""}}/></label><div className={styles.assetList}>{assets.map(asset=><div key={asset.id}><a href={asset.url} target="_blank" rel="noreferrer">{asset.originalName}</a><span>v{asset.versionNumber||1} · {Math.ceil(Number(asset.byteSize)/1024)} KB</span><button aria-label="Excluir arquivo" onClick={()=>void run(()=>api.deleteWorkItemAsset(item.id,asset.id))}><Trash2/></button></div>)}</div></section>
-    <section><h3><Camera/> Lote fotográfico</h3><form className={styles.metricForm} onSubmit={event=>{event.preventDefault();const values=Object.fromEntries([...new FormData(event.currentTarget)].map(([key,value])=>[key,Number(value)]));void run(()=>api.saveCapability(item.id,"photo-job",values))}}>{[["capturedCount","Captadas","captured_count"],["selectedCount","Selecionadas","selected_count"],["targetEditCount","A editar","target_edit_count"],["editedCount","Editadas","edited_count"],["exportedCount","Exportadas","exported_count"],["deliveredCount","Entregues","delivered_count"]].map(([name,label,key])=><label key={name}><span>{label}</span><input name={name} type="number" min="0" defaultValue={photo?.[key]||0}/></label>)}<Button type="submit" size="small">Atualizar lote</Button></form></section>
-    <section><h3><MapPin/> Operação externa</h3>{!external?<form className={styles.stackForm} onSubmit={event=>submitData(event,"external-operation")}><input name="title" defaultValue={item.title}/><select name="operationType"><option>CAPTURE</option><option>MEETING</option><option>CLIENT_VISIT</option><option>EVENT_COVERAGE</option><option>DELIVERY</option><option>PICKUP</option><option>OTHER</option></select><input name="locationName" placeholder="Local"/><textarea name="briefing" placeholder="Briefing"/><Button type="submit" size="small">Preparar externa</Button></form>:<div className={styles.externalWorkspace}><div className={styles.externalMode}><b>{external.status}</b><span>{external.location_name||"Local não informado"}</span>{externalSummary&&<small>Checklist {externalSummary.checklist?.completed||0}/{externalSummary.checklist?.total||0} · Ocorrências {externalSummary.incidents||0} · Extras {externalSummary.extraDemands||0}</small>}{externalNext[external.status]&&<Button icon={<Play/>} loading={busy} onClick={()=>void run(()=>api.transitionExternalOperation(item.id,externalNext[external.status]!))}>Avançar para {externalNext[external.status]}</Button>}{externalSummary?.trackingActive&&<Button variant="glass" icon={<MapPin/>} onClick={()=>navigator.geolocation.getCurrentPosition(position=>void run(()=>api.addExternalLocation(item.id,{latitude:position.coords.latitude,longitude:position.coords.longitude,accuracyMeters:position.coords.accuracy,capturedAt:new Date().toISOString()})))}>Registrar localização</Button>}</div><h4>Plano operacional</h4><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();const form=event.currentTarget,data=Object.fromEntries(new FormData(form).entries());void run(()=>api.postExternalOperationAction(item.id,"plan-items",{...data,required:true,blocking:data.blocking==="on"})).then(()=>form.reset())}}><input name="title" required placeholder="Novo item do plano"/><label className={styles.compactCheck}><input type="checkbox" name="blocking"/>Bloqueante</label><Button size="small">Adicionar</Button></form>{planItems.map(entry=><label className={styles.check} key={entry.id}><input type="checkbox" checked={Boolean(entry.completed_at)} onChange={event=>void run(()=>api.patchExternalOperationAction(item.id,"plan-items",{id:entry.id,completed:event.target.checked}))}/><span>{entry.title}{entry.blocking?" · bloqueante":""}</span></label>)}<h4>Ocorrências</h4><form className={styles.stackForm} onSubmit={event=>{event.preventDefault();const form=event.currentTarget,data=Object.fromEntries(new FormData(form).entries());void run(()=>api.postExternalOperationAction(item.id,"incidents",data)).then(()=>form.reset())}}><div className={styles.formGrid}><select name="type"><option>CLIENT_DELAY</option><option>CLIENT_ABSENT</option><option>BRIEFING_CHANGE</option><option>TECHNICAL_PROBLEM</option><option>EQUIPMENT_PROBLEM</option><option>LOCATION_PROBLEM</option><option>EXTRA_REQUEST</option><option>OTHER</option></select><input name="title" required placeholder="Título da ocorrência"/></div><textarea name="description" placeholder="Descrição"/><Button size="small">Registrar ocorrência</Button></form>{incidents.slice(0,5).map(incident=><div className={styles.incident} key={incident.id}><b>{incident.incident_type}</b><span>{incident.title}</span></div>)}<h4>Demanda extra</h4><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();const form=event.currentTarget,data=Object.fromEntries(new FormData(form).entries());void run(()=>api.postExternalOperationAction(item.id,"extra-work-item",data)).then(()=>form.reset())}}><select name="type"><option>TASK</option><option>DEMAND</option></select><input name="title" required placeholder="Pedido adicional do cliente"/><Button size="small">Criar</Button></form></div>}</section>
-    <section><h3><MessageSquare/> Comentários</h3><form className={styles.inlineForm} onSubmit={event=>{event.preventDefault();if(comment.trim())void run(()=>api.addComment(item.id,comment.trim())).then(()=>setComment(""))}}><input value={comment} onChange={event=>setComment(event.target.value)} placeholder="Escrever comentário"/><Button size="small">Enviar</Button></form></section>
-    <section><h3><CheckCircle2/> Histórico</h3><div className={styles.timeline}>{events.slice(0,20).map(event=><div key={event.id}><b>{event.event_type}</b><span>{event.actor_name||"Sistema"} · {new Date(event.created_at).toLocaleString("pt-BR")}</span></div>)}</div></section>
-  </div>;
+const externalNext: Record<string, string | undefined> = {
+  PLANNING: "READY",
+  READY: "DEPARTED",
+  DEPARTED: "IN_TRANSIT",
+  IN_TRANSIT: "ARRIVED",
+  ARRIVED: "IN_PROGRESS",
+  IN_PROGRESS: "FINISHING",
+  FINISHING: "RETURNING",
+  RETURNING: "COMPLETED",
+};
+export function WorkItemCapabilitiesPanel({
+  item,
+  onRefresh,
+}: {
+  item: any;
+  onRefresh: () => Promise<void>;
+}) {
+  const [content, setContent] = useState<any>(null),
+    [photo, setPhoto] = useState<any>(null),
+    [external, setExternal] = useState<any>(null),
+    [externalSummary, setExternalSummary] = useState<any>(null),
+    [planItems, setPlanItems] = useState<any[]>([]),
+    [externalMembers, setExternalMembers] = useState<any[]>([]),
+    [incidents, setIncidents] = useState<any[]>([]),
+    [events, setEvents] = useState<any[]>([]),
+    [assets, setAssets] = useState<any[]>([]),
+    [users, setUsers] = useState<any[]>([]),
+    [allItems, setAllItems] = useState<any[]>([]),
+    [assignees, setAssignees] = useState<any[]>([]),
+    [timeEntries, setTimeEntries] = useState<any[]>([]),
+    [tags, setTags] = useState<any[]>([]),
+    [dependencies, setDependencies] = useState<any[]>([]),
+    [approvalFlows, setApprovalFlows] = useState<any[]>([]),
+    [publicReviewLink, setPublicReviewLink] = useState(""),
+    [comment, setComment] = useState(""),
+    [checkTitle, setCheckTitle] = useState(""),
+    [busy, setBusy] = useState(false);
+  const load = async () => {
+    const results = await Promise.allSettled([
+      api.getWorkItemEvents(item.id),
+      item.type === "TASK"
+        ? api.getCapability(item.id, "content")
+        : Promise.resolve(null),
+      api.getCapability(item.id, "photo-job"),
+      api.getCapability(item.id, "external-operation"),
+      api.listWorkItemAssets(item.id),
+      api.listUsers(),
+      api.listWorkItems(),
+      api.listWorkItemAssignees(item.id),
+      api.listTimeEntries(item.id),
+      api.listTags(item.id),
+      api.listDependencies(item.id),
+      api.getCapability(item.id, "approvals"),
+    ]);
+    if (results[0].status === "fulfilled") setEvents(results[0].value);
+    if (results[1].status === "fulfilled") setContent(results[1].value);
+    if (results[2].status === "fulfilled") setPhoto(results[2].value);
+    if (results[3].status === "fulfilled") {
+      setExternal(results[3].value);
+      if (results[3].value) {
+        const detail = await Promise.allSettled([
+          api.getExternalOperationAction(item.id, "summary"),
+          api.getExternalOperationAction(item.id, "plan-items"),
+          api.getExternalOperationAction(item.id, "incidents"),
+          api.getExternalOperationAction(item.id, "members"),
+        ]);
+        if (detail[0].status === "fulfilled")
+          setExternalSummary(detail[0].value);
+        if (detail[1].status === "fulfilled") setPlanItems(detail[1].value);
+        if (detail[2].status === "fulfilled") setIncidents(detail[2].value);
+        if (detail[3].status === "fulfilled")
+          setExternalMembers(detail[3].value);
+      }
+    }
+    if (results[4].status === "fulfilled") setAssets(results[4].value);
+    if (results[5].status === "fulfilled") setUsers(results[5].value);
+    if (results[6].status === "fulfilled") setAllItems(results[6].value);
+    if (results[7].status === "fulfilled") setAssignees(results[7].value);
+    if (results[8].status === "fulfilled") setTimeEntries(results[8].value);
+    if (results[9].status === "fulfilled") setTags(results[9].value);
+    if (results[10].status === "fulfilled") setDependencies(results[10].value);
+    if (results[11].status === "fulfilled") setApprovalFlows(results[11].value);
+  };
+  useEffect(() => {
+    void load();
+  }, [item.id]);
+  const run = async (action: () => Promise<unknown>) => {
+    setBusy(true);
+    try {
+      await action();
+      await onRefresh();
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+  const submitData = (
+    event: FormEvent<HTMLFormElement>,
+    capability: string,
+  ) => {
+    event.preventDefault();
+    const data = Object.fromEntries(
+      new FormData(event.currentTarget).entries(),
+    );
+    void run(() => api.saveCapability(item.id, capability, data));
+  };
+  return (
+    <div className={styles.capabilities}>
+      <section>
+        <h3>Checklist</h3>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (checkTitle.trim())
+              void run(() =>
+                api.addChecklistItem(item.id, { title: checkTitle.trim() }),
+              ).then(() => setCheckTitle(""));
+          }}
+        >
+          <input
+            value={checkTitle}
+            onChange={(event) => setCheckTitle(event.target.value)}
+            placeholder="Nova microação"
+          />
+          <Button size="small">Adicionar</Button>
+        </form>
+        {item.checklist?.map((entry: any) => (
+          <label className={styles.check} key={entry.id}>
+            <input
+              type="checkbox"
+              checked={Boolean(entry.completed_at)}
+              onChange={(event) =>
+                void run(() =>
+                  api.toggleChecklistItem(
+                    item.id,
+                    entry.id,
+                    event.target.checked,
+                  ),
+                )
+              }
+            />
+            <span>{entry.title}</span>
+          </label>
+        ))}
+      </section>
+      <section>
+        <h3>Execução e produtividade</h3>
+        <h4>Responsáveis</h4>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget,
+              data = Object.fromEntries(new FormData(form).entries());
+            if (data.userId)
+              void run(() =>
+                api.addWorkItemAssignee(
+                  item.id,
+                  String(data.userId),
+                  String(data.role || ""),
+                  data.isPrimary === "on",
+                ),
+              );
+          }}
+        >
+          <select name="userId" required defaultValue="">
+            <option value="" disabled>
+              Selecionar colaborador
+            </option>
+            {users.map((user) => (
+              <option key={user.uid || user.id} value={user.uid || user.id}>
+                {user.displayName || user.name}
+              </option>
+            ))}
+          </select>
+          <input name="role" placeholder="Função" />
+          <label className={styles.compactCheck}>
+            <input name="isPrimary" type="checkbox" />
+            Principal
+          </label>
+          <Button size="small">Atribuir</Button>
+        </form>
+        <div className={styles.pills}>
+          {assignees.map((person) => (
+            <button
+              key={person.id}
+              onClick={() =>
+                void run(() =>
+                  api.removeWorkItemAssignee(item.id, person.user_id),
+                )
+              }
+            >
+              {person.name}
+              {person.is_primary ? " ★" : ""} ×
+            </button>
+          ))}
+        </div>
+        <h4>Tempo</h4>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget,
+              data = Object.fromEntries(new FormData(form).entries()),
+              minutes = Math.max(1, Number(data.minutes || 0)),
+              endedAt = new Date(),
+              startedAt = new Date(endedAt.getTime() - minutes * 60000);
+            void run(() =>
+              api.addTimeEntry(item.id, {
+                startedAt: startedAt.toISOString(),
+                endedAt: endedAt.toISOString(),
+                notes: String(data.notes || ""),
+              }),
+            ).then(() => form.reset());
+          }}
+        >
+          <input
+            name="minutes"
+            type="number"
+            min="1"
+            required
+            placeholder="Minutos"
+          />
+          <input name="notes" placeholder="Atividade realizada" />
+          <Button size="small">Apontar</Button>
+        </form>
+        <small>
+          {Math.round(
+            timeEntries.reduce(
+              (total, entry) => total + Number(entry.duration_seconds || 0),
+              0,
+            ) / 36,
+          ) / 100}{" "}
+          h registradas
+        </small>
+        <h4>Tags e dependências</h4>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget,
+              name = String(new FormData(form).get("tag") || "").trim();
+            if (name)
+              void run(() => api.addTag(item.id, name)).then(() =>
+                form.reset(),
+              );
+          }}
+        >
+          <input name="tag" placeholder="Nova tag" />
+          <Button size="small">Adicionar tag</Button>
+        </form>
+        <div className={styles.pills}>
+          {tags.map((tag) => (
+            <button
+              key={tag.id}
+              onClick={() => void run(() => api.removeTag(item.id, tag.id))}
+            >
+              {tag.name} ×
+            </button>
+          ))}
+        </div>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const target = String(
+              new FormData(event.currentTarget).get("dependency") || "",
+            );
+            if (target) void run(() => api.addDependency(item.id, target));
+          }}
+        >
+          <select name="dependency" defaultValue="">
+            <option value="">Bloqueada por...</option>
+            {allItems
+              .filter((candidate) => candidate.id !== item.id)
+              .map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.title}
+                </option>
+              ))}
+          </select>
+          <Button size="small">Vincular</Button>
+        </form>
+        {dependencies.map((dependency) => (
+          <div className={styles.dependency} key={dependency.id}>
+            <span>Bloqueada por {dependency.title}</span>
+            <button
+              onClick={() =>
+                void run(() => api.removeDependency(item.id, dependency.id))
+              }
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </section>
+      {item.type === "TASK" && (
+        <section>
+          <h3>Conteúdo editorial</h3>
+          <form
+            className={styles.stackForm}
+            onSubmit={(event) => submitData(event, "content")}
+          >
+            <input
+              name="head"
+              defaultValue={content?.head || ""}
+              placeholder="Head"
+            />
+            <textarea
+              name="caption"
+              defaultValue={content?.caption || ""}
+              placeholder="Legenda"
+            />
+            <div className={styles.formGrid}>
+              <select
+                name="channel"
+                defaultValue={content?.channel || "INSTAGRAM"}
+              >
+                <option>INSTAGRAM</option>
+                <option>FACEBOOK</option>
+                <option>TIKTOK</option>
+                <option>LINKEDIN</option>
+                <option>YOUTUBE</option>
+              </select>
+              <select name="format" defaultValue={content?.format || "FEED"}>
+                <option>FEED</option>
+                <option>STORY</option>
+                <option>FEED_STORY</option>
+                <option>REEL</option>
+                <option>CAROUSEL</option>
+                <option>VIDEO</option>
+                <option>SHORT</option>
+              </select>
+            </div>
+            <Button type="submit" size="small" icon={<Save />} loading={busy}>
+              Salvar conteúdo
+            </Button>
+          </form>
+        </section>
+      )}
+      <section>
+        <h3>Aprovações</h3>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const data = Object.fromEntries(new FormData(form).entries());
+            if (data.approverUserId)
+              void run(() =>
+                api.createApprovalFlow(item.id, {
+                  steps: [
+                    {
+                      name: data.name || "Revisão interna",
+                      approverUserId: data.approverUserId,
+                    },
+                  ],
+                }),
+              ).then(() => form.reset());
+          }}
+        >
+          <input
+            name="name"
+            placeholder="Nome da etapa"
+            defaultValue="Revisão interna"
+          />
+          <select name="approverUserId" required defaultValue="">
+            <option value="" disabled>
+              Escolher aprovador
+            </option>
+            {users.map((user) => (
+              <option key={user.uid || user.id} value={user.uid || user.id}>
+                {user.displayName || user.name}
+              </option>
+            ))}
+          </select>
+          <Button size="small">Criar fluxo</Button>
+        </form>
+        {approvalFlows.map((flow) => (
+          <div className={styles.approvalFlow} key={flow.id}>
+            <b>{flow.status}</b>
+            {(flow.steps || []).map((step: any) => (
+              <div key={step.id}>
+                <span>
+                  {step.name} · {step.approver_name || "Cliente"} ·{" "}
+                  {step.status}
+                </span>
+                {step.status === "PENDING" && (
+                  <span className={styles.approvalActions}>
+                    <button
+                      onClick={() =>
+                        void run(() =>
+                          api.decideApproval(item.id, {
+                            stepId: step.id,
+                            decision: "APPROVED",
+                          }),
+                        )
+                      }
+                    >
+                      Aprovar
+                    </button>
+                    <button
+                      onClick={() =>
+                        void run(() =>
+                          api.decideApproval(item.id, {
+                            stepId: step.id,
+                            decision: "CHANGES_REQUESTED",
+                          }),
+                        )
+                      }
+                    >
+                      Pedir ajustes
+                    </button>
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+        {item.client_id && (
+          <Button
+            size="small"
+            variant="glass"
+            onClick={() =>
+              void run(async () => {
+                const token = await api.createPublicApprovalToken(item.id, {
+                  clientId: item.client_id,
+                  approvalFlowId: approvalFlows[0]?.id || null,
+                  expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+                  assetVersionIds: assets
+                    .map((asset) => asset.assetVersionId)
+                    .filter(Boolean),
+                });
+                setPublicReviewLink(
+                  `${window.location.origin}/review/${token.token}`,
+                );
+              })
+            }
+          >
+            Gerar revisão pública
+          </Button>
+        )}
+        {publicReviewLink && (
+          <input
+            readOnly
+            value={publicReviewLink}
+            onFocus={(event) => event.currentTarget.select()}
+          />
+        )}
+      </section>
+      <section>
+        <h3>
+          <FileUp /> Arquivos
+        </h3>
+        <label className={styles.upload}>
+          <FileUp />
+          <span>{busy ? "Enviando..." : "Adicionar arquivo"}</span>
+          <input
+            type="file"
+            disabled={busy}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void run(() => api.uploadWorkItemAsset(item.id, file));
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+        <div className={styles.assetList}>
+          {assets.map((asset) => (
+            <div key={asset.id}>
+              <a href={asset.url} target="_blank" rel="noreferrer">
+                {asset.originalName}
+              </a>
+              <span>
+                v{asset.versionNumber || 1} ·{" "}
+                {Math.ceil(Number(asset.byteSize) / 1024)} KB
+              </span>
+              <button
+                aria-label="Excluir arquivo"
+                onClick={() =>
+                  void run(() => api.deleteWorkItemAsset(item.id, asset.id))
+                }
+              >
+                <Trash2 />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section>
+        <h3>
+          <Camera /> Lote fotográfico
+        </h3>
+        <form
+          className={styles.metricForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const values = Object.fromEntries(
+              [...new FormData(event.currentTarget)].map(([key, value]) => [
+                key,
+                Number(value),
+              ]),
+            );
+            void run(() => api.saveCapability(item.id, "photo-job", values));
+          }}
+        >
+          {[
+            ["capturedCount", "Captadas", "captured_count"],
+            ["selectedCount", "Selecionadas", "selected_count"],
+            ["targetEditCount", "A editar", "target_edit_count"],
+            ["editedCount", "Editadas", "edited_count"],
+            ["exportedCount", "Exportadas", "exported_count"],
+            ["deliveredCount", "Entregues", "delivered_count"],
+          ].map(([name, label, key]) => (
+            <label key={name}>
+              <span>{label}</span>
+              <input
+                name={name}
+                type="number"
+                min="0"
+                defaultValue={photo?.[key] || 0}
+              />
+            </label>
+          ))}
+          <Button type="submit" size="small">
+            Atualizar lote
+          </Button>
+        </form>
+      </section>
+      <section>
+        <h3>
+          <MapPin /> Operação externa
+        </h3>
+        {!external ? (
+          <form
+            className={styles.stackForm}
+            onSubmit={(event) => submitData(event, "external-operation")}
+          >
+            <input name="title" defaultValue={item.title} />
+            <select name="operationType">
+              <option>CAPTURE</option>
+              <option>MEETING</option>
+              <option>CLIENT_VISIT</option>
+              <option>EVENT_COVERAGE</option>
+              <option>DELIVERY</option>
+              <option>PICKUP</option>
+              <option>OTHER</option>
+            </select>
+            <input name="locationName" placeholder="Local" />
+            <textarea name="briefing" placeholder="Briefing" />
+            <Button type="submit" size="small">
+              Preparar externa
+            </Button>
+          </form>
+        ) : (
+          <div className={styles.externalWorkspace}>
+            <div className={styles.externalMode}>
+              <b>{external.status}</b>
+              <span>{external.location_name || "Local não informado"}</span>
+              {externalSummary && (
+                <small>
+                  Checklist {externalSummary.checklist?.completed || 0}/
+                  {externalSummary.checklist?.total || 0} · Ocorrências{" "}
+                  {externalSummary.incidents || 0} · Extras{" "}
+                  {externalSummary.extraDemands || 0}
+                </small>
+              )}
+              {externalNext[external.status] && (
+                <Button
+                  icon={<Play />}
+                  loading={busy}
+                  onClick={() =>
+                    void run(() =>
+                      api.transitionExternalOperation(
+                        item.id,
+                        externalNext[external.status]!,
+                      ),
+                    )
+                  }
+                >
+                  Avançar para {externalNext[external.status]}
+                </Button>
+              )}
+              {externalSummary?.trackingActive && (
+                <Button
+                  variant="glass"
+                  icon={<MapPin />}
+                  onClick={() =>
+                    navigator.geolocation.getCurrentPosition(
+                      (position) =>
+                        void run(() =>
+                          api.addExternalLocation(item.id, {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracyMeters: position.coords.accuracy,
+                            capturedAt: new Date().toISOString(),
+                          }),
+                        ),
+                    )
+                  }
+                >
+                  Registrar localização
+                </Button>
+              )}
+            </div>
+            <h4>Equipe da operação</h4>
+            <form
+              className={styles.inlineForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const data = Object.fromEntries(new FormData(form).entries());
+                if (data.userId)
+                  void run(() =>
+                    api.postExternalOperationAction(item.id, "members", {
+                      userId: data.userId,
+                      role: data.role,
+                      isPrimary: data.isPrimary === "on",
+                    }),
+                  ).then(() => form.reset());
+              }}
+            >
+              <select name="userId" required defaultValue="">
+                <option value="" disabled>
+                  Selecionar colaborador
+                </option>
+                {users.map((user) => (
+                  <option key={user.uid || user.id} value={user.uid || user.id}>
+                    {user.displayName || user.name}
+                  </option>
+                ))}
+              </select>
+              <input name="role" placeholder="Função na externa" />
+              <label className={styles.compactCheck}>
+                <input type="checkbox" name="isPrimary" /> Principal
+              </label>
+              <Button size="small">Adicionar</Button>
+            </form>
+            <div className={styles.pills}>
+              {externalMembers.map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() =>
+                    void run(() =>
+                      api.deleteExternalOperationAction(item.id, "members", {
+                        id: member.id,
+                      }),
+                    )
+                  }
+                >
+                  {member.name}
+                  {member.role ? ` · ${member.role}` : ""}
+                  {member.isPrimary ? " ★" : ""} ×
+                </button>
+              ))}
+            </div>
+            <h4>Plano operacional</h4>
+            <form
+              className={styles.inlineForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget,
+                  data = Object.fromEntries(new FormData(form).entries());
+                void run(() =>
+                  api.postExternalOperationAction(item.id, "plan-items", {
+                    ...data,
+                    required: true,
+                    blocking: data.blocking === "on",
+                  }),
+                ).then(() => form.reset());
+              }}
+            >
+              <input name="title" required placeholder="Novo item do plano" />
+              <label className={styles.compactCheck}>
+                <input type="checkbox" name="blocking" />
+                Bloqueante
+              </label>
+              <Button size="small">Adicionar</Button>
+            </form>
+            {planItems.map((entry) => (
+              <label className={styles.check} key={entry.id}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(entry.completed_at)}
+                  onChange={(event) =>
+                    void run(() =>
+                      api.patchExternalOperationAction(item.id, "plan-items", {
+                        id: entry.id,
+                        completed: event.target.checked,
+                      }),
+                    )
+                  }
+                />
+                <span>
+                  {entry.title}
+                  {entry.blocking ? " · bloqueante" : ""}
+                </span>
+              </label>
+            ))}
+            <h4>Ocorrências</h4>
+            <form
+              className={styles.stackForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget,
+                  data = Object.fromEntries(new FormData(form).entries());
+                void run(() =>
+                  api.postExternalOperationAction(item.id, "incidents", data),
+                ).then(() => form.reset());
+              }}
+            >
+              <div className={styles.formGrid}>
+                <select name="type">
+                  <option>CLIENT_DELAY</option>
+                  <option>CLIENT_ABSENT</option>
+                  <option>BRIEFING_CHANGE</option>
+                  <option>TECHNICAL_PROBLEM</option>
+                  <option>EQUIPMENT_PROBLEM</option>
+                  <option>LOCATION_PROBLEM</option>
+                  <option>EXTRA_REQUEST</option>
+                  <option>OTHER</option>
+                </select>
+                <input
+                  name="title"
+                  required
+                  placeholder="Título da ocorrência"
+                />
+              </div>
+              <textarea name="description" placeholder="Descrição" />
+              <Button size="small">Registrar ocorrência</Button>
+            </form>
+            {incidents.slice(0, 5).map((incident) => (
+              <div className={styles.incident} key={incident.id}>
+                <b>{incident.incident_type}</b>
+                <span>{incident.title}</span>
+              </div>
+            ))}
+            <h4>Demanda extra</h4>
+            <form
+              className={styles.inlineForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget,
+                  data = Object.fromEntries(new FormData(form).entries());
+                void run(() =>
+                  api.postExternalOperationAction(
+                    item.id,
+                    "extra-work-item",
+                    data,
+                  ),
+                ).then(() => form.reset());
+              }}
+            >
+              <select name="type">
+                <option>TASK</option>
+                <option>DEMAND</option>
+              </select>
+              <input
+                name="title"
+                required
+                placeholder="Pedido adicional do cliente"
+              />
+              <Button size="small">Criar</Button>
+            </form>
+          </div>
+        )}
+      </section>
+      <section>
+        <h3>
+          <MessageSquare /> Comentários
+        </h3>
+        <form
+          className={styles.inlineForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (comment.trim())
+              void run(() => api.addComment(item.id, comment.trim())).then(() =>
+                setComment(""),
+              );
+          }}
+        >
+          <input
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            placeholder="Escrever comentário"
+          />
+          <Button size="small">Enviar</Button>
+        </form>
+      </section>
+      <section>
+        <h3>
+          <CheckCircle2 /> Histórico
+        </h3>
+        <div className={styles.timeline}>
+          {events.slice(0, 20).map((event) => (
+            <div key={event.id}>
+              <b>{event.event_type}</b>
+              <span>
+                {event.actor_name || "Sistema"} ·{" "}
+                {new Date(event.created_at).toLocaleString("pt-BR")}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
