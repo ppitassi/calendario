@@ -13,5 +13,6 @@ artifacts/
 backups/
 *.sql
 *.sql.gz
+!database/migrations/*.sql
 .env*
 !.env.example
