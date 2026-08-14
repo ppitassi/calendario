@@ -9,6 +9,16 @@ export async function updateWorkItem(id:string,patch:Record<string,unknown>){ret
 export async function moveWorkItem(id:string,parentId:string|null,clientId?:string|null){return(await axios.post(`${API_URL}/work-items/${id}/move`,{parentId,clientId})).data;}
 export async function addWorkItemAssignee(id:string,userId:string,role?:string,isPrimary=false){return(await axios.post(`${API_URL}/work-items/${id}/assignees`,{userId,role,isPrimary})).data;}
 export async function getWorkItemEvents(id:string){return(await axios.get(`${API_URL}/work-items/${id}/events`)).data;}
+export async function getCapability(id:string,name:string){return(await axios.get(`${API_URL}/work-items/${id}/${name}`)).data;}
+export async function saveCapability(id:string,name:string,data:Record<string,unknown>){return(await axios.put(`${API_URL}/work-items/${id}/${name}`,data)).data;}
+export async function addChecklistItem(id:string,data:Record<string,unknown>){return(await axios.post(`${API_URL}/work-items/${id}/checklists`,data)).data;}
+export async function toggleChecklistItem(id:string,checklistId:string,completed:boolean){return(await axios.patch(`${API_URL}/work-items/${id}/checklists`,{id:checklistId,completed})).data;}
+export async function addComment(id:string,body:string){return(await axios.post(`${API_URL}/work-items/${id}/comments`,{body})).data;}
+export async function transitionExternalOperation(id:string,status:string,data?:Record<string,unknown>){return(await axios.post(`${API_URL}/work-items/${id}/external-operation/transition`,{status,data})).data;}
+export async function addExternalLocation(id:string,data:Record<string,unknown>){return(await axios.post(`${API_URL}/work-items/${id}/external-operation/locations`,data)).data;}
+export async function listWorkItemAssets(id:string){return(await axios.get(`${API_URL}/work-items/${id}/assets`)).data;}
+export async function uploadWorkItemAsset(id:string,file:File,category="GENERAL"){const form=new FormData();form.append("file",file);form.append("category",category);return(await axios.post(`${API_URL}/work-items/${id}/assets`,form)).data;}
+export async function deleteWorkItemAsset(id:string,assetId:string){return(await axios.delete(`${API_URL}/work-items/${id}/assets/${assetId}`)).data;}
 
 export async function getPlanningWorkflow(planningId: string): Promise<any> {
   return (await axios.get(`${API_URL}/plannings/${planningId}`)).data;

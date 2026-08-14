@@ -3,25 +3,20 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbPool } from '../../../../../../lib/db';
-import { accessiblePost, workflowSession } from '../../../../../../lib/post-workflow';
+import { getContext } from '../../../../../../lib/api-core/context';
 import { canonicalAssetsRoot, localUploadsRoot } from '../../../../../../lib/storage';
 
 async function resolveAsset(req: NextRequest, assetId: string) {
   const [rows]: any = await getDbPool().query(
-    'SELECT * FROM media_assets WHERE id=? AND status=? LIMIT 1',
-    [assetId, 'active'],
+    'SELECT id,storage_provider storageProvider,storage_key storageKey,original_name originalName,mime_type mimeType,byte_size byteSize,checksum_sha256 checksum,deleted_at deletedAt FROM media_assets WHERE id=? AND deleted_at IS NULL LIMIT 1',
+    [assetId],
   );
   const asset = rows[0];
   if (!asset) return { error: NextResponse.json({ error: 'MÃ­dia nÃ£o encontrada.' }, { status: 404 }) };
-  if (asset.visibility === 'public') return { asset };
-  const session = await workflowSession(req);
-  if (!session) return { error: NextResponse.json({ error: 'NÃ£o autenticado.' }, { status: 401 }) };
-  if (asset.ownerType === 'post' && !(await accessiblePost(session, asset.ownerId))) {
-    return { error: NextResponse.json({ error: 'Acesso negado.' }, { status: 403 }) };
-  }
-  if (asset.ownerType === 'user' && asset.ownerId !== session.userId && !['admin', 'gerente'].includes(session.role)) {
-    return { error: NextResponse.json({ error: 'Acesso negado.' }, { status: 403 }) };
-  }
+  const session = await getContext(req);
+  if (!session.isAuthenticated) return { error: NextResponse.json({ error: 'Não autenticado.' }, { status: 401 }) };
+  const [links]:any=await getDbPool().query('SELECT 1 FROM work_item_assets wa JOIN work_items w ON w.id=wa.work_item_id WHERE wa.media_asset_id=? AND w.deleted_at IS NULL LIMIT 1',[assetId]);
+  if (!links[0] && session.userRole !== 'admin') return { error: NextResponse.json({ error: 'Acesso negado.' }, { status: 403 }) };
   return { asset };
 }
 
@@ -50,7 +45,7 @@ async function fileResponse(req: NextRequest, asset: any, headOnly: boolean, tar
     'Content-Length': String(selected.end - selected.start + 1),
     ETag: `"${asset.sha256 || asset.checksum || `${stat.size}-${stat.mtimeMs}`}"`
   });
-  if (asset.visibility !== 'public') {
+  {
     const safeName = String(asset.originalName || 'arquivo').replace(/["\\\r\n]/g, '_');
     headers.set('Content-Disposition', `attachment; filename="${safeName}"`);
     headers.set('X-Content-Type-Options', 'nosniff');
@@ -62,7 +57,7 @@ async function fileResponse(req: NextRequest, asset: any, headOnly: boolean, tar
 }
 
 async function localResponse(req: NextRequest, asset: any, headOnly: boolean) {
-  const root = asset.storageProvider === 'nextcloud-mount' ? canonicalAssetsRoot() : asset.visibility === 'public' ? canonicalAssetsRoot() : localUploadsRoot();
+  const root = asset.storageProvider === 'nextcloud-mount' ? canonicalAssetsRoot() : localUploadsRoot();
   return fileResponse(req, asset, headOnly, path.resolve(root, String(asset.localPath || asset.storageKey || '')), root);
 }
 
