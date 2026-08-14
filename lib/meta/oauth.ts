@@ -1,14 +1,9 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, randomUUID } from "crypto";
 import { exec, rows } from "../db";
 import { decryptSecret, encryptSecret } from "../secret-box";
 
 const apiVersion = () => process.env.META_GRAPH_VERSION || "v22.0";
 const graphUrl = (path: string) => `https://graph.facebook.com/${apiVersion()}/${path.replace(/^\//, "")}`;
-
-async function ensureOAuthTables() {
-  await exec(`CREATE TABLE IF NOT EXISTS meta_oauth_states (state_hash VARCHAR(64) PRIMARY KEY, user_uid VARCHAR(191) NOT NULL, client_id VARCHAR(191) NOT NULL, expires_at DATETIME NOT NULL, used_at DATETIME NULL, INDEX idx_meta_oauth_state_expiry (expires_at))`);
-  await exec(`CREATE TABLE IF NOT EXISTS meta_oauth_connections (id VARCHAR(64) PRIMARY KEY, user_uid VARCHAR(191) NOT NULL, client_id VARCHAR(191) NOT NULL, encrypted_accounts LONGTEXT NULL, expires_at DATETIME NOT NULL, used_at DATETIME NULL, INDEX idx_meta_oauth_connection_expiry (expires_at))`);
-}
 
 async function graph(path: string, token: string, init: RequestInit = {}, timeoutMs = 25_000) {
   const url = new URL(graphUrl(path));
@@ -24,13 +19,12 @@ async function graph(path: string, token: string, init: RequestInit = {}, timeou
 }
 
 export async function createMetaOAuth(input: { userUid: string; clientId: string; origin: string }) {
-  await ensureOAuthTables();
   if (!process.env.META_CLIENT_ID || !process.env.META_CLIENT_SECRET) throw new Error("META_NOT_CONFIGURED");
   if (!(await rows("SELECT 1 FROM clients WHERE id = ? LIMIT 1", [input.clientId]))[0]) throw new Error("CLIENT_NOT_FOUND");
   const state = randomBytes(32).toString("base64url");
   const hash = createHash("sha256").update(state).digest("hex");
-  await exec("DELETE FROM meta_oauth_states WHERE expires_at < NOW() OR used_at IS NOT NULL");
-  await exec("INSERT INTO meta_oauth_states (state_hash, user_uid, client_id, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))", [hash, input.userUid, input.clientId]);
+  await exec("DELETE FROM oauth_states WHERE expires_at<NOW() OR consumed_at IS NOT NULL");
+  await exec("INSERT INTO oauth_states (state_hash,provider,user_id,client_id,expires_at) VALUES (?,'META',?,?,DATE_ADD(NOW(),INTERVAL 10 MINUTE))",[hash,input.userUid,input.clientId]);
   const callback = `${input.origin}/api/auth/callback/meta`;
   const url = new URL(`https://www.facebook.com/${apiVersion()}/dialog/oauth`);
   url.searchParams.set("client_id", process.env.META_CLIENT_ID);
@@ -42,11 +36,10 @@ export async function createMetaOAuth(input: { userUid: string; clientId: string
 }
 
 export async function finishMetaOAuth(input: { state: string; code: string; origin: string }) {
-  await ensureOAuthTables();
   const hash = createHash("sha256").update(input.state).digest("hex");
-  const state = (await rows("SELECT * FROM meta_oauth_states WHERE state_hash = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1", [hash]))[0];
+  const state = (await rows("SELECT * FROM oauth_states WHERE state_hash=? AND provider='META' AND consumed_at IS NULL AND expires_at>NOW() LIMIT 1",[hash]))[0];
   if (!state) throw new Error("OAUTH_STATE_INVALID");
-  await exec("UPDATE meta_oauth_states SET used_at = NOW() WHERE state_hash = ?", [hash]);
+  await exec("UPDATE oauth_states SET consumed_at=NOW() WHERE state_hash=?",[hash]);
   const callback = `${input.origin}/api/auth/callback/meta`;
   const tokenUrl = new URL(graphUrl("/oauth/access_token"));
   tokenUrl.searchParams.set("client_id", process.env.META_CLIENT_ID || "");
@@ -107,8 +100,8 @@ export async function finishMetaOAuth(input: { state: string; code: string; orig
       mediaCount: Number(page.instagram_business_account.media_count || 0),
     } : null,
   }));
-  const connectionId = randomBytes(32).toString("hex");
-  await exec("INSERT INTO meta_oauth_connections (id, user_uid, client_id, encrypted_accounts, expires_at) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))", [connectionId, state.user_uid, state.client_id, encryptSecret(JSON.stringify({ userToken, accounts }))]);
+  const connectionId = randomUUID();
+  await exec("INSERT INTO integration_connections (id,provider,client_id,external_id,display_name,encrypted_access_token,metadata_json,expires_at,created_by) VALUES (?,'META_PENDING',?,?,?, ?,?,DATE_ADD(NOW(),INTERVAL 30 MINUTE),?)",[connectionId,state.client_id,connectionId,identity.name||"Meta OAuth",encryptSecret(JSON.stringify({userToken,accounts})),JSON.stringify({temporary:true}),state.user_id]);
   return {
     connectionId,
     accounts: accounts.map((item) => ({ pageId: item.pageId, pageName: item.pageName, instagram: item.instagram })),
@@ -121,26 +114,23 @@ export async function finishMetaOAuth(input: { state: string; code: string; orig
 }
 
 export async function selectMetaAccount(input: { connectionId: string; pageId: string; clientId: string; userUid: string }) {
-  await ensureOAuthTables();
-  const conn = (await rows("SELECT * FROM meta_oauth_connections WHERE id = ? AND client_id = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1", [input.connectionId, input.clientId]))[0];
+  const conn=(await rows("SELECT * FROM integration_connections WHERE id=? AND client_id=? AND provider='META_PENDING' AND revoked_at IS NULL AND expires_at>NOW() LIMIT 1",[input.connectionId,input.clientId]))[0];
   if (!conn) throw new Error("CONNECTION_INVALID");
-  const payload = JSON.parse(decryptSecret(conn.encrypted_accounts) || "{}");
+  const payload=JSON.parse(decryptSecret(conn.encrypted_access_token)||"{}");
   const account = (payload.accounts || []).find((item: any) => item.pageId === input.pageId);
   if (!account) throw new Error("PAGE_NOT_FOUND");
-  await exec("UPDATE meta_oauth_connections SET used_at = NOW() WHERE id = ?", [input.connectionId]);
-  const config = JSON.stringify({
+  await exec("UPDATE integration_connections SET revoked_at=NOW() WHERE id=?",[input.connectionId]);
+  const config = {
     facebookPageId: account.pageId,
     facebookPageName: account.pageName,
     instagramAccountId: account.instagram?.id || null,
     instagramUsername: account.instagram?.username || null,
     instagramName: account.instagram?.name || null,
     instagramProfilePictureUrl: account.instagram?.profilePictureUrl || null,
-    userAccessToken: encryptSecret(payload.userToken),
-    pageAccessToken: encryptSecret(account.pageAccessToken),
     connectedAt: new Date().toISOString(),
     connectedBy: input.userUid,
-  });
-  await exec("UPDATE clients SET meta_config = ? WHERE id = ?", [config, input.clientId]);
+  };
+  await exec("UPDATE integration_connections SET revoked_at=NOW() WHERE provider='META' AND client_id=? AND revoked_at IS NULL",[input.clientId]);await exec("INSERT INTO integration_connections (id,provider,client_id,external_id,display_name,encrypted_access_token,metadata_json,created_by) VALUES (?,'META',?,?,?,?,?,?)",[randomUUID(),input.clientId,account.instagram?.id||account.pageId,account.instagram?.username||account.pageName,encryptSecret(account.pageAccessToken||payload.userToken),JSON.stringify(config),input.userUid]);
   return {
     success: true,
     pageId: account.pageId,

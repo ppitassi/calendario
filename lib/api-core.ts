@@ -20,17 +20,6 @@ import { pdfRendererHealth } from "./api-core/pdf";
 export { clientOwnerIds, publicClient };
 export { getContext, isPublic, requiredPermission, ROLE_PERMISSIONS } from "./api-core/context";
 
-async function sendWAMessage(to: string, text: string) {
-  if (process.env.NODE_ENV === "test") return;
-  const endpoint = process.env.WHATSAPP_API_ENDPOINT;
-  if (!endpoint) return;
-  await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ to, text }),
-  }).catch(() => undefined);
-}
-
 export async function handleApi(
   method: string,
   route: string,
@@ -84,51 +73,6 @@ export async function handleApi(
     if (route === "/cron/deadlines" && method === "GET") {
       if (!validCronSecret(req)) return err("Não autorizado.", 401);
       const dueItems=await rows(`SELECT wi.id,wi.title,wi.due_at,a.user_id,DATEDIFF(wi.due_at,CURRENT_DATE) days_left FROM work_items wi JOIN work_item_assignees a ON a.work_item_id=wi.id AND a.removed_at IS NULL WHERE wi.deleted_at IS NULL AND wi.archived_at IS NULL AND wi.status NOT IN ('DONE','CANCELLED') AND wi.due_at IS NOT NULL AND wi.due_at<DATE_ADD(CURRENT_DATE,INTERVAL 3 DAY)`);let created=0;for(const item of dueItems){const type=Number(item.days_left)<0?"WORK_ITEM_OVERDUE":"WORK_ITEM_DUE_SOON",dedupe=`deadline:${item.id}:${item.user_id}:${new Date().toISOString().slice(0,10)}`,result=await exec("INSERT IGNORE INTO notifications (id,recipient_user_id,type,work_item_id,data_json,deduplication_key) VALUES (UUID(),?,?,?,?,?)",[item.user_id,type,item.id,JSON.stringify({title:item.title,dueAt:item.due_at,daysLeft:Number(item.days_left)}),dedupe]);created+=Number(result.affectedRows||0);}return ok({success:true,notifications:created,itemsChecked:dueItems.length});
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: process.env.APP_TIMEZONE || "America/Sao_Paulo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).formatToParts(new Date());
-      const values = Object.fromEntries(
-        parts.map((part) => [part.type, part.value]),
-      );
-      const day = Number(values.day);
-      const dateKey = `${values.year}-${values.month}-${values.day}`;
-      const agencies = await rows(
-        "SELECT id, name, deadline_pre, deadline_final FROM agencies WHERE deadline_pre = ? OR deadline_final = ?",
-        [day, day],
-      );
-      let notifications = 0;
-      for (const agency of agencies) {
-        const kinds = [
-          ...(Number(agency.deadline_pre) === day ? ["pre"] : []),
-          ...(Number(agency.deadline_final) === day ? ["final"] : []),
-        ];
-        for (const kind of kinds) {
-          const inserted = await exec(
-            "INSERT IGNORE INTO deadline_alert_log (alert_date, alert_kind) VALUES (?, ?)",
-            [dateKey, kind],
-          );
-          if (!inserted.affectedRows) continue;
-          const clients = await rows(
-            "SELECT name, whatsappGroupId FROM clients WHERE whatsappGroupId IS NOT NULL AND whatsappGroupId <> ?",
-            [""],
-          );
-          const message =
-            kind === "pre"
-              ? `Alerta de pré-calendário: hoje é o prazo de preparação da agência ${agency.name}.`
-              : `Alerta de prazo final: hoje é o fechamento do calendário da agência ${agency.name}.`;
-          for (const client of clients) {
-            await sendWAMessage(
-              client.whatsappGroupId,
-              `${message} Cliente: ${client.name}.`,
-            ).catch(() => undefined);
-            notifications += 1;
-          }
-        }
-      }
-      return ok({ success: true, notifications });
     }
 
     const authRes = await handleAuthApi(method, route, req, params, ctx);

@@ -1,6 +1,6 @@
 import path from "path";
 import { promises as fsp } from "fs";
-import { randomBytes } from "crypto";
+import { randomUUID } from "crypto";
 import { exec, parseJson, rows } from "../db";
 import { deleteStoredAsset, localUploadsRoot } from "../storage";
 import { ApiContext as Ctx } from "../api-types";
@@ -16,30 +16,14 @@ export function assetUrls(value: any): string[] {
 }
 
 export async function removeLocalAssetIfUnreferenced(url: string) {
-  const refs = await rows(
-    `SELECT 1 FROM clients WHERE logoUrl = ?
-     UNION ALL SELECT 1 FROM agencies WHERE logo_url = ? OR logo_dark_url = ?
-     UNION ALL SELECT 1 FROM users WHERE photoURL = ?
-     UNION ALL SELECT 1 FROM posts WHERE feedImages LIKE ? OR storyImage = ? OR coverImage = ? OR linkedinCover = ? OR videoUrl = ? LIMIT 1`,
-    [
-      url,
-      url,
-      url,
-      url,
-      `%${url}%`,
-      url,
-      url,
-      url,
-      url,
-    ],
-  );
+  const refs=await rows(`SELECT 1 FROM clients WHERE logo_url=? UNION ALL SELECT 1 FROM agency_profile WHERE logo=? OR logo_dark=? UNION ALL SELECT 1 FROM users WHERE avatar=? LIMIT 1`,[url,url,url,url]);
   if (refs.length) return;
   const assets = await rows(
-    "SELECT id, storageProvider, storageKey FROM media_assets WHERE publicUrl = ? AND status = 'active'",
+    "SELECT id,storage_provider storageProvider,storage_key storageKey FROM media_assets WHERE storage_key=? AND deleted_at IS NULL",
     [url],
   );
   await exec(
-    "UPDATE media_assets SET status = 'deleted', deletedAt = NOW() WHERE publicUrl = ? AND status = 'active'",
+    "UPDATE media_assets SET deleted_at=NOW() WHERE storage_key=? AND deleted_at IS NULL",
     [url],
   );
   for (const asset of assets)
@@ -84,29 +68,21 @@ export async function registerMediaAsset(
     ctx.userUid ||
     "agency",
   );
-  const id = randomBytes(24).toString("hex");
+  const id=randomUUID(),entityType=ownerType.toUpperCase(),entityId=ownerId,originalName=String(stored.originalName||data.fileName||"asset").slice(0,512),mimeType=stored.mimeType||data.mimeType||"application/octet-stream",size=Number(stored.sizeBytes||data.size||0);
   await exec(
-    `INSERT INTO media_assets
-     (id, clientId, ownerType, ownerId, category, storageProvider, storageKey, publicUrl, mimeType, sizeBytes, width, height, originalName, checksum, status, createdBy)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+    `INSERT INTO media_assets (id,storage_provider,storage_key,original_name,mime_type,byte_size,checksum_sha256,created_by) VALUES (?,?,?,?,?,?,?,?)`,
     [
       id,
-      data.clientId || null,
-      ownerType,
-      ownerId,
-      category + suffix,
       stored.provider,
       stored.storageKey,
-      stored.url || null,
-      stored.mimeType || data.mimeType || "application/octet-stream",
-      Number(stored.sizeBytes || data.size || 0),
-      stored.width || null,
-      stored.height || null,
-      String(stored.originalName || data.fileName || "asset").slice(0, 255),
+      originalName,
+      mimeType,
+      size,
       stored.checksum || null,
       ctx.userUid,
     ],
   );
+  await exec("INSERT INTO asset_versions (id,logical_asset_id,media_asset_id,version_number,created_by) VALUES (?,?,?,?,?)",[randomUUID(),id,id,1,ctx.userUid]);await exec("INSERT INTO file_links (id,media_asset_id,entity_type,entity_id,category) VALUES (?,?,?,?,?)",[randomUUID(),id,entityType,entityId,category+suffix]);
   return id;
 }
 

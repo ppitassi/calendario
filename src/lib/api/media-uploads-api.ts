@@ -1,7 +1,16 @@
 import axios from "axios";
 import { API_URL } from "./core";
 
-export type MediaAssetSummary = { assetId: string; originalName: string; mimeType: string; sizeBytes: number; checksum: string; logicalPath: string; visibility: "public" | "protected"; url: string };
+export type MediaAssetSummary = {
+  assetId: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  checksum: string;
+  logicalPath: string;
+  visibility: "public" | "protected";
+  url: string;
+};
 
 export type BrandManualDigest = {
   manual: { url: string; name: string; size: number; digestedAt: string; sampledPages: number };
@@ -11,13 +20,21 @@ export type BrandManualDigest = {
 export async function uploadBrandManual(file: File): Promise<BrandManualDigest> {
   const form = new FormData();
   form.append("file", file);
-  const response = await axios.post(`${API_URL}/agency/brand-manual`, form);
-  return response.data;
+  return (await axios.post(`${API_URL}/agency/brand-manual`, form)).data;
 }
 
 export async function getPostMediaAssets(ownerId: string): Promise<MediaAssetSummary[]> {
   const response = await axios.get(`${API_URL}/work-items/${ownerId}/assets`);
-  return response.data.map((asset:any)=>({assetId:asset.id,originalName:asset.originalName,mimeType:asset.mimeType,sizeBytes:Number(asset.byteSize),checksum:"",logicalPath:"",visibility:asset.category==="post_document"?"protected":"public",url:asset.url}));
+  return response.data.map((asset: any) => ({
+    assetId: asset.id,
+    originalName: asset.originalName,
+    mimeType: asset.mimeType,
+    sizeBytes: Number(asset.byteSize),
+    checksum: asset.checksum || "",
+    logicalPath: "",
+    visibility: asset.category === "post_document" ? "protected" : "public",
+    url: asset.url,
+  }));
 }
 
 export async function uploadImage(
@@ -31,60 +48,32 @@ export async function uploadImage(
   targetUserId?: string,
   ownerId?: string,
 ): Promise<string> {
-  const res = await axios.post(`${API_URL}/upload-base64`, {
-    base64,
-    fileName,
-    subfolder,
-    clientName,
-    postDate,
-    designerName,
-    clientId,
-    targetUserId,
-    ownerId,
-  });
-  return res.data.url;
+  return (await axios.post(`${API_URL}/upload-base64`, {
+    base64, fileName, subfolder, clientName, postDate, designerName,
+    clientId, targetUserId, ownerId,
+  })).data.url;
 }
 
-export async function uploadProfileImage(
-  base64: string,
-  fileName: string,
-): Promise<{
+export async function uploadProfileImage(base64: string, fileName: string): Promise<{
   url: string;
   assetId: string;
   thumbnailUrl?: string | null;
   thumbnailAssetId?: string | null;
 }> {
-  const res = await axios.post(`${API_URL}/upload-base64`, {
-    base64,
-    fileName,
-    subfolder: "avatars",
-  });
-  return res.data;
+  return (await axios.post(`${API_URL}/upload-base64`, {
+    base64, fileName, subfolder: "avatars",
+  })).data;
 }
 
 export async function uploadPostImage(
-  base64: string,
-  fileName: string,
-  clientName: string,
-  postDate: string | undefined,
-  clientId: string,
-  postId: string,
-): Promise<{
-  url: string;
-  assetId: string;
-  thumbnailUrl?: string | null;
-  thumbnailAssetId?: string | null;
-}> {
-  const res = await axios.post(`${API_URL}/upload-base64`, {
-    base64,
-    fileName,
-    subfolder: "posts",
-    clientName,
-    postDate,
-    clientId,
-    ownerId: postId,
-  });
-  return res.data;
+  _base64: string,
+  _fileName: string,
+  _clientName: string,
+  _postDate: string | undefined,
+  _clientId: string,
+  _postId: string,
+): Promise<never> {
+  throw new Error("Use o envio de arquivo do item de trabalho.");
 }
 
 export async function uploadAudio(
@@ -93,58 +82,32 @@ export async function uploadAudio(
   subfolder?: string,
   clientId?: string,
 ): Promise<string> {
-  const res = await axios.post(`${API_URL}/upload-audio`, {
-    base64,
-    fileName,
-    subfolder,
-    clientId,
-  });
-  return res.data.url;
+  return (await axios.post(`${API_URL}/upload-audio`, {
+    base64, fileName, subfolder, clientId,
+  })).data.url;
 }
 
 export async function uploadMediaFile(
   file: File,
-  clientId: string,
-  postDate?: string,
+  _clientId: string,
+  _postDate?: string,
   ownerId?: string,
   category = "media",
   itemIndex?: number,
 ): Promise<{ url: string; provider: string; assetId: string; logicalPath: string; checksum: string; visibility: "public" | "protected"; mirrorState: string }> {
-  if(ownerId){const form=new FormData();form.append("file",file);form.append("category",category);if(itemIndex!=null)form.append("sortOrder",String(itemIndex));const response=await axios.post(`${API_URL}/work-items/${ownerId}/assets`,form);return{url:response.data.url,provider:"local",assetId:response.data.id,logicalPath:"",checksum:"",visibility:category.includes("document")?"protected":"public",mirrorState:"local"};}
-  let initialized;
-  try {
-    initialized = await axios.post(`${API_URL}/uploads/media/init`, {
-      clientId,
-      postDate,
-      fileName: file.name,
-      mimeType: file.type,
-      size: file.size,
-      ownerId,
-      category,
-      itemIndex,
-    });
-  } catch (error: any) {
-    throw error;
-  }
-  const uploadUrl = String(
-    initialized.data.uploadUrl || "/api/uploads/media",
-  );
-  const upload = await fetch(
-    uploadUrl.startsWith("/api/") ? uploadUrl : initialized.data.uploadUrl,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type,
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Upload-Intent-Id": initialized.data.intentId,
-      },
-      body: file,
-    },
-  );
-  if (!upload.ok)
-    throw new Error(`Falha ao persistir mídia (${upload.status}).`);
-  const finalized = await axios.post(`${API_URL}/uploads/media/finalize`, {
-    intentId: initialized.data.intentId,
-  });
-  return finalized.data;
+  if (!ownerId) throw new Error("Salve o item de trabalho antes de enviar arquivos.");
+  const form = new FormData();
+  form.append("file", file);
+  form.append("category", category);
+  if (itemIndex != null) form.append("sortOrder", String(itemIndex));
+  const response = await axios.post(`${API_URL}/work-items/${ownerId}/assets`, form);
+  return {
+    url: response.data.url,
+    provider: "local",
+    assetId: response.data.id,
+    logicalPath: "",
+    checksum: response.data.checksum || "",
+    visibility: category.includes("document") ? "protected" : "public",
+    mirrorState: "local",
+  };
 }
