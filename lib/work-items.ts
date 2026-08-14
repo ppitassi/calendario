@@ -130,6 +130,8 @@ export async function handleWorkItems(req:NextRequest,segments:string[],method:s
   const [id,resource]=segments;
   if(!resource){if(method==="GET")return getWorkItem(id);if(method==="PATCH")return updateWorkItem(req,id,ctx.userUid);if(method==="DELETE"){await getDbPool().query("UPDATE work_items SET deleted_at=NOW() WHERE id=?",[id]);return ok({success:true});}}
   if(resource==="move"&&method==="POST")return moveWorkItem(req,id,ctx.userUid);
+  if(resource==="archive"&&method==="POST"){await getDbPool().query("UPDATE work_items SET archived_at=NOW() WHERE id=? AND deleted_at IS NULL",[id]);await getDbPool().query("INSERT INTO work_item_events (work_item_id,actor_id,event_type) VALUES (?,?,?)",[id,ctx.userUid,"ITEM_ARCHIVED"]);return ok({success:true,archived:true});}
+  if(resource==="restore"&&method==="POST"){await getDbPool().query("UPDATE work_items SET archived_at=NULL,deleted_at=NULL WHERE id=?",[id]);await getDbPool().query("INSERT INTO work_item_events (work_item_id,actor_id,event_type) VALUES (?,?,?)",[id,ctx.userUid,"ITEM_RESTORED"]);return ok({success:true,restored:true});}
   if(resource==="assignees"&&["GET","POST","DELETE"].includes(method))return manageAssignees(req,id,ctx.userUid,method);
   if(resource==="events"&&method==="GET")return timeline(id);
   if(resource==="comments"&&["GET","POST"].includes(method))return comments(req,id,ctx.userUid,method);

@@ -16,6 +16,9 @@ export async function toggleChecklistItem(id:string,checklistId:string,completed
 export async function addComment(id:string,body:string){return(await axios.post(`${API_URL}/work-items/${id}/comments`,{body})).data;}
 export async function transitionExternalOperation(id:string,status:string,data?:Record<string,unknown>){return(await axios.post(`${API_URL}/work-items/${id}/external-operation/transition`,{status,data})).data;}
 export async function addExternalLocation(id:string,data:Record<string,unknown>){return(await axios.post(`${API_URL}/work-items/${id}/external-operation/locations`,data)).data;}
+export async function getExternalOperationAction(id:string,action:string){return(await axios.get(`${API_URL}/work-items/${id}/external-operation/${action}`)).data;}
+export async function postExternalOperationAction(id:string,action:string,data:Record<string,unknown>){return(await axios.post(`${API_URL}/work-items/${id}/external-operation/${action}`,data)).data;}
+export async function patchExternalOperationAction(id:string,action:string,data:Record<string,unknown>){return(await axios.patch(`${API_URL}/work-items/${id}/external-operation/${action}`,data)).data;}
 export async function listWorkItemAssets(id:string){return(await axios.get(`${API_URL}/work-items/${id}/assets`)).data;}
 export async function uploadWorkItemAsset(id:string,file:File,category="GENERAL"){const form=new FormData();form.append("file",file);form.append("category",category);return(await axios.post(`${API_URL}/work-items/${id}/assets`,form)).data;}
 export async function deleteWorkItemAsset(id:string,assetId:string){return(await axios.delete(`${API_URL}/work-items/${id}/assets/${assetId}`)).data;}

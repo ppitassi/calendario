@@ -1,118 +1,17 @@
 import "server-only";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 
-export type ClientRow = RowDataPacket & {
-  id: string;
-  name: string;
-  owners: string | string[] | null;
-};
+export type ClientRow=RowDataPacket&{id:string;name:string;displayName:string};
+export type ResponsibleUser=RowDataPacket&{uid:string;displayName:string;role:string};
+export type PlanningPost=RowDataPacket&{id:string;title:string;head?:string|null;subhead?:string|null;caption?:string|null;currentStage:string;currentAssigneeId?:string|null;workflowStatus?:string|null;artworkCurrentVersion?:number|null};
+export type ArtworkVersion=RowDataPacket&{id:string;versionNumber:number};
+export type PlanningRef={clientId:string;month:string};
 
-export type ResponsibleUser = RowDataPacket & {
-  uid: string;
-  displayName: string;
-  role: string;
-};
+export function decodePlanningId(value:string):PlanningRef {const index=value.lastIndexOf("__"),clientId=decodeURIComponent(index<0?"":value.slice(0,index)),month=value.slice(index+2);if(!clientId||!/^[0-9]{4}-[0-9]{2}$/.test(month))throw Object.assign(new Error("Planejamento inválido."),{status:422,code:"INVALID_PLANNING"});return{clientId,month};}
+export const planningId=(clientId:string,month:string)=>`${encodeURIComponent(clientId)}__${month}`;
 
-export type PlanningPost = RowDataPacket & {
-  id: number;
-  title?: string | null;
-  head?: string | null;
-  subhead?: string | null;
-  caption?: string | null;
-  subtitle?: string | null;
-  currentStage: string;
-  currentAssigneeId?: string | null;
-  workflowStatus?: string | null;
-  artworkCurrentVersion?: number | null;
-};
+const roleAliases:Record<string,string[]>={social_media:["SOCIAL_MEDIA","SOCIALMEDIA","COPYWRITER"],designer:["DESIGNER"],atendimento:["ATENDIMENTO","ACCOUNT_MANAGER"]};
+export async function clientResponsible(connection:PoolConnection,clientId:string,kind:keyof typeof roleAliases){const [clients]=await connection.query<ClientRow[]>("SELECT id,name,display_name displayName FROM clients WHERE id=? AND archived_at IS NULL LIMIT 1",[clientId]);const client=clients[0];if(!client)throw Object.assign(new Error("Cliente não encontrado."),{status:404,code:"CLIENT_NOT_FOUND"});const [users]=await connection.query<ResponsibleUser[]>(`SELECT u.id uid,u.name displayName,UPPER(COALESCE(cm.role,r.key_name,'')) role FROM client_members cm JOIN users u ON u.id=cm.user_id LEFT JOIN user_roles ur ON ur.user_id=u.id LEFT JOIN roles r ON r.id=ur.role_id WHERE cm.client_id=? AND cm.removed_at IS NULL AND u.active=TRUE ORDER BY cm.is_primary DESC,u.name`,[clientId]);return{client,user:users.find(user=>roleAliases[kind].includes(String(user.role).toUpperCase()))||null};}
 
-export type ArtworkVersion = RowDataPacket & {
-  id: number;
-  versionNumber: number;
-};
-
-export type PlanningRef = { clientId: string; month: string };
-
-export function decodePlanningId(value: string): PlanningRef {
-  const i = value.lastIndexOf("__");
-  const clientId = decodeURIComponent(i < 0 ? "" : value.slice(0, i)),
-    month = value.slice(i + 2);
-  if (!clientId || !/^[0-9]{4}-[0-9]{2}$/.test(month))
-    throw Object.assign(new Error("Planejamento inválido."), {
-      status: 422,
-      code: "INVALID_PLANNING",
-    });
-  return { clientId, month };
-}
-
-export const planningId = (clientId: string, month: string) =>
-  `${encodeURIComponent(clientId)}__${month}`;
-
-const roles: Record<string, string[]> = {
-  social_media: ["socialmedia", "social_media"],
-  designer: ["designer", "estagiario"],
-  atendimento: ["atendimento"],
-};
-
-export async function clientResponsible(
-  connection: PoolConnection,
-  clientId: string,
-  kind: keyof typeof roles,
-) {
-  const [clients] = await connection.query<ClientRow[]>(
-    "SELECT id,name,owners FROM clients WHERE id=? LIMIT 1",
-    [clientId],
-  );
-  const client = clients[0];
-  if (!client)
-    throw Object.assign(new Error("Cliente não encontrado."), {
-      status: 404,
-      code: "CLIENT_NOT_FOUND",
-    });
-  let owners: string[] = [];
-  try {
-    owners = Array.isArray(client.owners)
-      ? client.owners
-      : JSON.parse(client.owners || "[]");
-  } catch { }
-  if (!owners.length) return { client, user: null };
-  const [users] = await connection.query<ResponsibleUser[]>(
-    "SELECT uid,displayName,role FROM users WHERE uid IN (?) ORDER BY displayName,uid",
-    [owners],
-  );
-  return {
-    client,
-    user:
-      users.find((user) =>
-        roles[kind].includes(String(user.role).toLowerCase()),
-      ) || null,
-  };
-}
-
-export async function planningPosts(
-  connection: PoolConnection,
-  ref: PlanningRef,
-  lock = false,
-) {
-  const [posts] = await connection.query<PlanningPost[]>(
-    `SELECT * FROM posts WHERE clientId=? AND DATE_FORMAT(date,'%Y-%m')=? AND COALESCE(currentStage,'copy') NOT IN ('arquivado','cancelado') ORDER BY date,id${lock ? " FOR UPDATE" : ""}`,
-    [ref.clientId, ref.month],
-  );
-  return posts;
-}
-
-export function copyBlocks(posts: PlanningPost[]) {
-  return posts.flatMap((p) =>
-    [
-      ["Head", p.head],
-      ["Subhead", p.subhead],
-      ["Legenda", p.caption || p.subtitle],
-    ]
-      .filter(([, v]) => !String(v || "").trim())
-      .map(([field]) => ({
-        postId: p.id,
-        title: p.title || p.head || `Post ${p.id}`,
-        field,
-      })),
-  );
-}
+export async function planningPosts(connection:PoolConnection,ref:PlanningRef,lock=false){const [items]=await connection.query<PlanningPost[]>(`SELECT wi.id,wi.title,ci.head,ci.subhead,ci.caption,COALESCE(ws.key_name,'BRIEFING') currentStage,COALESCE(ws.key_name,'BRIEFING') workflowStatus,primary_user.user_id currentAssigneeId,MAX(av.version_number) artworkCurrentVersion FROM work_items wi JOIN content_items ci ON ci.work_item_id=wi.id LEFT JOIN work_item_workflows wiw ON wiw.work_item_id=wi.id LEFT JOIN workflow_stages ws ON ws.id=wiw.current_stage_id LEFT JOIN work_item_assignees primary_user ON primary_user.work_item_id=wi.id AND primary_user.is_primary=TRUE AND primary_user.removed_at IS NULL LEFT JOIN work_item_assets wia ON wia.work_item_id=wi.id LEFT JOIN asset_versions av ON av.media_asset_id=wia.media_asset_id WHERE wi.client_id=? AND wi.type='TASK' AND wi.deleted_at IS NULL AND wi.archived_at IS NULL AND (DATE_FORMAT(COALESCE(wi.start_at,wi.due_at,wi.created_at),'%Y-%m')=? OR EXISTS(SELECT 1 FROM work_items parent WHERE parent.id=wi.parent_id AND parent.type='DEMAND' AND parent.title LIKE CONCAT('%',?,'%'))) GROUP BY wi.id,wi.title,ci.head,ci.subhead,ci.caption,ws.key_name,primary_user.user_id ORDER BY COALESCE(wi.start_at,wi.due_at,wi.created_at),wi.id${lock?" FOR UPDATE":""}`,[ref.clientId,ref.month,ref.month]);return items;}
+export function copyBlocks(posts:PlanningPost[]){return posts.flatMap(post=>[{field:"head",value:post.head},{field:"caption",value:post.caption}].filter(field=>!String(field.value||"").trim()).map(field=>({postId:post.id,title:post.title,field:field.field,reason:`${field.field} não preenchido`})));}
