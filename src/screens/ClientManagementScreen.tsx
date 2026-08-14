@@ -63,7 +63,7 @@ export function ClientManagementScreen({ onSelectClient, currentClient, onNaviga
 
   const handleDeleteClient = async (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm("Tem certeza que deseja excluir permanentemente este cliente e todos os seus posts/métricas?")) {
+    if (!window.confirm("Arquivar este cliente? O histórico e os itens de trabalho serão preservados.")) {
       return;
     }
     try {

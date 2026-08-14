@@ -11,7 +11,10 @@ export async function getClients(): Promise<ClientData[]> {
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const error = new Error(
-      apiErrorMessage(payload, `GET ${endpoint} falhou com status ${response.status}.`),
+      apiErrorMessage(
+        payload,
+        `GET ${endpoint} falhou com status ${response.status}.`,
+      ),
     );
     console.error("[GET /clients]", {
       status: response.status,
@@ -41,6 +44,27 @@ export async function saveClient(client: ClientData): Promise<string> {
 
 export async function deleteClient(clientId: string): Promise<void> {
   await axios.delete(`${API_URL}/clients/${clientId}`);
+}
+
+export async function getClientContacts(clientId: string): Promise<any[]> {
+  return (await axios.get(`${API_URL}/clients/${clientId}/contacts`)).data;
+}
+
+export async function saveClientContact(
+  clientId: string,
+  contact: Record<string, unknown>,
+): Promise<any> {
+  return (await axios.post(`${API_URL}/clients/${clientId}/contacts`, contact))
+    .data;
+}
+
+export async function deleteClientContact(
+  clientId: string,
+  contactId: string,
+): Promise<void> {
+  await axios.delete(`${API_URL}/clients/${clientId}/contacts`, {
+    data: { contactId },
+  });
 }
 
 export async function saveMetaAccount(

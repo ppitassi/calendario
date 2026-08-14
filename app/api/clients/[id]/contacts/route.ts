@@ -1,9 +1,78 @@
-import {randomUUID} from "crypto";
-import {NextRequest,NextResponse} from "next/server";
-import {getContext} from "../../../../../lib/api-core/context";
-import {getDbPool} from "../../../../../lib/db";
+import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { getContext } from "../../../../../lib/api-core/context";
+import { getDbPool } from "../../../../../lib/db";
 
-async function authorized(req:NextRequest){const context=await getContext(req);return context.isAuthenticated&&Boolean(context.userUid);}
-export async function GET(req:NextRequest,{params}:{params:Promise<{id:string}>}){if(!await authorized(req))return NextResponse.json({error:"Não autenticado."},{status:401});const{id}=await params;const[items]=await getDbPool().query("SELECT id,name,position,email,phone,is_primary isPrimary,notes,created_at createdAt,updated_at updatedAt FROM client_contacts WHERE client_id=? ORDER BY is_primary DESC,name",[id]);return NextResponse.json(items);}
-export async function POST(req:NextRequest,{params}:{params:Promise<{id:string}>}){if(!await authorized(req))return NextResponse.json({error:"Não autenticado."},{status:401});const{id}=await params,data=await req.json().catch(()=>({})),name=String(data.name||"").trim();if(!name)return NextResponse.json({error:"Nome obrigatório."},{status:422});const contactId=String(data.id||randomUUID()),connection=await getDbPool().getConnection();try{await connection.beginTransaction();if(data.isPrimary)await connection.query("UPDATE client_contacts SET is_primary=FALSE WHERE client_id=?",[id]);await connection.query(`INSERT INTO client_contacts(id,client_id,name,position,email,phone,is_primary,notes) VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name=VALUES(name),position=VALUES(position),email=VALUES(email),phone=VALUES(phone),is_primary=VALUES(is_primary),notes=VALUES(notes)`,[contactId,id,name,data.position||null,data.email||null,data.phone||null,Boolean(data.isPrimary),data.notes||null]);await connection.commit();return NextResponse.json({id:contactId},{status:201});}catch(error:any){await connection.rollback();return NextResponse.json({error:error.message},{status:422});}finally{connection.release();}}
-export async function DELETE(req:NextRequest,{params}:{params:Promise<{id:string}>}){if(!await authorized(req))return NextResponse.json({error:"Não autenticado."},{status:401});const{id}=await params,data=await req.json().catch(()=>({}));await getDbPool().query("DELETE FROM client_contacts WHERE client_id=? AND id=?",[id,data.contactId]);return NextResponse.json({success:true});}
+async function authorized(req: NextRequest) {
+  const context = await getContext(req);
+  return context.isAuthenticated && Boolean(context.userUid);
+}
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!(await authorized(req)))
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+  const { id } = await params;
+  const [items] = await getDbPool().query(
+    "SELECT id,name,position,email,phone,is_primary isPrimary,notes,created_at createdAt,updated_at updatedAt FROM client_contacts WHERE client_id=? ORDER BY is_primary DESC,name",
+    [id],
+  );
+  return NextResponse.json(items);
+}
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!(await authorized(req)))
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+  const { id } = await params,
+    data = await req.json().catch(() => ({})),
+    name = String(data.name || "").trim();
+  if (!name)
+    return NextResponse.json({ error: "Nome obrigatório." }, { status: 422 });
+  const contactId = String(data.id || randomUUID()),
+    connection = await getDbPool().getConnection();
+  try {
+    await connection.beginTransaction();
+    if (data.isPrimary)
+      await connection.query(
+        "UPDATE client_contacts SET is_primary=FALSE WHERE client_id=?",
+        [id],
+      );
+    await connection.query(
+      `INSERT INTO client_contacts(id,client_id,name,position,email,phone,is_primary,notes) VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name=VALUES(name),position=VALUES(position),email=VALUES(email),phone=VALUES(phone),is_primary=VALUES(is_primary),notes=VALUES(notes)`,
+      [
+        contactId,
+        id,
+        name,
+        data.position || null,
+        data.email || null,
+        data.phone || null,
+        Boolean(data.isPrimary),
+        data.notes || null,
+      ],
+    );
+    await connection.commit();
+    return NextResponse.json({ id: contactId }, { status: 201 });
+  } catch (error: any) {
+    await connection.rollback();
+    return NextResponse.json({ error: error.message }, { status: 422 });
+  } finally {
+    connection.release();
+  }
+}
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!(await authorized(req)))
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+  const { id } = await params,
+    data = await req.json().catch(() => ({}));
+  await getDbPool().query(
+    "DELETE FROM client_contacts WHERE client_id=? AND id=?",
+    [id, data.contactId],
+  );
+  return NextResponse.json({ success: true });
+}

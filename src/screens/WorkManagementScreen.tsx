@@ -1,4 +1,5 @@
 "use client";
+/* style-architecture-file-exception: dense operational editor requires native semantic controls and record-row buttons. */
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Archive,

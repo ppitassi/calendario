@@ -533,14 +533,47 @@ async function externalOperation(
     );
     return ok({ id: extraId, type }, 201);
   }
+  if (action === "incident-file" && method === "POST") {
+    const incident = (
+      await rows(
+        "SELECT id FROM external_operation_incidents WHERE id=? AND external_operation_id=?",
+        [input.incidentId, current.id],
+      )
+    )[0];
+    const media = (
+      await rows(
+        "SELECT ma.id FROM media_assets ma JOIN work_item_assets wa ON wa.media_asset_id=ma.id WHERE ma.id=? AND wa.work_item_id=? AND ma.deleted_at IS NULL",
+        [input.mediaAssetId, id],
+      )
+    )[0];
+    if (!incident || !media) return err("Ocorrência ou arquivo inválido.", 404);
+    await getDbPool().query(
+      "INSERT IGNORE INTO file_links (id,media_asset_id,entity_type,entity_id,category) VALUES (?,?, 'EXTERNAL_INCIDENT',?,'INCIDENT_ATTACHMENT')",
+      [randomUUID(), media.id, incident.id],
+    );
+    await getDbPool().query(
+      "INSERT INTO work_item_events (work_item_id,actor_id,event_type,data_json) VALUES (?,?, 'INCIDENT_FILE_ATTACHED',?)",
+      [
+        id,
+        userId,
+        JSON.stringify({ incidentId: incident.id, mediaAssetId: media.id }),
+      ],
+    );
+    return ok({ success: true }, 201);
+  }
   if (action === "incidents") {
-    if (method === "GET")
-      return ok(
-        await rows(
-          "SELECT * FROM external_operation_incidents WHERE external_operation_id=? ORDER BY created_at DESC",
-          [current.id],
-        ),
+    if (method === "GET") {
+      const incidentRows = await rows(
+        "SELECT * FROM external_operation_incidents WHERE external_operation_id=? ORDER BY created_at DESC",
+        [current.id],
       );
+      for (const incident of incidentRows)
+        incident.attachments = await rows(
+          "SELECT ma.id,ma.original_name originalName,ma.mime_type mimeType,CONCAT('/api/media/assets/',ma.id,'/content') url FROM file_links fl JOIN media_assets ma ON ma.id=fl.media_asset_id WHERE fl.entity_type='EXTERNAL_INCIDENT' AND fl.entity_id=? AND ma.deleted_at IS NULL",
+          [incident.id],
+        );
+      return ok(incidentRows);
+    }
     const incidentId = randomUUID();
     await getDbPool().query(
       "INSERT INTO external_operation_incidents (id,external_operation_id,reported_by,incident_type,severity,title,description) VALUES (?,?,?,?,?,?,?)",

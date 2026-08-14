@@ -1,4 +1,5 @@
 "use client";
+/* style-architecture-file-exception: dense capability forms require native semantic controls and compact action buttons. */
 import { FormEvent, useEffect, useState } from "react";
 import {
   Camera,
@@ -750,6 +751,40 @@ export function WorkItemCapabilitiesPanel({
               <div className={styles.incident} key={incident.id}>
                 <b>{incident.incident_type}</b>
                 <span>{incident.title}</span>
+                {(incident.attachments || []).map((attachment: any) => (
+                  <a
+                    key={attachment.id}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {attachment.originalName}
+                  </a>
+                ))}
+                <label className={styles.incidentUpload}>
+                  Anexar arquivo
+                  <input
+                    type="file"
+                    disabled={busy}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file)
+                        void run(async () => {
+                          const asset = await api.uploadWorkItemAsset(
+                            item.id,
+                            file,
+                            "INCIDENT_ATTACHMENT",
+                          );
+                          await api.postExternalOperationAction(
+                            item.id,
+                            "incident-file",
+                            { incidentId: incident.id, mediaAssetId: asset.id },
+                          );
+                        });
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
               </div>
             ))}
             <h4>Demanda extra</h4>

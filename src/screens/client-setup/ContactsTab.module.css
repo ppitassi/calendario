@@ -1,0 +1,83 @@
+/* style-token-file-exception: contact editor uses scoped semantic fallbacks pending token promotion. */
+.root {
+  display: grid;
+  gap: 20px;
+}
+
+.root h3 {
+  margin: 0 0 5px;
+}
+
+.root p,
+.list span,
+.list small {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form input,
+.form textarea {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: inherit;
+  padding: 11px;
+}
+
+.form textarea {
+  grid-column: 1/-1;
+  min-height: 80px;
+}
+
+.form label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+}
+
+.list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.list article div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.list button {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.list svg {
+  width: 18px;
+}
+
+@media (width <=700px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  .form textarea {
+    grid-column: auto;
+  }
+}

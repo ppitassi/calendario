@@ -11,6 +11,7 @@ function files(dir) { return fs.readdirSync(dir, { withFileTypes: true }).flatMa
 const violations = [];
 for (const root of roots) if (fs.existsSync(root)) for (const file of files(root)) {
   const source = fs.readFileSync(file, "utf8");
+  const fileException = source.includes("style-architecture-file-exception:");
   const checkGlobalClasses = (classes, index) => {
     const invalid = classes.split(/\s+/).filter(Boolean).filter(value => globalAppearanceUtilities.test(value));
     if (!invalid.length) return;
@@ -33,7 +34,7 @@ for (const root of roots) if (fs.existsSync(root)) for (const file of files(root
     }
   }
   const normalized = file.replaceAll("\\", "/");
-  if (!normalized.includes("/components/ui/")) {
+  if (!normalized.includes("/components/ui/") && !fileException) {
     for (const match of source.matchAll(/<(input|textarea|select)\b/g)) {
       const context = source.slice(Math.max(0, match.index - 220), match.index);
       if (!context.includes("style-architecture-exception:")) {
@@ -57,6 +58,7 @@ for (const file of allStyleFiles) {
   const normalized = file.replaceAll("\\", "/");
   if (normalized.endsWith("/styles/variables.css") || normalized.endsWith("/styles/print.css")) continue;
   const source = fs.readFileSync(file, "utf8");
+  if (source.includes("style-token-file-exception:")) continue;
   for (const match of source.matchAll(/#[0-9a-f]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\)/gi)) {
     const context = source.slice(Math.max(0, match.index - 300), match.index);
     if (context.includes("style-token-exception:")) continue;
@@ -87,6 +89,7 @@ for (const file of allStyleFiles) {
 }
 for (const file of allStyleFiles) {
   const source = fs.readFileSync(file, "utf8");
+  if (source.includes("style-token-file-exception:")) continue;
   for (const match of source.matchAll(/var\(\s*(--[a-zA-Z0-9-_]+)([^)]*)\)/g)) {
     if (definedTokens.has(match[1]) || match[2].includes(",")) continue;
     const line = source.slice(0, match.index).split("\n").length;

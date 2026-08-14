@@ -59,6 +59,13 @@ test("auth and universal work item hierarchy", async () => {
     assert.equal(login.response.status, 200);
     assert.equal(login.payload.success, true);
     assert.match(login.cookie, /cp_session=/);
+    const roles = await request("/custom-roles", {}, login.cookie);
+    assert.equal(roles.response.status, 200);
+    assert.ok(
+      roles.payload.some(
+        (role) => role.key === "ADMIN" && Array.isArray(role.permissions),
+      ),
+    );
     const create = async (type, title, parentId) =>
       request(
         "/work-items",
@@ -105,6 +112,43 @@ test("auth and universal work item hierarchy", async () => {
       login.cookie,
     );
     assert.equal(client.response.status, 200);
+    const member = await request(
+      `/clients/${clientId}/members`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          userId: login.payload.user.uid,
+          role: "SOCIAL_MEDIA",
+          isPrimary: true,
+        }),
+      },
+      login.cookie,
+    );
+    assert.equal(member.response.status, 201);
+    const contact = await request(
+      `/clients/${clientId}/contacts`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Contato Teste",
+          email: "contato@example.com",
+          isPrimary: true,
+        }),
+      },
+      login.cookie,
+    );
+    assert.equal(contact.response.status, 201);
+    const contacts = await request(
+      `/clients/${clientId}/contacts`,
+      {},
+      login.cookie,
+    );
+    assert.equal(contacts.response.status, 200);
+    assert.ok(
+      contacts.payload.some(
+        (entry) => entry.id === contact.payload.id && entry.isPrimary,
+      ),
+    );
     const contentTask = await request(
       "/work-items",
       {
