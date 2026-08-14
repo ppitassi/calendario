@@ -114,7 +114,6 @@ Estados lógicos de tela encontrados: `login`, `home`, `client_management`, `cli
 ### Prioridade crítica
 
 - **RBAC somente parcial:** permissões do frontend não substituem autorização em cada Route Handler. Toda ação administrativa deve validar permissão no servidor.
-- **Multitenancy incompleto:** várias consultas precisam impor `tenant_id`/agência derivado da sessão, nunca do cliente ou apenas de um ID da URL.
 - **Uploads inseguros:** validar caminho canônico, MIME real, extensão, tamanho, quantidade e autorização; armazenar fora da pasta pública ou em object storage.
 - **Sessão:** endurecer expiração, rotação, revogação, cookies e proteção contra abuso/brute force.
 - **PDF:** aplicar rate limit, timeout, limite de concorrência e origem interna confiável para evitar DoS/SSRF.

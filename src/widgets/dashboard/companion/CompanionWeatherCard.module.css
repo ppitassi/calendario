@@ -1,0 +1,12 @@
+.root { display: flex; flex-direction: column; gap: var(--space-6); text-align: left; }
+.summary { display: flex; align-items: center; gap: var(--space-6); }
+.icon { display: flex; width: 4rem; height: 4rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: var(--radius-overlay); background: var(--gradient-weather); box-shadow: var(--shadow-surface); color: var(--color-text-on-action); }
+.icon svg { width: 2rem; height: 2rem; }
+.temperature { display: flex; align-items: baseline; gap: var(--space-2); }
+.temperature strong { font-family: var(--font-display); font-size: 2.25rem; font-weight: 900; line-height: 1; }
+.temperature span { color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: 700; text-transform: uppercase; }
+.location { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-2xs); font-weight: 700; text-transform: uppercase; }
+.location svg { width: .75rem; height: .75rem; }
+.metric { display: flex; align-items: center; flex-direction: column; padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-card); background: var(--color-bg-muted); }
+.metric span { margin-bottom: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-3xs); font-weight: 700; text-transform: uppercase; }
+.metric strong { font-size: var(--font-size-sm); font-weight: 900; }

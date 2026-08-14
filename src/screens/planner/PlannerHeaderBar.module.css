@@ -1,0 +1,7 @@
+.bar { align-items: center; display: flex; gap: var(--space-3); justify-content: center; max-width: 100%; min-width: 0; text-align: left; }.workflow,.navigation,.status { display: none; }.navigation { align-items: center; background: var(--glass-surface-subtle); border: 1px solid var(--glass-border); border-radius: var(--radius-pill); gap: var(--space-1); padding: var(--space-1); }.navigation>span { color: var(--color-text-secondary); font-size: var(--font-size-2xs); font-weight: 800; letter-spacing: .08em; padding-inline: var(--space-2); text-transform: uppercase; }.status { color: var(--color-text-secondary); font-size: var(--font-size-2xs); font-weight: 700; white-space: nowrap; }.statusError { color: var(--color-status-danger); }
+
+@media (width >= 640px) { .status { display: inline; } }
+
+@media (width >= 1024px) { .navigation { display: flex; } }
+
+@media (width >= 1280px) { .workflow { display: block; min-width: 0; } }

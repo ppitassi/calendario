@@ -34,6 +34,24 @@ export function getDbPool() {
 }
 
 export async function testDbConnection() {
-  const [rows] = await getDbPool().query('SELECT 1 AS ok');
-  return rows;
+  const [r] = await getDbPool().query('SELECT 1 AS ok');
+  return r;
+}
+
+// ─── Shared query helpers ───────────────────────────────────────────────────
+
+export async function rows(sql: string, params: unknown[] = []) {
+  const [r] = await getDbPool().query(sql, params);
+  return r as any[];
+}
+
+export async function exec(sql: string, params: unknown[] = []) {
+  const [r] = await getDbPool().query(sql, params);
+  return r as any;
+}
+
+export function parseJson(value: unknown, fallback: unknown) {
+  if (!value) return fallback;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return fallback; }
 }

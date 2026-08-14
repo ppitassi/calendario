@@ -1,0 +1,33 @@
+.shell { position: relative; display: flex; width: 100%; flex-direction: column; background: var(--color-bg-canvas); font-family: var(--font-body); transition: background var(--duration-standard),color var(--duration-standard); }
+.shellLocked { height: 100dvh; max-height: 100dvh; overflow: hidden; }
+.shellScrollable { min-height: 100vh; }
+.header { position: relative; z-index: var(--z-header); display: grid; width: 100%; min-height: 4.5rem; align-items: center; grid-template-columns: auto minmax(0,1fr) auto; gap: var(--space-4); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--glass-border); background: var(--glass-surface-strong); box-shadow: var(--shadow-surface); backdrop-filter: blur(var(--glass-blur)) saturate(145%); }
+.brandArea { display: flex; min-width: 0; align-items: center; gap: var(--space-3); }
+.mobileMenuAction { display: inline-flex; }
+.logoFrame { display: flex; height: 2.5rem; align-items: center; justify-content: center; }
+.logoImage { max-width: 8.75rem; height: 100%; object-fit: contain; }
+.logoFallback { display: flex; width: 2rem; height: 2rem; align-items: center; justify-content: center; border-radius: var(--radius-control); background: var(--color-action-primary); box-shadow: var(--shadow-surface); color: var(--color-text-on-action); }
+.logoFallback span { font-size: var(--font-size-xs); font-weight: 700; }
+.brandCopy { display: none; justify-content: center; flex-direction: column; text-align: left; }
+.brandCopy strong { font-family: var(--font-display); font-size: var(--font-size-sm); font-weight: 700; letter-spacing: var(--tracking-bold); line-height: 1; }
+.brandCopy span { margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-2xs); font-weight: 700; line-height: 1; text-transform: uppercase; }
+.headerActions,.userActions { display: flex; align-items: center; gap: var(--space-2); }
+.searchAction { display: none; align-items: center; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--glass-border); border-radius: var(--radius-control); background: var(--color-bg-muted); }
+.divider { display: none; width: 1px; height: 2rem; margin-inline: var(--space-1); background: var(--glass-border); }
+.userAvatar { display: flex; width: 2rem; height: 2rem; flex-shrink: 0; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--radius-pill); background: var(--color-action-primary); box-shadow: var(--shadow-surface); color: var(--color-text-on-action); font-size: var(--font-size-sm); font-weight: 700; text-transform: uppercase; }
+.userPhoto { width: 100%; height: 100%; object-fit: cover; }
+.userCopy { display: none; max-width: 6.25rem; align-items: flex-start; flex-direction: column; line-height: 1; }
+.userCopy strong { width: 100%; overflow: hidden; font-size: var(--font-size-xs); text-overflow: ellipsis; white-space: nowrap; }
+.userCopy span { margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-2xs); font-weight: 900; text-transform: uppercase; }
+.mobileBackdrop { position: fixed; inset: 0; z-index: var(--z-sidebar-mobile-backdrop); display: block; background: color-mix(in srgb,var(--color-bg-inverse) 35%,transparent); backdrop-filter: blur(var(--glass-blur)); }
+.main { display: flex; min-width: 0; flex: 1; flex-direction: column; overflow: hidden; background: var(--color-bg-canvas); }
+.workspace { position: relative; z-index: var(--z-content-raised); display: flex; width: 100%; flex: 1; }
+.workspaceLocked { min-height: 0; overflow: hidden; }
+
+@media (width >= 640px) { .header { padding-inline: var(--space-6); } .brandArea { gap: var(--space-6); } .searchAction,.divider { display: flex; } }
+
+@media (width >= 768px) { .userCopy { display: flex; } .mobileBackdrop { display: none; } }
+
+@media (width >= 768px) { .mobileMenuAction { display: none; } }
+
+@media (width >= 1024px) { .brandCopy { display: flex; } }

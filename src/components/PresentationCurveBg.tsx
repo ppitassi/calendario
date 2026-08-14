@@ -1,12 +1,12 @@
-import React from 'react';
+import styles from "./PresentationCurveBg.module.css";
 
 export function PresentationCurveBg() {
   return (
-    <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden opacity-30">
+    <div className={styles.root}>
       <svg 
         viewBox="0 0 1440 1024" 
         preserveAspectRatio="xMidYMid slice" 
-        className="w-full h-full text-[var(--color-primary)]"
+        className={styles.curves}
       >
         {/* Curvas paralelas suaves do PDF */}
         <path d="M-100,512 C300,200 600,900 1540,300" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.3" strokeDasharray="10 10" />

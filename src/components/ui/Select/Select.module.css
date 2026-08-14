@@ -1,0 +1,5 @@
+.select { width: 100%; min-height: var(--control-height-md); padding: 0 2rem 0 var(--space-4); appearance: none; border: 1px solid var(--glass-border); border-radius: var(--radius-control); outline: 0; background-color: color-mix(in srgb, var(--glass-surface-strong) 92%, transparent); background-image: linear-gradient(45deg, transparent 50%, currentcolor 50%), linear-gradient(135deg, currentcolor 50%, transparent 50%); background-position: calc(100% - 15px) 50%, calc(100% - 11px) 50%; background-repeat: no-repeat; background-size: 4px 4px, 4px 4px; box-shadow: var(--shadow-control-inset); font-size: .8125rem; backdrop-filter: blur(var(--blur-control)); }
+.select:focus { border-color: color-mix(in srgb, var(--color-action-primary) 44%, var(--color-static-white)); box-shadow: var(--shadow-focus); }
+.select[aria-invalid="true"] { border-color: var(--color-status-danger); }
+.select:disabled { opacity: .55; }
+.select option { background: var(--color-bg-surface); color: var(--color-text-primary); }

@@ -1,0 +1,8 @@
+.root { position: fixed; z-index: var(--z-background); inset: 0; overflow: hidden; pointer-events: none; user-select: none; }
+.blur { position: absolute; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-action-primary) 15%, transparent); filter: blur(var(--blur-ambient-lg)); mix-blend-mode: multiply; }
+.blurPrimary { top: 0; left: 0; width: 60vw; height: 60vw; }
+.blurSecondary { right: 0; bottom: 0; width: 50vw; height: 50vw; background: color-mix(in srgb, var(--color-action-primary) 10%, transparent); filter: blur(var(--blur-ambient-xl)); }
+.asterisk { position: absolute; color: transparent; font-weight: 700; opacity: .4; -webkit-text-stroke: 2px var(--color-action-primary); }
+:global(.dark) .blur { mix-blend-mode: screen; }
+
+@media (prefers-reduced-motion: reduce) { .root { display: none; } }

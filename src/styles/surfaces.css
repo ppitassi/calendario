@@ -1,0 +1,97 @@
+.glass,
+.glass-card,
+.glass-control,
+.glass-subtle,
+.glass-medium,
+.glass-strong,
+.liquid-glass {
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+}
+
+.glass {
+  background: var(--glass-surface);
+  box-shadow: var(--shadow-surface);
+}
+
+.glass-card {
+  background: var(--glass-surface);
+  box-shadow: var(--shadow-surface);
+}
+
+.liquid-glass {
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --glow-opacity: 0;
+  --glisten-color: transparent;
+
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background:
+    radial-gradient(
+      210px circle at var(--pointer-x) var(--pointer-y),
+      var(--glisten-color),
+      transparent 70%
+    ),
+    var(--glass-surface);
+  box-shadow: var(--shadow-surface);
+}
+
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  z-index: var(--z-background);
+  pointer-events: none;
+  left: 12%;
+  right: 12%;
+  top: 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-glass-reflection),
+    transparent
+  );
+}
+
+.glass-control {
+  background: color-mix(in srgb, var(--glass-surface-strong) 94%, transparent);
+  box-shadow: var(--glass-inner-highlight), var(--shadow-glass-control);
+  backdrop-filter: blur(var(--blur-glass-control)) saturate(112%);
+}
+
+.glass-subtle {
+  background: color-mix(in srgb, var(--glass-surface-strong) 90%, transparent);
+}
+
+.glass-medium {
+  background: color-mix(in srgb, var(--glass-surface-strong) 86%, transparent);
+  box-shadow: var(--shadow-surface);
+}
+
+.glass-strong {
+  background: var(--glass-surface-strong);
+  box-shadow: var(--shadow-glass-strong), var(--glass-inner-highlight);
+}
+
+.app-surface {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-surface);
+}
+
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .glass,
+  .liquid-glass,
+  .glass-control,
+  .glass-subtle,
+  .glass-medium,
+  .glass-strong {
+    background: var(--color-bg-surface);
+  }
+}

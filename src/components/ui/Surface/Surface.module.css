@@ -1,0 +1,5 @@
+.surface { padding: var(--space-4); border: 1px solid var(--glass-border); border-radius: var(--radius-card); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation)); }
+.subtle { background: color-mix(in srgb, var(--glass-surface-strong) 90%, transparent); }
+.medium { background: color-mix(in srgb, var(--glass-surface-strong) 86%, transparent); box-shadow: var(--shadow-surface); }
+.strong { background: var(--glass-surface-strong); box-shadow: var(--shadow-glass-strong), var(--glass-inner-highlight); }
+.overlay { border-color: var(--glass-border-highlight); background: color-mix(in srgb, var(--glass-surface-strong) 94%, transparent); box-shadow: var(--shadow-overlay); }

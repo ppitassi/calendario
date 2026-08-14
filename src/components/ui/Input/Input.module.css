@@ -1,0 +1,4 @@
+.input { width: 100%; min-height: var(--control-height-md); padding-inline: var(--space-4); border: 1px solid var(--glass-border); border-radius: var(--radius-control); outline: 0; background: color-mix(in srgb, var(--glass-surface-strong) 92%, transparent); box-shadow: var(--shadow-control-inset); font-size: .8125rem; backdrop-filter: blur(var(--blur-control)) saturate(120%); }
+.input:focus { border-color: color-mix(in srgb, var(--color-action-primary) 44%, var(--color-static-white)); box-shadow: var(--shadow-focus); }
+.input[aria-invalid="true"] { border-color: var(--color-status-danger); }
+.input:disabled { opacity: .55; }

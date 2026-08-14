@@ -1,0 +1,16 @@
+.edgeHandle{position:absolute;top:50%;z-index:var(--z-sticky);display:flex;width:.875rem;height:3rem;translate:0 -50%;align-items:center;justify-content:center;border:1px solid var(--color-border-strong);background:var(--glass-surface-strong);color:var(--color-text-secondary);box-shadow:var(--shadow-surface);cursor:pointer;transition:width var(--duration-fast),color var(--duration-fast),background var(--duration-fast)}
+.edgeHandle:hover,.edgeHandle:focus-visible{width:1.375rem;background:var(--color-action-primary);color:var(--color-text-on-action)}
+.edgeLeft{right:-.4375rem;border-radius:0 var(--radius-control) var(--radius-control) 0}.edgeRight{left:-.4375rem;border-radius:var(--radius-control) 0 0 var(--radius-control)}.edgeClosed.edgeLeft{right:auto;left:0}.edgeClosed.edgeRight{right:0;left:auto}
+.previewPane{position:absolute;inset:0;z-index:var(--z-sticky);width:100%;flex-shrink:0;flex-direction:column;gap:var(--space-4);overflow:hidden;padding:var(--space-4) var(--space-4) var(--space-12);background:var(--glass-surface-strong);box-shadow:var(--shadow-surface);backdrop-filter:blur(var(--glass-blur))}
+.previewEmpty{display:flex;flex:1;align-items:center;justify-content:center;flex-direction:column;padding:var(--space-6);color:var(--color-text-muted);text-align:center}.previewEmpty svg{width:3rem;height:3rem;margin-bottom:var(--space-4)}.previewEmpty strong{font-size:var(--font-size-xs);letter-spacing:.08em;text-transform:uppercase}.previewEmpty p{margin-top:var(--space-2);font-size:.6875rem}
+
+@media(width < 1024px){.edgeHandle{display:none}}
+
+@media(width >= 1280px){.previewPane{position:relative;inset:auto;z-index:auto;display:flex;width:min(20rem,26vw);padding-bottom:var(--space-4)}}
+
+@media(height < 520px){.workflowBar{display:none}.editorPane>div:last-child{padding-block:var(--space-1)}}
+.shell{position:relative;display:flex;width:100%;height:100%;min-height:0;flex:1;overflow:hidden}.calendarSlot{position:relative;display:none;width:100%;min-height:0;flex-shrink:0}.editorPane{position:relative;display:none;min-width:0;min-height:0;flex:1;flex-direction:column;overflow:hidden;background:var(--color-bg-canvas)}.editorContent{display:flex;width:100%;max-width:56rem;min-height:0;flex:1;flex-direction:column;margin-inline:auto;padding:var(--space-3) var(--space-4);overflow:hidden}.editorTransition{width:100%;min-height:0;flex:1;overflow:hidden}.mobilePaneActive{display:flex}
+
+@media(width >= 640px){.editorContent{padding:var(--space-4) var(--space-6)}}
+
+@media(width >= 1024px){.calendarSlot{display:flex;width:auto}.editorPane{display:flex}}

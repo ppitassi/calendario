@@ -8,5 +8,10 @@ coverage/
 logs/
 !logs/.gitkeep
 server/uploads/
+public/posts/
+artifacts/
+backups/
+*.sql
+*.sql.gz
 .env*
 !.env.example

@@ -1,4 +1,4 @@
-import '../src/index.css';
+import '../src/styles/index.css';
 
 export const metadata = {
   title: 'Content Planner',

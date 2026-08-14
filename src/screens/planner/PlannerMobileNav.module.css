@@ -1,0 +1,6 @@
+.navigation { position: fixed; z-index: var(--z-floating-control); bottom: max(var(--space-4), env(safe-area-inset-bottom)); left: 50%; display: none; gap: var(--space-1); padding: .375rem; border: 1px solid var(--glass-border-highlight); border-radius: var(--radius-card); background: var(--glass-surface-strong); box-shadow: var(--shadow-overlay); backdrop-filter: blur(var(--glass-blur)); transform: translateX(-50%); }
+.label { display: none; }
+
+@media (width < 64rem) { .navigation { display: flex; } }
+
+@media (width >= 24.375rem) { .label { display: inline; } }

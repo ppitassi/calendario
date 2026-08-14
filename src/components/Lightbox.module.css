@@ -1,0 +1,27 @@
+.backdrop {
+  position: fixed;
+  z-index: var(--z-modal-overlay);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--color-static-black) 90%, transparent);
+}
+
+.closeButton, .previousButton, .nextButton { position: absolute; }
+.closeButton { top: var(--space-6); right: var(--space-6); }
+.previousButton, .nextButton { top: 50%; transform: translateY(-50%); }
+.previousButton { left: var(--space-6); }
+.nextButton { right: var(--space-6); }
+
+.image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: default;
+}
+
+@media (width >= 64rem) {
+  .backdrop { padding: var(--space-12); }
+}

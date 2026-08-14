@@ -1,271 +1,223 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Layout } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { WidgetConfig, WidgetLayout } from './types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
+import { WidgetConfig, WidgetLayout, WidgetSize } from './types';
 import { WidgetBase } from './WidgetBase';
-import { ClientData } from '../../types';
+import { cn } from '../../lib/utils';
+import styles from '../dashboard/Dashboard.module.css';
 
-interface FlexiGridProps {
+type PointerSession = {
+  id: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  started: boolean;
+  original: WidgetLayout[];
+  lastTarget: string | null;
+};
+
+export function FlexiGrid({
+  widgets,
+  layouts,
+  isEditing,
+  onLayoutChange,
+  onOpenAdmin,
+  onSelectClient,
+  currentClient,
+  dashboardData,
+  onOpenProduction,
+  onOpenPost
+}: {
   widgets: WidgetConfig[];
   layouts: WidgetLayout[];
   isEditing: boolean;
   onLayoutChange: (layouts: WidgetLayout[]) => void;
-  onRestoreWidget: (id: string) => void;
   onOpenAdmin?: () => void;
-  onSelectClient?: (client: ClientData, role: string, destination: string) => void;
-  currentClient?: ClientData | null;
-}
+  onSelectClient?: any;
+  currentClient?: any;
+  dashboardData?: any;
+  onOpenProduction?: any;
+  onOpenPost?: any;
+}) {
+  const [dragged, setDragged] = useState<string | null>(null);
+  const [keyboardMoving, setKeyboardMoving] = useState<string | null>(null);
+  const live = useRef<HTMLDivElement>(null);
+  const pointerSession = useRef<PointerSession | null>(null);
+  const keyboardOriginal = useRef<WidgetLayout[] | null>(null);
+  const layoutsRef = useRef(layouts);
+  layoutsRef.current = layouts;
 
-export function FlexiGrid({ 
-  widgets, 
-  layouts, 
-  isEditing = true, 
-  onLayoutChange, 
-  onRestoreWidget,
-  onOpenAdmin,
-  onSelectClient,
-  currentClient
-}: FlexiGridProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [gridSize, setGridSize] = useState<{ colWidth: number; rowHeight: number; gap: number }>({ colWidth: 0, rowHeight: 120, gap: 24 });
-  
-  // Real-time customization states
-  const [isInteracting, setIsInteracting] = useState(false);
-  const [dragPlaceholder, setDragPlaceholder] = useState<{ id: string; x: number; y: number; w: number; h: number } | null>(null);
+  const visible = useMemo(
+    () => layouts
+      .filter(item => !item.isHidden && widgets.some(widget => widget.id === item.id))
+      .sort((a, b) => (a.position || 0) - (b.position || 0)),
+    [layouts, widgets]
+  );
+
+  const commitOrder = (orderedVisible: WidgetLayout[]) => {
+    const hidden = layoutsRef.current.filter(item => item.isHidden);
+    onLayoutChange([...orderedVisible, ...hidden].map((item, index) => ({ ...item, position: index })));
+  };
+
+  const reorderToIndex = (id: string, targetIndex: number) => {
+    const ordered = layoutsRef.current
+      .filter(item => !item.isHidden && widgets.some(widget => widget.id === item.id))
+      .sort((a, b) => (a.position || 0) - (b.position || 0));
+    const from = ordered.findIndex(item => item.id === id);
+    const to = Math.max(0, Math.min(ordered.length - 1, targetIndex));
+    if (from < 0 || from === to) return false;
+    const [moved] = ordered.splice(from, 1);
+    ordered.splice(to, 0, moved);
+    commitOrder(ordered);
+    if (live.current) live.current.textContent = `Widget ${widgets.find(widget => widget.id === id)?.title || id} movido para a posição ${to + 1}.`;
+    return true;
+  };
+
+  const moveBy = (id: string, direction: -1 | 1) => {
+    const ordered = layoutsRef.current
+      .filter(item => !item.isHidden && widgets.some(widget => widget.id === item.id))
+      .sort((a, b) => (a.position || 0) - (b.position || 0));
+    const index = ordered.findIndex(item => item.id === id);
+    reorderToIndex(id, index + direction);
+  };
+
+  const clearPointerSession = (restore = false) => {
+    const session = pointerSession.current;
+    if (restore && session?.started) onLayoutChange(session.original.map(item => ({ ...item })));
+    pointerSession.current = null;
+    setDragged(null);
+  };
 
   useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.offsetWidth;
-        if (width > 0) {
-          const colWidth = (width - (gridSize.gap * 11)) / 12;
-          setGridSize(prev => ({ ...prev, colWidth }));
-        }
+    const onPointerMove = (event: PointerEvent) => {
+      const session = pointerSession.current;
+      if (!session || event.pointerId !== session.pointerId) return;
+      const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
+      if (!session.started) {
+        if (distance < 8) return;
+        session.started = true;
+        setDragged(session.id);
+      }
+      event.preventDefault();
+      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-widget-id]');
+      const targetId = target?.dataset.widgetId;
+      if (!targetId || targetId === session.id || targetId === session.lastTarget) return;
+      session.lastTarget = targetId;
+      const ordered = layoutsRef.current
+        .filter(item => !item.isHidden && widgets.some(widget => widget.id === item.id))
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
+      reorderToIndex(session.id, ordered.findIndex(item => item.id === targetId));
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      if (pointerSession.current?.pointerId === event.pointerId) clearPointerSession(false);
+    };
+    const onPointerCancel = (event: PointerEvent) => {
+      if (pointerSession.current?.pointerId === event.pointerId) clearPointerSession(true);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && pointerSession.current?.started) {
+        event.preventDefault();
+        clearPointerSession(true);
       }
     };
-
-    updateSize(); // Initial call
-    
-    // Use ResizeObserver for reliable width updates during layout transitions
-    let observer: ResizeObserver | null = null;
-    if (containerRef.current) {
-      observer = new ResizeObserver(() => {
-        updateSize();
-      });
-      observer.observe(containerRef.current);
-    }
-    
-    window.addEventListener('resize', updateSize);
+    document.addEventListener('pointermove', onPointerMove, { passive: false });
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
+    document.addEventListener('keydown', onKeyDown);
     return () => {
-      window.removeEventListener('resize', updateSize);
-      if (observer) observer.disconnect();
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerCancel);
+      document.removeEventListener('keydown', onKeyDown);
     };
-  }, [gridSize.gap]);
+  }, [widgets]);
 
-  const resolveCollisions = (changedId: string, currentLayouts: WidgetLayout[]): WidgetLayout[] => {
-    let layoutsCopy = currentLayouts.map(l => {
-      if (l.id === changedId) {
-        // Keep within 12 columns
-        const w = Math.min(12, Math.max(1, l.w));
-        let x = Math.max(0, l.x);
-        if (x + w > 12) {
-          x = 12 - w;
-        }
-        return { ...l, x, w };
+  const keyboardHandler = (id: string) => (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (keyboardMoving === id) {
+        setKeyboardMoving(null);
+        keyboardOriginal.current = null;
+        if (live.current) live.current.textContent = 'Nova posição confirmada.';
+      } else {
+        keyboardOriginal.current = layoutsRef.current.map(item => ({ ...item }));
+        setKeyboardMoving(id);
+        if (live.current) live.current.textContent = 'Modo de movimentação iniciado. Use as setas e confirme com Enter ou Espaço.';
       }
-      return l;
-    });
-
-    const hasCollision = (a: WidgetLayout, b: WidgetLayout) => {
-      if (a.id === b.id || a.isHidden || b.isHidden) return false;
-      return !(
-        a.x + a.w <= b.x ||
-        b.x + b.w <= a.x ||
-        a.y + a.h <= b.y ||
-        b.y + b.h <= a.y
-      );
-    };
-
-    let hasOverlaps = true;
-    let iterations = 0;
-    
-    while (hasOverlaps && iterations < 50) {
-      hasOverlaps = false;
-      for (let i = 0; i < layoutsCopy.length; i++) {
-        for (let j = 0; j < layoutsCopy.length; j++) {
-          if (i === j) continue;
-          const itemA = layoutsCopy[i];
-          const itemB = layoutsCopy[j];
-          if (hasCollision(itemA, itemB)) {
-            hasOverlaps = true;
-            // Push the one that wasn't the active user-moved one down
-            if (itemB.id === changedId) {
-              layoutsCopy[i] = { ...itemA, y: itemB.y + itemB.h };
-            } else {
-              layoutsCopy[j] = { ...itemB, y: itemA.y + itemA.h };
-            }
-          }
-        }
-      }
-      iterations++;
+      return;
     }
-    return layoutsCopy;
+    if (event.key === 'Escape' && keyboardMoving === id) {
+      event.preventDefault();
+      if (keyboardOriginal.current) onLayoutChange(keyboardOriginal.current.map(item => ({ ...item })));
+      keyboardOriginal.current = null;
+      setKeyboardMoving(null);
+      if (live.current) live.current.textContent = 'Movimentação cancelada; posição anterior restaurada.';
+      return;
+    }
+    if (keyboardMoving !== id) return;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveBy(id, -1);
+    }
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveBy(id, 1);
+    }
   };
-
-  const handleWidgetLayoutChange = (id: string, updates: Partial<WidgetLayout>) => {
-    const updated = layouts.map(l => l.id === id ? { ...l, ...updates } : l);
-    const resolved = resolveCollisions(id, updated);
-    onLayoutChange(resolved);
-  };
-
-  const handleHide = (id: string) => {
-    handleWidgetLayoutChange(id, { isHidden: true });
-  };
-
-  const visibleLayouts = layouts.filter(l => !l.isHidden);
-  const hiddenLayouts = layouts.filter(l => l.isHidden);
-
-  // Dynamically calculate grid height to allow scrolling when dragging down
-  let maxY = 0;
-  visibleLayouts.forEach(l => {
-    if (l.y + l.h > maxY) maxY = l.y + l.h;
-  });
-  if (dragPlaceholder && dragPlaceholder.y + dragPlaceholder.h > maxY) {
-    maxY = dragPlaceholder.y + dragPlaceholder.h;
-  }
-  // Base 1200px or dynamically tall enough + 4 rows of padding
-  const dynamicMinHeight = Math.max(1200, (maxY + 4) * (gridSize.rowHeight + gridSize.gap));
 
   return (
-    <div className="flex-1 flex flex-col relative">
-      <div 
-        ref={containerRef} 
-        className="flex-1 relative m-8"
-        style={{ minHeight: `${dynamicMinHeight}px`, transition: 'min-height 0.3s ease-out' }}
-      >
-        {/* Visual Snapping Cartesian Grid (Fades in only while dragging or resizing) */}
-        <AnimatePresence>
-          {isInteracting && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 grid grid-cols-12 pointer-events-none z-0" 
-              style={{ 
-                gap: `${gridSize.gap}px`,
-                gridAutoRows: `${gridSize.rowHeight}px`
-              }}
-            >
-              {Array.from({ length: 120 }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-full border border-dashed border-[var(--color-primary)]/[0.04] bg-[var(--color-primary)]/[0.001] rounded-[2rem] transition-colors duration-300"
-                  style={{ height: `${gridSize.rowHeight}px` }}
-                />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Snapping Previsualisation (Ghost Outline Placeholder) */}
-        <AnimatePresence>
-          {dragPlaceholder && (
+    <>
+      <div ref={live} className="sr-only" aria-live="polite" />
+      <div className={styles.grid}>
+        {visible.map(layout => {
+          const config = widgets.find(widget => widget.id === layout.id)!;
+          const Component = config.component;
+          return (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ 
-                opacity: 0.35,
-                left: dragPlaceholder.x * (gridSize.colWidth + gridSize.gap),
-                top: dragPlaceholder.y * (gridSize.rowHeight + gridSize.gap),
-                width: dragPlaceholder.w * gridSize.colWidth + (dragPlaceholder.w - 1) * gridSize.gap,
-                height: dragPlaceholder.h * gridSize.rowHeight + (dragPlaceholder.h - 1) * gridSize.gap
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-              className="absolute border-3 border-dashed border-[var(--color-primary)] bg-[var(--color-primary)]/10 rounded-[2.5rem] shadow-[0_0_20px_rgba(var(--color-primary),0.3)] pointer-events-none z-30"
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Draggable Widgets */}
-        <AnimatePresence>
-          {visibleLayouts.map(layout => {
-            const config = widgets.find(w => w.id === layout.id);
-            if (!config) return null;
-            const Component = config.component;
-
-            return (
+              layout
+              key={layout.id}
+              data-widget-id={layout.id}
+              data-size={layout.size || config.defaultSize || 'medium'}
+              className={cn(dragged === layout.id && 'opacity-55')}
+            >
               <WidgetBase
-                key={layout.id}
                 layout={layout}
-                title={config.title}
-                icon={config.icon}
-                colorClass={config.colorClass}
-                gridSize={gridSize}
+                config={config}
                 isEditing={isEditing}
-                onLayoutChange={handleWidgetLayoutChange}
-                onHide={handleHide}
-                onInteractionStart={() => setIsInteracting(true)}
-                onInteractionEnd={() => setIsInteracting(false)}
-                onDragProgress={(id, coords) => setDragPlaceholder(coords ? { id, ...coords } : null)}
+                onMove={direction => moveBy(layout.id, direction)}
+                onRemove={() => onLayoutChange(layouts.map(item => item.id === layout.id ? { ...item, isHidden: true } : item))}
+                onSize={(size: WidgetSize) => onLayoutChange(layouts.map(item => item.id === layout.id ? { ...item, size } : item))}
+                dragProps={{
+                  'aria-pressed': keyboardMoving === layout.id,
+                  onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+                    if (!isEditing || event.button !== 0) return;
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    pointerSession.current = {
+                      id: layout.id,
+                      pointerId: event.pointerId,
+                      startX: event.clientX,
+                      startY: event.clientY,
+                      started: false,
+                      original: layoutsRef.current.map(item => ({ ...item })),
+                      lastTarget: null
+                    };
+                  },
+                  onKeyDown: keyboardHandler(layout.id)
+                }}
               >
-                <Component 
+                <Component
                   onOpenAdmin={onOpenAdmin}
                   onSelectClient={onSelectClient}
                   currentClient={currentClient}
+                  dashboardData={dashboardData}
+                  onOpenProduction={onOpenProduction}
+                  onOpenDetails={onOpenProduction}
+                  onOpenPost={onOpenPost}
                 />
               </WidgetBase>
-            );
-          })}
-        </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </div>
-
-      {/* DOCK FOR MINIMIZED WIDGETS */}
-      <AnimatePresence>
-        {hiddenLayouts.length > 0 && (
-          <motion.footer
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110]"
-          >
-            <div className="glass px-6 py-4 rounded-[2rem] shadow-3xl border border-white/20 flex items-center gap-4 backdrop-blur-3xl">
-              <div className="flex items-center gap-2 pr-4 border-r border-white/10">
-                <Layout className="w-4 h-4 opacity-40 text-primary" />
-                <span className="text-[10px] font-black uppercase opacity-40 tracking-widest">Minimizados</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {hiddenLayouts.map(layout => {
-                  const config = widgets.find(w => w.id === layout.id);
-                  if (!config) return null;
-                  const Icon = config.icon;
-                  return (
-                    <button
-                      key={layout.id}
-                      onClick={() => onRestoreWidget(layout.id)}
-                      className="group relative p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-primary/20 hover:border-primary/40 transition-all active:scale-90"
-                      title={`Restaurar ${config.title}`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg bg-black/80 text-[8px] font-black uppercase text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none backdrop-blur-md">
-                        {config.title}
-                      </div>
-                    </button>
-                  );
-                })}
-                {isEditing && (
-                  <button 
-                    onClick={() => hiddenLayouts.forEach(l => onRestoreWidget(l.id))}
-                    className="px-4 py-2 bg-primary text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-primary/20 hover:scale-105 transition-all ml-2"
-                  >
-                    Restaurar Tudo
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.footer>
-        )}
-      </AnimatePresence>
-    </div>
+    </>
   );
 }

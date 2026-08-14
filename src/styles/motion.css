@@ -1,0 +1,64 @@
+@keyframes app-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(var(--blur-focus));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+.page-motion {
+  animation: page-enter var(--duration-page) var(--ease-expressive) both;
+}
+
+.app-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+}
+
+.app-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-text-primary) 8%, transparent),
+    transparent
+  );
+  animation: app-shimmer 1.2s ease-in-out infinite;
+}
+
+:where(button, a, input, textarea, select, [role="button"]) {
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-expressive);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+
+  .page-motion {
+    filter: none;
+    transform: none;
+  }
+}

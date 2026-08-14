@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { useState } from 'react';
 import { 
   Lock,
   Eye,
   AlertCircle
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { auth, signInWithEmailAndPassword } from '../lib/auth';
+import { signInWithEmailAndPassword } from '../lib/auth';
 import { BackgroundEffects } from "../components/BackgroundEffects";
+import { Button } from "../components/ui/Button/Button";
+import { Checkbox } from "../components/ui/Checkbox/Checkbox";
+import { IconButton } from "../components/ui/IconButton/IconButton";
+import { Input } from "../components/ui/Input/Input";
 
 import { AgencySetupScreen } from './AgencySetupScreen';
+import styles from './LoginScreen.module.css';
 
 export function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState('');
@@ -31,12 +34,10 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
     setError(null);
     setIsLoading(true);
     try {
-      console.log(`🚀 Iniciando autenticação para: ${username}`);
-      await signInWithEmailAndPassword(auth, username, password, rememberMe);
+      await signInWithEmailAndPassword(username, password, rememberMe);
       onLogin(); 
     } catch (err: any) {
-      console.error("❌ Erro de Autenticação:", err);
-      const errorMessage = err.message || "Erro desconhecido ao autenticar";
+      const errorMessage = err?.message || "Não foi possível autenticar. Verifique os dados e tente novamente.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -44,16 +45,18 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center flex-col relative z-10 w-full px-4 tracking-wide">
+    <div className={styles.root}>
       <BackgroundEffects />
       {isConfigOpen && (
         <AgencySetupScreen 
+          presentation="modal"
           onClose={() => setIsConfigOpen(false)} 
           onSave={() => window.location.reload()}
         />
       )}
-      <div className="glass p-10 md:p-14 rounded-[3rem] w-full max-w-md shadow-2xl flex flex-col items-center border border-white/20">
-        <button 
+      <div className={styles.card}>
+        <IconButton
+          label="Configuração da agência"
           onClick={() => {
             const newCount = configClicks + 1;
             setConfigClicks(newCount);
@@ -62,73 +65,85 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
                setConfigClicks(0);
             }
           }}
-          className="w-16 h-16 rounded-3xl bg-[var(--color-primary)] flex items-center justify-center text-white mb-8 shadow-xl shadow-[var(--color-primary)]/20 hover:scale-110 active:scale-95 transition-all"
+          className="mb-8"
+          variant="primary"
+          size="large"
         >
-          <Lock className="w-8 h-8" />
-        </button>
+          <Lock />
+        </IconButton>
         
 
-        <h1 className="text-3xl font-display font-bold  mb-2 text-center leading-tight">Content Planner</h1>
-        <p className="text-sm opacity-60 mb-8 text-center text-balance">
+        <h1>Content Planner</h1>
+        <p className={styles.subtitle}>
           Insira suas credenciais de administrador.
         </p>
         
         {error && (
-          <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold px-4 py-3 rounded-xl mb-6 flex items-start gap-2 animate-shake">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div id="login-error" role="alert" aria-live="assertive" className={styles.error}>
+            <AlertCircle />
             <p>{error}</p>
           </div>
         )}
 
-        <div className="w-full space-y-4">
+        <form className="w-full space-y-4" onSubmit={(event) => { event.preventDefault(); void handleAuth(); }}>
           <div className="relative">
-            <input 
+            <label className="sr-only" htmlFor="login-username">Usuário</label>
+            <Input
+              id="login-username"
+              name="username"
               type="text" 
+              autoComplete="username"
+              required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Usuário"
-              className="w-full bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all font-medium tracking-wide"
+              className="w-full"
             />
           </div>
 
           <div className="relative">
-            <input 
+            <label className="sr-only" htmlFor="login-password">Senha</label>
+            <Input
+              id="login-password"
+              name="password"
               type={showPassword ? "text" : "password"} 
+              autoComplete="current-password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Senha"
-              className="w-full bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all font-medium tracking-wide"
-              onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+              className="w-full"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'login-error' : undefined}
             />
-            <button 
+            <IconButton
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 opacity-40 hover:opacity-100 transition-opacity"
+              label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              className="absolute right-4 top-1/2 -translate-y-1/2"
             >
-              <Eye className={cn("w-5 h-5", showPassword ? "text-[var(--color-primary)] opacity-100" : "")} />
-            </button>
+              <Eye data-active={showPassword || undefined} />
+            </IconButton>
           </div>
 
           <div className="flex items-center justify-between px-1">
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <input 
-                type="checkbox" 
+            <Checkbox
+                label="Continuar logado"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-black/10 accent-[var(--color-primary)]"
               />
-              <span className="text-xs font-semibold opacity-40 group-hover:opacity-100 transition-opacity">Continuar Logado</span>
-            </label>
           </div>
-        </div>
-        
-        <button 
-          onClick={handleAuth}
-          disabled={isLoading}
-          className="w-full mt-8 bg-[var(--color-primary)] text-white font-bold uppercase text-sm py-5 rounded-3xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-[var(--color-primary)]/30 disabled:opacity-50"
-        >
-          {isLoading ? 'Aguarde...' : 'Autenticar'}
-        </button>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            aria-busy={isLoading}
+            variant="primary"
+            loading={isLoading}
+            className="w-full mt-8"
+          >
+            {isLoading ? 'Autenticando…' : 'Autenticar'}
+          </Button>
+        </form>
       </div>
     </div>
   );

@@ -1,0 +1,5 @@
+.root { text-align: left; }
+.emptyState { padding: var(--space-12); border: 2px dashed var(--color-border-subtle); border-radius: var(--radius-overlay); text-align: center; }
+.icon { width: 3rem; height: 3rem; margin: 0 auto var(--space-4); color: var(--color-text-muted); opacity: .35; }
+.title { font-weight: 700; }
+.description { max-width: 24rem; margin: var(--space-2) auto 0; color: var(--color-text-muted); font-size: var(--font-size-xs); }

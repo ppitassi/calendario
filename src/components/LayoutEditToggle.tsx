@@ -1,26 +1,27 @@
-import React from 'react';
-import { PenTool } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { auth, useAuthState } from '../lib/auth';
+import { PenTool } from "lucide-react";
+import { auth, useAuthState } from "../lib/auth";
 import { useUICopy } from "../contexts/UICopyContext";
+import { Button } from "./ui/Button/Button";
 
 export function LayoutEditToggle() {
   const { isEditMode, setIsEditMode } = useUICopy();
   const [user] = useAuthState(auth);
-  
-  if (!user || user.uid !== 'admin_local') return null;
+  const canCustomizeInterface =
+    user?.role === "admin" ||
+    Boolean(user?.permissions?.canManageBrandSystem);
+
+  if (!canCustomizeInterface) return null;
 
   return (
-    <button
+    <Button
       onClick={() => setIsEditMode(!isEditMode)}
-      className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase  transition-all",
-        isEditMode ? "bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30" : "bg-black/5 dark:bg-white/10 opacity-50 hover:opacity-100"
-      )}
-      title="Ativar Modo de Edição do Layout"
+      variant={isEditMode ? "primary" : "glass"}
+      size="small"
+      icon={<PenTool />}
+      title="Ativar modo de edição da interface"
+      aria-pressed={isEditMode}
     >
-      <PenTool className="w-3.5 h-3.5" />
-      <span className="hidden sm:inline">{isEditMode ? 'Editando Layout' : 'Editar Layout'}</span>
-    </button>
+      {isEditMode ? "Editando interface" : "Personalizar interface"}
+    </Button>
   );
 }

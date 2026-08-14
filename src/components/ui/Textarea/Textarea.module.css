@@ -1,0 +1,3 @@
+.textarea { width: 100%; min-height: 7rem; padding: var(--space-3) var(--space-4); resize: vertical; border: 1px solid var(--glass-border); border-radius: var(--radius-control); outline: 0; background: color-mix(in srgb, var(--glass-surface-strong) 92%, transparent); box-shadow: var(--shadow-control-inset); font-size: .8125rem; line-height: 1.55; backdrop-filter: blur(var(--blur-control)); }
+.textarea:focus { border-color: color-mix(in srgb, var(--color-action-primary) 44%, var(--color-static-white)); box-shadow: var(--shadow-focus); }
+.textarea[aria-invalid="true"] { border-color: var(--color-status-danger); }

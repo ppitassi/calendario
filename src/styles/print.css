@@ -1,0 +1,6 @@
+@media print{body,html{background:#fff!important;color:#000!important;font-size:12pt!important}
+
+@page{margin:0}.print-hide,input,select,textarea{display:none!important}.print-main{max-width:100%!important;margin:0!important;padding:10mm!important}.print-main [style]{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+.pdf-document{background:#fff;color:#18181b;font-family:Arial,sans-serif}.pdf-page{box-sizing:border-box;width:210mm;min-height:297mm;padding:18mm 16mm;background:#fff}.pdf-page+.pdf-page{page-break-before:always;break-before:page}.pdf-page table{width:100%;border-collapse:collapse;font-size:9pt}.pdf-page th,.pdf-page td{padding:3mm;border-bottom:1px solid #e4e4e7;text-align:left;vertical-align:top}
+
+@media print{.pdf-document{padding:0}.pdf-page{width:auto;min-height:261mm;padding:0;margin:0;box-shadow:none;page-break-before:always}}

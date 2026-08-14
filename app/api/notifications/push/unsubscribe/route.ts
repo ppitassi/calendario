@@ -1,0 +1,2 @@
+﻿import {NextRequest,NextResponse} from 'next/server';import {getDbPool} from '../../../../../lib/db';import {notificationSession} from '../../../../../lib/notifications';
+export async function DELETE(req:NextRequest){const s=await notificationSession(req);if(!s)return NextResponse.json({error:'SessÃ£o expirada.'},{status:401});const b=await req.json().catch(()=>({}));await getDbPool().execute('UPDATE push_subscriptions SET revokedAt=NOW() WHERE userId=? AND endpoint=?',[s.uid,String(b.endpoint||'').slice(0,700)]);return NextResponse.json({success:true});}

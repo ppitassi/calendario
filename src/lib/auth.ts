@@ -23,14 +23,14 @@ export const useAuthState = (authObj: any) => {
 
   React.useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('content_planner_token') || sessionStorage.getItem('content_planner_token');
-      
-      // Restore from the HttpOnly cookie first; the legacy token is optional.
+      localStorage.removeItem('content_planner_token');
+      sessionStorage.removeItem('content_planner_token');
+      // A sessão é restaurada exclusivamente pelo cookie HttpOnly.
       if (!_currentUser) {
         try {
-          const result = await api.validateToken(token || undefined);
+          const result = await api.validateToken();
           if (result.success) {
-            auth.currentUser = { ...result.user, session_token: token || result.user?.session_token };
+            auth.currentUser = result.user;
           } else {
             localStorage.removeItem('content_planner_token');
             sessionStorage.removeItem('content_planner_token');
@@ -64,19 +64,39 @@ export const useAuthState = (authObj: any) => {
   return [user, loading, null];
 };
 
-export const signInWithEmailAndPassword = async (authObj: any, email: string, pass: string, rememberMe?: boolean) => {
+export const signInWithEmailAndPassword = async (email: string, pass: string, rememberMe?: boolean) => {
   try {
     const result = await api.login({ email, password: pass, rememberMe });
     if (result.success) {
-      const token = result.user?.session_token || result.session_token;
-      if (rememberMe !== false) {
-        localStorage.setItem('content_planner_token', token);
-        sessionStorage.removeItem('content_planner_token');
-      } else {
-        sessionStorage.setItem('content_planner_token', token);
-        localStorage.removeItem('content_planner_token');
+      localStorage.removeItem('content_planner_token');
+      sessionStorage.removeItem('content_planner_token');
+      auth.currentUser = result.user;
+
+      const pendingAgencySettings = localStorage.getItem('pending_agency_settings');
+      if (pendingAgencySettings) {
+        try {
+          const pending = JSON.parse(pendingAgencySettings);
+          if (String(pending?.theme_config?.primary || '').toLowerCase() === '#6366f1') {
+            localStorage.removeItem('pending_agency_settings');
+          } else {
+            await api.updateAgencySettings(pending);
+          auth.currentUser = {
+            ...auth.currentUser,
+            agencyName: pending.name,
+            agencySlogan: pending.slogan,
+            agencyLogo: pending.logo_url,
+            agencyLogoDark: pending.logo_dark_url,
+            theme_config: pending.theme_config,
+            planning_month: pending.planning_month,
+            deadline_pre: pending.deadline_pre,
+            deadline_final: pending.deadline_final
+          };
+          localStorage.removeItem('pending_agency_settings');
+          }
+        } catch (syncError) {
+          console.error('Não foi possível sincronizar o Brand System pendente:', syncError);
+        }
       }
-      auth.currentUser = { ...result.user, session_token: token };
       return { user: auth.currentUser };
     }
     throw new Error('Erro ao autenticar');

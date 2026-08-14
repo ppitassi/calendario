@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { cn } from '../lib/utils';
 import { useUICopy } from "../contexts/UICopyContext";
+import styles from './EditableText.module.css';
 
 export function EditableText({ id, defaultText, as: Component = 'span', className }: { id: string, defaultText: string, as?: any, className?: string }) {
   const { isEditMode, copy, updateCopy } = useUICopy();
@@ -11,10 +12,11 @@ export function EditableText({ id, defaultText, as: Component = 'span', classNam
 
   if (isEditMode) {
     if (isEditing) {
-      return (
+      return (<>
+        {/* style-architecture-exception: inline editor must inherit the surrounding text metrics instead of control metrics. */}
         <input 
           autoFocus
-          className={cn("bg-transparent outline-none border-b-2 border-[var(--color-primary)] w-full font-inherit text-inherit", className)}
+          className={cn(styles.input, className)}
           value={tempText}
           onChange={(e) => setTempText(e.target.value)}
           onBlur={() => {
@@ -29,7 +31,7 @@ export function EditableText({ id, defaultText, as: Component = 'span', classNam
             }
           }}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        />
+        /></>
       );
     }
 
@@ -41,7 +43,7 @@ export function EditableText({ id, defaultText, as: Component = 'span', classNam
           setTempText(currentText);
           setIsEditing(true);
         }}
-        className={cn(className, "cursor-pointer border-b-2 border-dashed border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors inline-block")}
+        className={cn(className, styles.editable)}
         title="Clique para editar texto"
       >
         {currentText}

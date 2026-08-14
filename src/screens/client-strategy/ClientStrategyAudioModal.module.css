@@ -1,0 +1,2 @@
+.description { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.actions { display: flex; gap: var(--space-3); }

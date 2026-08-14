@@ -1,122 +1,110 @@
-import React, { useRef } from 'react';
-import { 
-  Image as ImageIcon, 
-  Upload, 
-  X,
-  Video
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from "react";
+import { FileText, ImageIcon, Upload, X, Video } from "lucide-react";
 import { PostData } from "../types";
 import { api } from "../lib/api";
-import { auth } from '../lib/auth';
+import { useNotifications } from "../contexts/NotificationContext";
+import { Button } from "./ui/Button/Button";
+import { IconButton } from "./ui/IconButton/IconButton";
+import styles from "./SmartMediaUploader.module.css";
+export { compressImage } from "../lib/image-compressor";
 
-export const compressImage = (file: File, maxWidth = 512, maxHeight = 512): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          // Garante transparência limpando o canvas antes de desenhar
-          ctx.clearRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Usa PNG para preservar transparência
-          resolve(canvas.toDataURL('image/png', 0.8));
-        } else {
-          resolve(event.target?.result as string);
-        }
-      };
-      img.onerror = (error) => reject(error);
-      img.src = event.target?.result as string;
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-};
-
-export function SmartMediaUploader({ 
-  currentPost, 
+export function SmartMediaUploader({
+  currentPost,
   onUpdate,
-  clientName = 'Geral',
-  clientId = 'post'
-}: { 
-  currentPost: PostData, 
-  onUpdate: (updates: Partial<PostData>) => void,
-  clientName?: string,
-  clientId?: string
+  clientId = "post",
+}: {
+  currentPost: PostData;
+  onUpdate: (updates: Partial<PostData>) => void;
+  clientId?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [artworkVersions, setArtworkVersions] = useState<any[]>([]);
+  const [failedFiles, setFailedFiles] = useState<Array<{ file: File; reason: string }>>([]);
+  const [documents, setDocuments] = useState<Array<{ assetId: string; originalName: string; url: string; logicalPath: string; checksum: string }>>([]);
+  const { toast } = useNotifications();
+  const refreshVersions = () => (currentPost.id ? api.getArtworkVersions(currentPost.id).then(setArtworkVersions).catch(() => setArtworkVersions([])) : Promise.resolve());
+  useEffect(() => {
+    void refreshVersions();
+    if (currentPost.id) void api.getPostMediaAssets(String(currentPost.id)).then((items) => setDocuments(items.filter((item) => item.visibility === "protected"))).catch(() => setDocuments([]));
+  }, [currentPost.id]);
+  const uploadDocuments = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length || !currentPost.id) return;
+    setIsUploading(true);
+    for (const file of files) {
+      try {
+        const uploaded = await api.uploadMediaFile(file, clientId, currentPost.date, String(currentPost.id), "post_document");
+        setDocuments((items) => [...items, { ...uploaded, originalName: file.name }]);
+      } catch (error: any) { toast(error?.response?.data?.error || `Falha ao enviar ${file.name}.`, "error"); }
+    }
+    setIsUploading(false);
+    event.target.value = "";
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isUploading) return;
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files) as File[];
-      
+      const allowed = new Set(["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm", "video/quicktime"]);
+      const maxItems = currentPost.type === "carousel" ? 10 : currentPost.type === "post" || currentPost.type === "promoted" ? 2 : 1;
+      if (files.length > maxItems || files.some((file) => !allowed.has(file.type) || !file.size)) {
+        toast(`Selecione ate ${maxItems} arquivos JPEG, PNG, WebP, MP4, WebM ou MOV validos.`, "error");
+        e.currentTarget.value = "";
+        return;
+      }
+      setIsUploading(true);
+
       let newFeed = Array.isArray(currentPost.feedImages) ? [...currentPost.feedImages] : currentPost.feedImages ? [currentPost.feedImages] : [];
-      let newStory = currentPost.storyImage || '';
-      let newCover = currentPost.coverImage || '';
-      let newLinkedinCover = currentPost.linkedinCover || '';
+      let newStory = currentPost.storyImage || "";
+      let newCover = currentPost.coverImage || "";
+      let newLinkedinCover = currentPost.linkedinCover || "";
 
-      const isReel = currentPost.type === 'reel';
-      const isLinkedin = currentPost.type === 'linkedin';
+      const isReel = currentPost.type === "reel";
+      const isLinkedin = currentPost.type === "linkedin";
 
-      const designerName = auth.currentUser?.displayName || auth.currentUser?.email || 'Designer';
       const postDate = currentPost.date;
-      let newVideoUrl = currentPost.videoUrl || '';
+      let newVideoUrl = currentPost.videoUrl || "";
 
-      for (const file of files) {
-        if (file.type.startsWith('video/')) {
-          const uploaded = await api.uploadMediaFile(file, clientId, postDate);
-          newVideoUrl = uploaded.url;
-          continue;
-        }
-        const compressed = await compressImage(file, 800, 800);
-        
-        // Upload to server and get URL
-        const fileName = `${clientId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        const uploadedUrl = await api.uploadImage(compressed, fileName, 'posts', clientName, postDate, designerName);
-
-        const img = new Image();
-        img.src = uploadedUrl;
-        await new Promise(resolve => {
-          img.onload = () => {
-            const ratio = img.naturalWidth / img.naturalHeight;
-            
-            if (isReel) {
-              newCover = uploadedUrl;
-            } else if (isLinkedin) {
-              newLinkedinCover = uploadedUrl;
+      const failures: Array<{ file: File; name: string; reason: string }> = [];
+      const uploadedAssetIds: string[] = [];
+      for (const [fileIndex, file] of files.entries()) {
+        try {
+          if (file.type.startsWith("video/")) {
+            const uploaded = await api.uploadMediaFile(file, clientId, postDate, String(currentPost.id || clientId), "post_video", fileIndex + 1);
+            newVideoUrl = uploaded.url;
+            if (uploaded.assetId) uploadedAssetIds.push(uploaded.assetId);
+            continue;
+          }
+          const bitmap = await createImageBitmap(file);
+          const ratio = bitmap.width / bitmap.height;
+          bitmap.close();
+          const category = isReel ? "post_cover" : isLinkedin ? "post_linkedin_cover" : ratio <= 0.6 ? "post_story" : "post_feed";
+          const uploaded = await api.uploadMediaFile(file, clientId, postDate, String(currentPost.id || clientId), category, fileIndex + 1);
+          const uploadedUrl = uploaded.url;
+          if (uploaded.assetId) uploadedAssetIds.push(uploaded.assetId);
+          if (isReel) {
+            newCover = uploadedUrl;
+          } else if (isLinkedin) {
+            newLinkedinCover = uploadedUrl;
+          } else {
+            if (ratio <= 0.6) {
+              newStory = uploadedUrl;
             } else {
-              // Auto detect Feed vs Story
-              if (ratio <= 0.6) {
-                newStory = uploadedUrl; 
-              } else {
-                newFeed.push(uploadedUrl);
-              }
+              newFeed.push(uploadedUrl);
             }
-            resolve(null);
-          };
-        });
+          }
+        } catch (error: any) {
+          failures.push({
+            file,
+            name: file.name,
+            reason: error?.response?.data?.error || error?.message || "Não foi possível concluir o upload.",
+          });
+        }
       }
 
-      if (currentPost.type !== 'carousel') {
+      if (currentPost.type !== "carousel") {
         newFeed = newFeed.slice(0, 1);
       } else {
         newFeed = newFeed.slice(0, 10);
@@ -126,130 +114,193 @@ export function SmartMediaUploader({
         feedImages: newFeed,
         storyImage: newStory,
         coverImage: newCover,
-        linkedinCover: newLinkedinCover
-        ,videoUrl: newVideoUrl
+        linkedinCover: newLinkedinCover,
+        videoUrl: newVideoUrl,
       });
+      if (uploadedAssetIds.length && currentPost.id) {
+        try {
+          const currentVersionAssetIds = (artworkVersions[0]?.items || []).map((item: any) => String(item.mediaAssetId || "")).filter(Boolean);
+          await api.createArtworkVersion(currentPost.id, Array.from(new Set([...currentVersionAssetIds, ...uploadedAssetIds])));
+          await refreshVersions();
+        } catch (error: any) {
+          toast(error?.response?.data?.error || "A mídia foi salva, mas a versão da arte não foi registrada.", "error");
+        }
+      }
+      if (failures.length)
+        toast(
+          failures.length === 1
+            ? `Não foi possível enviar ${failures[0].name}. ${failures[0].reason}`
+            : `${failures.length} arquivos não foram enviados: ${failures.map((item) => `${item.name} — ${item.reason}`).join("; ")}. Os demais foram preservados.`,
+          "error",
+        );
+      else toast("Midia enviada com sucesso.", "success");
+      setFailedFiles(failures.map(({ file, reason }) => ({ file, reason })));
+      setIsUploading(false);
     }
-    
-    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const retryFailedFiles = () => {
+    if (isUploading || !failedFiles.length || !fileInputRef.current) return;
+    const transfer = new DataTransfer();
+    failedFiles.forEach((item) => transfer.items.add(item.file));
+    fileInputRef.current.files = transfer.files;
+    fileInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
   };
 
   const renderImageItem = (url: string, onRemove: () => void, idx: number | string) => (
-    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden group shadow-md border border-black/10 dark:border-white/10">
-      <img src={url} alt="Uploaded" className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-        <button onClick={onRemove} className="p-1 bg-white/20 hover:bg-white/40 rounded-full backdrop-blur-sm text-white">
-          <X className="w-4 h-4" />
-        </button>
+    <div key={idx} className={styles.thumbnail}>
+      <img src={url} alt="Uploaded" />
+      <div className={styles.thumbnailOverlay}>
+        <IconButton label="Remover mídia" onClick={onRemove} size="small" variant="glass">
+          <X />
+        </IconButton>
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4">
-         <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-6 rounded-2xl border-2 border-dashed border-[var(--color-primary)]/40 hover:border-[var(--color-primary)] bg-[var(--color-primary)]/5 hover:bg-[var(--color-primary)]/10 transition-all flex flex-col items-center justify-center gap-2 group"
-          >
-            <Upload className="w-6 h-6 text-[var(--color-primary)] group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-semibold uppercase text-[var(--color-primary)] ">
-               {currentPost.type === 'reel' || currentPost.type === 'linkedin' 
-                ? 'Upload de Vídeo ou Capa' 
-                : 'Upload de Mídia (Detecta Feed / Story)'}
-            </span>
-            <span className="text-xs opacity-60">Mídias são enviadas diretamente ao Nextcloud</span>
-          </button>
-          
-          <input 
-            type="file" 
-            multiple={currentPost.type === 'carousel' || currentPost.type === 'post' || currentPost.type === 'promoted'}
-            accept="image/*,video/mp4,video/webm,video/quicktime"
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            className="hidden" 
-          />
+    <div className={styles.root}>
+      {artworkVersions.length > 0 && (
+        <details className={styles.versions}>
+          <summary>
+            Arte atual: V{artworkVersions[0].versionNumber} · {artworkVersions[0].status}
+          </summary>
+          <div className={styles.versionList}>
+            {artworkVersions.map((version) => (
+              <div key={version.id} className={styles.versionRow}>
+                <strong>
+                  Versão {version.versionNumber}
+                  {version.versionNumber === artworkVersions[0].versionNumber ? " · Atual" : ""}
+                </strong>
+                <span>{version.status}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+      <div className={styles.uploadArea}>
+        {/* style-architecture-button-exception: the upload dropzone is a feature-specific file interaction, not a standard action button. */}
+        <button
+          type="button"
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
+          className={styles.uploadTrigger}
+        >
+          <Upload />
+          <span className={styles.uploadLabel}>
+            {isUploading
+              ? "Enviando..."
+              : currentPost.type === "reel" || currentPost.type === "linkedin"
+                ? "Upload de Vídeo ou Capa"
+                : "Upload de Mídia (Detecta Feed / Story)"}
+          </span>
+          <span className={styles.uploadHint}>O servidor preserva o original; o Nextcloud será sincronizado quando configurado.</span>
+        </button>
+
+        {/* style-architecture-exception: native file input is required for browser upload integration. */}
+        <input
+          type="file"
+          multiple={currentPost.type === "carousel" || currentPost.type === "post" || currentPost.type === "promoted"}
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+          disabled={isUploading}
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <Button disabled={isUploading || !currentPost.id} onClick={() => documentInputRef.current?.click()} icon={<FileText />}>
+          Anexar documentos (até 100 MB)
+        </Button>
+        {/* style-architecture-exception: native file input is required for browser upload integration. */}
+        <input ref={documentInputRef} type="file" multiple disabled={isUploading} onChange={uploadDocuments} className="hidden" />
+        {documents.length > 0 && <div className={styles.documentList}>{documents.map((document) => <a key={document.assetId} href={document.url} className={styles.documentLink} download><FileText />{document.originalName}</a>)}</div>}
+        {failedFiles.length > 0 && (
+          <div className={styles.failures} role="alert">
+            <div className={styles.failureList}>
+              {failedFiles.map(({ file, reason }) => (
+                <div key={`${file.name}:${file.size}:${file.lastModified}`}>
+                  <strong>{file.name}</strong>
+                  <span>— {reason}</span>
+                </div>
+              ))}
+            </div>
+            <Button disabled={isUploading} onClick={retryFailedFiles} className="mt-3" variant="danger" size="small">
+              Tentar novamente {failedFiles.length === 1 ? "o arquivo" : `os ${failedFiles.length} arquivos`}
+            </Button>
+          </div>
+        )}
       </div>
 
       {currentPost.videoUrl && (
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase opacity-60 flex items-center gap-2">
-            <Video className="w-4 h-4" /> Vídeo no Nextcloud
+        <div className={styles.mediaSection}>
+          <label className={styles.mediaLabel}>
+            <Video /> Vídeo do post
           </label>
-          <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10">
-            <video src={currentPost.videoUrl} controls preload="metadata" className="w-full max-h-72 object-contain" />
-            <button
-              type="button"
-              onClick={() => onUpdate({ videoUrl: '' })}
-              className="absolute right-2 top-2 p-2 bg-black/60 text-white rounded-full"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div className={styles.videoFrame}>
+            <video src={currentPost.videoUrl} controls preload="metadata" />
+            <IconButton label="Remover vídeo" type="button" onClick={() => onUpdate({ videoUrl: "" })} className="absolute right-2 top-2" variant="glass">
+              <X />
+            </IconButton>
           </div>
         </div>
       )}
 
       {(() => {
-        const isStandardPost = currentPost.type === 'post' || currentPost.type === 'promoted' || currentPost.type === 'carousel';
+        const isStandardPost = currentPost.type === "post" || currentPost.type === "promoted" || currentPost.type === "carousel";
         if (!isStandardPost) return null;
 
-        const safeFeedImages = Array.isArray(currentPost.feedImages) 
-          ? currentPost.feedImages 
-          : currentPost.feedImages ? [currentPost.feedImages] : [];
+        const safeFeedImages = Array.isArray(currentPost.feedImages) ? currentPost.feedImages : currentPost.feedImages ? [currentPost.feedImages] : [];
 
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-               <label className="text-xs font-semibold uppercase opacity-60 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4" /> Feed ({safeFeedImages.length}/{currentPost.type === 'carousel' ? 10 : 1})
-               </label>
-               {safeFeedImages.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {safeFeedImages.map((url, idx) => (
-                      renderImageItem(url, () => {
-                         const newFeed = [...safeFeedImages];
-                         newFeed.splice(idx, 1);
-                         onUpdate({ feedImages: newFeed });
-                      }, idx)
-                    ))}
-                  </div>
-               )}
+          <div className={styles.mediaGroup}>
+            <div className={styles.mediaSection}>
+              <label className={styles.mediaLabel}>
+                <ImageIcon /> Feed ({safeFeedImages.length}/{currentPost.type === "carousel" ? 10 : 1})
+              </label>
+              {safeFeedImages.length > 0 && (
+                <div className={styles.thumbnailList}>
+                  {safeFeedImages.map((url, idx) =>
+                    renderImageItem(
+                      url,
+                      () => {
+                        const newFeed = [...safeFeedImages];
+                        newFeed.splice(idx, 1);
+                        onUpdate({ feedImages: newFeed });
+                      },
+                      idx,
+                    ),
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-               <label className="text-xs font-semibold uppercase opacity-60 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4" /> Story (Formato Vertical)
-               </label>
-               {currentPost.storyImage && (
-                  <div className="flex flex-wrap gap-2">
-                    {renderImageItem(currentPost.storyImage, () => onUpdate({ storyImage: '' }), 'story')}
-                  </div>
-               )}
+            <div className={styles.mediaSection}>
+              <label className={styles.mediaLabel}>
+                <ImageIcon /> Story (Formato Vertical)
+              </label>
+              {currentPost.storyImage && <div className={styles.thumbnailList}>{renderImageItem(currentPost.storyImage, () => onUpdate({ storyImage: "" }), "story")}</div>}
             </div>
           </div>
         );
       })()}
 
-      {currentPost.type === 'reel' && currentPost.coverImage && (
-         <div className="space-y-2">
-             <label className="text-xs font-semibold uppercase  opacity-60 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" /> Capa do Reel
-             </label>
-             <div className="flex flex-wrap gap-2">
-               {renderImageItem(currentPost.coverImage, () => onUpdate({ coverImage: '' }), 'reel-cover')}
-             </div>
-          </div>
+      {currentPost.type === "reel" && currentPost.coverImage && (
+        <div className={styles.mediaSection}>
+          <label className={styles.mediaLabel}>
+            <ImageIcon /> Capa do Reel
+          </label>
+          <div className={styles.thumbnailList}>{renderImageItem(currentPost.coverImage, () => onUpdate({ coverImage: "" }), "reel-cover")}</div>
+        </div>
       )}
 
-      {currentPost.type === 'linkedin' && currentPost.linkedinCover && (
-         <div className="space-y-2">
-             <label className="text-xs font-semibold uppercase  opacity-60 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" /> Banner do Artigo
-             </label>
-             <div className="flex flex-wrap gap-2">
-               {renderImageItem(currentPost.linkedinCover, () => onUpdate({ linkedinCover: '' }), 'linkedin-cover')}
-             </div>
-          </div>
+      {currentPost.type === "linkedin" && currentPost.linkedinCover && (
+        <div className={styles.mediaSection}>
+          <label className={styles.mediaLabel}>
+            <ImageIcon /> Banner do Artigo
+          </label>
+          <div className={styles.thumbnailList}>{renderImageItem(currentPost.linkedinCover, () => onUpdate({ linkedinCover: "" }), "linkedin-cover")}</div>
+        </div>
       )}
     </div>
   );

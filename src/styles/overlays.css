@@ -1,0 +1,3 @@
+.glass-overlay{border:1px solid var(--glass-border-highlight);background:color-mix(in srgb,var(--glass-surface-strong) 94%,transparent);box-shadow:var(--shadow-overlay);backdrop-filter:blur(var(--blur-overlay)) saturate(140%)}
+.liquid-dropdown-menu,.liquid-tooltip{border:1px solid var(--glass-border-highlight);background:linear-gradient(145deg,color-mix(in srgb,var(--glass-surface-strong) 96%,var(--color-static-white) 4%),var(--glass-surface));box-shadow:var(--shadow-overlay);backdrop-filter:blur(var(--blur-dropdown)) saturate(145%)}
+.liquid-dropdown-option-active{background:color-mix(in srgb,var(--color-action-primary) 12%,var(--glass-surface-strong));color:var(--color-action-primary)}

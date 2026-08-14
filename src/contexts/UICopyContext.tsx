@@ -26,9 +26,7 @@ export function UICopyProvider({ children }: { children: React.ReactNode }) {
       try {
         const data = await api.getSettings('ui_copy');
         if (data) setCopy(data);
-      } catch (e) {
-        console.error("Failed to load UI copy settings", e);
-      }
+      } catch {}
     };
     loadCopy();
   }, []);
@@ -38,9 +36,7 @@ export function UICopyProvider({ children }: { children: React.ReactNode }) {
     setCopy(newCopy);
     try {
        await api.saveSettings('ui_copy', newCopy);
-    } catch (e) {
-       console.error("Failed to save UI copy settings", e);
-    }
+    } catch {}
   };
 
   return (

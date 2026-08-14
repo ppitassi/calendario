@@ -1,17 +1,99 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Component, ReactNode, useEffect, useState } from 'react';
 import { OfflineScreen } from '../src/components/OfflineScreen';
+import { Button } from '../src/components/ui/Button/Button';
 import { ThemeProvider } from '../src/components/ThemeProvider';
 import { NotificationProvider } from '../src/contexts/NotificationContext';
 import { UICopyProvider } from '../src/contexts/UICopyContext';
 import { auth, useAuthState } from '../src/lib/auth';
 import { PlannerScreen } from '../src/screens/PlannerScreen';
 import { api } from '../src/lib/api';
+import { AppLoading } from '../src/components/AppStatus';
+import { AppNotificationsProvider } from '../src/contexts/AppNotificationsContext';
+import { AppFallback } from '../src/components/AppFallback';
+
+const VIEW_STATE_KEY = 'content_planner_view_state';
+
+class PlannerRecoveryBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('[planner-interface]', error);
+  }
+
+  private returnToDashboard = () => {
+    localStorage.removeItem(VIEW_STATE_KEY);
+    window.location.assign('/');
+  };
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return <AppFallback title="O Planejador de Calendários encontrou um erro" message="Seus posts e clientes continuam salvos. Volte ao Dashboard para restaurar somente a navegação da interface." actions={<><Button onClick={this.returnToDashboard} variant="primary">Voltar ao Dashboard</Button><Button onClick={() => this.setState({ error: null })} variant="ghost">Tentar novamente</Button></>} details={<details><summary>Detalhes técnicos</summary><code>{this.state.error.message}</code></details>} />;
+  }
+}
 
 export default function PlannerApp() {
   const [user, loading] = useAuthState(auth);
   const [isServerOffline, setIsServerOffline] = useState(false);
+  const [pendingBrandSettings, setPendingBrandSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('recover') === '1') {
+      localStorage.removeItem(VIEW_STATE_KEY);
+      url.searchParams.delete('recover');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const pending = localStorage.getItem('pending_agency_settings');
+      const parsed = pending ? JSON.parse(pending) : null;
+      if (String(parsed?.theme_config?.primary || '').toLowerCase() === '#6366f1') {
+        localStorage.removeItem('pending_agency_settings');
+        setPendingBrandSettings(null);
+      } else {
+        setPendingBrandSettings(parsed);
+      }
+    } catch {
+      setPendingBrandSettings(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user || !pendingBrandSettings) return;
+    let cancelled = false;
+    void api.updateAgencySettings(pendingBrandSettings)
+      .then(() => {
+        if (cancelled) return;
+        auth.currentUser = {
+          ...auth.currentUser,
+          agencyName: pendingBrandSettings.name,
+          agencySlogan: pendingBrandSettings.slogan,
+          agencyLogo: pendingBrandSettings.logo_url,
+          agencyLogoDark: pendingBrandSettings.logo_dark_url,
+          theme_config: pendingBrandSettings.theme_config,
+          planning_month: pendingBrandSettings.planning_month,
+          deadline_pre: pendingBrandSettings.deadline_pre,
+          deadline_final: pendingBrandSettings.deadline_final
+        };
+        localStorage.removeItem('pending_agency_settings');
+        setPendingBrandSettings(null);
+      })
+      .catch(() => {
+        // A configuração permanece na fila local e será reenviada no próximo acesso.
+      });
+    return () => { cancelled = true; };
+  }, [user, pendingBrandSettings]);
 
   useEffect(() => {
     document.documentElement.classList.toggle(
@@ -68,24 +150,28 @@ export default function PlannerApp() {
     };
 
     void checkServer();
-    const interval = window.setInterval(checkServer, 5000);
+    const interval = window.setInterval(checkServer, 30_000);
     return () => {
       mounted = false;
       window.clearInterval(interval);
     };
   }, []);
 
-  if (loading) return null;
+  if (loading) return <AppLoading label="Validando sessão" />;
 
   return (
     <ThemeProvider
-      themeConfig={user?.theme_config}
+      themeConfig={pendingBrandSettings?.theme_config || user?.theme_config}
       defaultTheme={user?.ui_preferences?.theme || 'system'}
     >
       <UICopyProvider>
         <NotificationProvider>
-          {isServerOffline && <OfflineScreen />}
-          <PlannerScreen />
+          <AppNotificationsProvider>
+            {isServerOffline && <OfflineScreen />}
+            <PlannerRecoveryBoundary>
+              <PlannerScreen />
+            </PlannerRecoveryBoundary>
+          </AppNotificationsProvider>
         </NotificationProvider>
       </UICopyProvider>
     </ThemeProvider>

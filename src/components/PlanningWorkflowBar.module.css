@@ -1,0 +1,91 @@
+.root {
+  position: relative;
+  padding: var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  background: var(--glass-surface-subtle);
+  box-shadow: var(--shadow-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+}
+
+.compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.compact .summaryRow {
+  gap: var(--space-3);
+}
+
+.compact .summaryText {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compact .phase {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-action-primary) 10%, transparent);
+}
+
+.compact > button {
+  min-height: var(--control-height-sm);
+  margin: 0;
+}
+
+.summaryRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.summaryText { min-width: 0; }
+
+.phase {
+  color: var(--color-action-primary);
+  font-size: var(--font-size-3xs);
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.summary {
+  margin-top: var(--space-1);
+  overflow: hidden;
+  font-size: .6875rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactSummary { margin-top: 0; font-size: var(--font-size-2xs); }
+
+.details {
+  max-height: 8rem;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  overflow-y: auto;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.compactDetails {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  inset: 100% 0 auto;
+  margin-top: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-control);
+  background: var(--glass-surface-strong);
+  box-shadow: var(--shadow-overlay);
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.block {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-3xs);
+}

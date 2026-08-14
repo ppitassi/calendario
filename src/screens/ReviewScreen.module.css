@@ -1,0 +1,16 @@
+.root { position: relative; }
+.floatingBar { position: fixed; right: 0; bottom: var(--space-8); left: 0; z-index: var(--z-header); width: min(42rem,90%); margin-inline: auto; }
+.approvedOverlay { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; flex-direction: column; padding: var(--space-8); background: var(--color-action-primary); color: var(--color-text-on-action); text-align: center; }
+.approvedContent { display: grid; gap: var(--space-8); }
+.approvedIcon { display: flex; width: 8rem; height: 8rem; align-items: center; justify-content: center; margin-inline: auto; border: 1px solid color-mix(in srgb,var(--color-text-on-action) 30%,transparent); border-radius: var(--radius-overlay); background: color-mix(in srgb,var(--color-text-on-action) 20%,transparent); backdrop-filter: blur(var(--glass-blur)); }
+.approvedIcon svg { width: 4rem; height: 4rem; }
+.approvedContent h2 { margin-bottom: var(--space-4); font-family: var(--font-display); font-size: clamp(2.25rem,5vw,3rem); font-weight: 900; }
+.approvedContent p { max-width: 28rem; margin-inline: auto; font-size: var(--font-size-xl); opacity: .8; }
+.approvedContent .closeHint { padding-top: var(--space-12); font-size: var(--font-size-sm); opacity: .6; }
+.modalIntro { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); }
+.modalIcon { display: flex; width: 3rem; height: 3rem; align-items: center; justify-content: center; border-radius: var(--radius-card); background: color-mix(in srgb,var(--color-status-danger) 10%,transparent); color: var(--color-status-danger); }
+.modalIcon[data-action="approve_with_caveats"] { background: color-mix(in srgb,var(--color-status-warning) 10%,transparent); color: var(--color-status-warning); }
+.modalIcon svg { width: 1.5rem; height: 1.5rem; }
+.modalIntro p { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.noteField { margin-bottom: var(--space-6); }
+.modalActions { display: flex; gap: var(--space-4); }

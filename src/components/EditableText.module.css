@@ -1,0 +1,4 @@
+.input { width: 100%; border: 0; border-bottom: 2px solid var(--color-action-primary); outline: 0; background: transparent; color: inherit; font: inherit; }
+.editable { display: inline-block; cursor: pointer; border-bottom: 2px dashed var(--color-action-primary); transition: background var(--duration-fast); }
+.editable:hover { background: color-mix(in srgb, var(--color-action-primary) 10%, transparent); }
+.editable:focus-visible { border-radius: var(--radius-detail); outline: none; box-shadow: var(--shadow-focus); }

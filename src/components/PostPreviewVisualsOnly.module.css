@@ -1,0 +1,20 @@
+.placeholder,.preview { position: relative; width: 100%; overflow: hidden; margin-inline: auto; border: 4px solid var(--color-bg-surface); border-radius: var(--radius-overlay); box-shadow: var(--shadow-overlay); cursor: pointer; transform: rotate(1deg); transition: transform var(--duration-fast); }
+.preview:hover { transform: rotate(1deg) scale(1.05); }
+.placeholder:focus-visible,.preview:focus-visible { outline: none; box-shadow: var(--shadow-focus),var(--shadow-overlay); }
+.placeholder { min-height: 25rem; height: 100%; cursor: default; }
+.placeholder>img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: .5; }
+.placeholder>div { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: var(--space-8); background: color-mix(in srgb,var(--color-bg-inverse) 20%,transparent); backdrop-filter: blur(var(--glass-blur)); color: var(--color-text-on-action); text-align: center; }
+.placeholder svg { width: 4rem; height: 4rem; margin-bottom: var(--space-4); opacity: .4; }
+.placeholder strong { font-size: var(--font-size-xl); letter-spacing: .1em; text-transform: uppercase; }
+.placeholder p { margin-top: var(--space-2); font-size: var(--font-size-sm); opacity: .65; }
+.preview { max-width: 25rem; aspect-ratio: 4/5; }
+.image,.video { width: 100%; height: 100%; }
+.image { object-fit: cover; }
+.video { background: var(--color-bg-inverse); object-fit: contain; }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb,var(--color-bg-inverse) 40%,transparent); opacity: 0; transition: opacity var(--duration-fast); }
+.preview:hover .overlay,.preview:focus-within .overlay { opacity: 1; }
+.expandLabel { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); border-radius: var(--radius-pill); background: var(--color-preview-light); color: var(--color-preview-light-text); font-weight: 700; transform: translateY(var(--space-4)); transition: transform var(--duration-fast); }
+.preview:hover .expandLabel,.preview:focus-within .expandLabel { transform: translateY(0); }
+.expandLabel svg { width: 1rem; height: 1rem; }
+.carouselBadge { position: absolute; top: var(--space-4); right: var(--space-4); display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-4); border-radius: var(--radius-pill); background: color-mix(in srgb,var(--color-bg-inverse) 80%,transparent); box-shadow: var(--shadow-surface); backdrop-filter: blur(var(--glass-blur)); color: var(--color-text-on-action); font-size: var(--font-size-sm); font-weight: 700; }
+.carouselBadge svg { width: 1rem; height: 1rem; }

@@ -1,0 +1,10 @@
+.page { display: flex; min-height: 100dvh; align-items: center; justify-content: center; padding: var(--space-6); background: var(--color-bg-canvas); color: var(--color-text-primary); }
+.card { width: 100%; max-width: 32rem; padding: var(--space-8); text-align: center; }
+.eyebrow { color: var(--color-action-primary); font-size: var(--font-size-xs); font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.title { margin-top: var(--space-3); font-family: var(--font-display); font-size: 1.5rem; font-weight: 900; }
+.message { margin-top: var(--space-3); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.actions { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-6); }
+.details { margin-top: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-xs); text-align: left; }
+.details code { display: block; margin-top: var(--space-2); overflow-wrap: anywhere; }
+
+@media (width < 36rem) { .actions { align-items: stretch; flex-direction: column; } }

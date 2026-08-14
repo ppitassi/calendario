@@ -1,0 +1,2 @@
+import {NextRequest,NextResponse} from 'next/server';import {notificationSession} from '../../../../../lib/notifications';
+export async function GET(req:NextRequest){if(!await notificationSession(req))return NextResponse.json({error:'Sessão expirada.'},{status:401});const key=process.env.VAPID_PUBLIC_KEY;if(!key)return NextResponse.json({error:'Push não configurado.'},{status:503});return NextResponse.json({publicKey:key});}

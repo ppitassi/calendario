@@ -1,0 +1,9 @@
+.list { display: flex; flex-direction: column; gap: var(--space-3); text-align: left; }
+.item { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4); border: 1px solid var(--glass-border); border-radius: var(--radius-card); background: color-mix(in srgb, var(--color-text-primary) 5%, transparent); color: inherit; transition: border-color var(--duration-fast), background var(--duration-fast); }
+.item:hover { border-color: color-mix(in srgb, var(--color-action-primary) 30%, transparent); background: color-mix(in srgb, var(--color-action-primary) 4%, transparent); }
+.copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.rank { color: var(--color-text-muted); font-size: var(--font-size-3xs); font-weight: 900; letter-spacing: var(--tracking-heavy); text-transform: uppercase; }
+.term { max-width: 11.25rem; overflow: hidden; font-size: var(--font-size-sm); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; transition: color var(--duration-fast); }
+.item:hover .term { color: var(--color-action-primary); }
+.icon { width: .75rem; height: .75rem; color: var(--color-text-muted); transition: color var(--duration-fast); }
+.item:hover .icon { color: var(--color-action-primary); }

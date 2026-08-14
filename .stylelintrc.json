@@ -1,0 +1,23 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "at-rule-no-unknown": [true, { "ignoreAtRules": ["theme", "custom-variant", "property", "apply", "utility", "variant", "source"] }],
+    "selector-class-pattern": "^[a-z][a-zA-Z0-9-]*$",
+    "declaration-no-important": [true, { "ignore": ["inside-media"] }],
+    "selector-max-specificity": "0,4,0",
+    "selector-max-compound-selectors": 5,
+    "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["global"] }],
+    "color-named": null,
+    "declaration-block-single-line-max-declarations": null,
+    "property-no-deprecated": null,
+    "font-family-no-missing-generic-family-keyword": true,
+    "no-descending-specificity": null,
+    "custom-property-pattern": "^[a-z][a-z0-9-]+$"
+  },
+  "overrides": [
+    {
+      "files": ["src/styles/print.css"],
+      "rules": { "declaration-no-important": null }
+    }
+  ]
+}

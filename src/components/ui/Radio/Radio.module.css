@@ -1,0 +1,37 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  appearance: none;
+  border: 1px solid var(--glass-border-highlight);
+  border-radius: var(--radius-circle);
+  background: var(--glass-surface-strong);
+  display: grid;
+  place-items: center;
+}
+
+.input::after {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-circle);
+  background: var(--color-action-primary);
+  transform: scale(0);
+  transition: transform var(--duration-fast);
+}
+
+.input:checked {
+  border-color: var(--color-action-primary);
+}
+
+.input:checked::after {
+  transform: scale(1);
+}

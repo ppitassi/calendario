@@ -1,0 +1,14 @@
+*,*::before,*::after{box-sizing:border-box}
+html{min-width:320px;background:var(--color-bg-canvas)}
+body{min-width:320px;min-height:100dvh;margin:0;overflow-x:hidden;background:var(--background-override,var(--color-bg-canvas));color:var(--color-text-primary);font-family:var(--font-body);font-weight:var(--font-weight-body);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer} button:disabled{cursor:not-allowed}
+img,video,canvas,svg{max-width:100%}
+::selection{background:var(--color-action-primary);color:var(--color-action-on-primary)}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:color-mix(in srgb,var(--glass-surface),transparent 80%);border-radius:var(--radius-control)}::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:var(--radius-control);background:color-mix(in srgb,var(--color-action-primary),transparent 40%);background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:var(--color-action-primary);background-clip:padding-box}
+.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+.app-page{width:100%;max-width:var(--content-max);margin-inline:auto;padding:var(--space-page)}
+:where(p,h1,h2,h3,h4,h5,h6,span,label,a,button,li){overflow-wrap:break-word;word-break:normal}
+.liquid-app-shell{background:var(--color-bg-canvas);transition:background-color var(--duration-standard) var(--ease-standard)}
+.liquid-app-shell :where(button:not(:disabled),[role="button"]):active{transform:scale(.985)}
+:root.density-compact{font-size:14px;--space-page:clamp(.75rem,1.5vw,1.5rem);--control-height:2.375rem;--space-12:1.5rem;--space-8:1rem;--space-6:.75rem}

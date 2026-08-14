@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { IconButton } from './ui/IconButton/IconButton';
+import styles from './Lightbox.module.css';
 
 export function Lightbox({ 
     images, 
@@ -26,28 +28,36 @@ export function Lightbox({
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 lg:p-12" onClick={onClose}>
-                    <button 
+                <div className={styles.backdrop} onClick={onClose} role="dialog" aria-modal="true" aria-label="Visualização de imagens">
+                    <IconButton
+                        label="Fechar visualização"
                         onClick={onClose}
-                        className="absolute top-6 right-6 p-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors z-[201]"
+                        className={styles.closeButton}
+                        variant="glass"
                     >
-                        <X className="w-6 h-6" />
-                    </button>
+                        <X />
+                    </IconButton>
 
                     {images.length > 1 && (
                         <>
-                            <button 
+                            <IconButton
+                                label="Imagem anterior"
                                 onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => prev > 0 ? prev - 1 : images.length - 1); }}
-                                className="absolute left-6 top-1/2 -translate-y-1/2 p-4 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors z-[201]"
+                                className={styles.previousButton}
+                                variant="glass"
+                                size="large"
                             >
-                                <ChevronLeft className="w-6 h-6" />
-                            </button>
-                            <button 
+                                <ChevronLeft />
+                            </IconButton>
+                            <IconButton
+                                label="Próxima imagem"
                                 onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => prev < images.length - 1 ? prev + 1 : 0); }}
-                                className="absolute right-6 top-1/2 -translate-y-1/2 p-4 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors z-[201]"
+                                className={styles.nextButton}
+                                variant="glass"
+                                size="large"
                             >
-                                <ChevronRight className="w-6 h-6" />
-                            </button>
+                                <ChevronRight />
+                            </IconButton>
                         </>
                     )}
 
@@ -57,7 +67,7 @@ export function Lightbox({
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="max-w-full max-h-full object-contain cursor-default"
+                        className={styles.image}
                         onClick={(e) => e.stopPropagation()}
                     />
                 </div>

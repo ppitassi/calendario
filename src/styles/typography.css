@@ -1,0 +1,4 @@
+.font-display{font-family:var(--font-display)}.font-black{font-weight:900;letter-spacing:var(--tracking-heavy)}.font-bold{font-weight:700;letter-spacing:var(--tracking-bold)}.uppercase{letter-spacing:.12em}
+.text-page-title{font-family:var(--font-display);font-size:clamp(1.75rem,4vw,3.25rem);font-weight:var(--font-weight-title);letter-spacing:var(--tracking-heavy);line-height:1.05}
+.text-section-title{font-family:var(--font-display);font-size:1rem;font-weight:var(--font-weight-title);letter-spacing:var(--tracking-heavy)}
+.text-body{font-size:.875rem;line-height:1.6}.text-caption{font-size:.6875rem;line-height:1.35;color:var(--color-text-muted)}

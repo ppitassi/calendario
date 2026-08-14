@@ -22,14 +22,16 @@
       }
     ],
     "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "allowJs": true
   },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

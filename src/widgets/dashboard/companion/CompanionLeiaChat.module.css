@@ -1,0 +1,15 @@
+.root { display: flex; flex-direction: column; height: 100%; gap: var(--space-3); text-align: left; }
+.messages { display: flex; flex: 1; flex-direction: column; gap: var(--space-3); min-height: 8.75rem; max-height: 11.25rem; padding-right: var(--space-1); overflow-y: auto; scrollbar-width: thin; }
+.message { display: flex; flex-direction: column; max-width: 85%; padding: var(--space-3); border-radius: var(--radius-card); font-size: var(--font-size-xs); line-height: 1.625; }
+.leiaMessage { align-self: flex-start; border: 1px solid var(--glass-border); background: color-mix(in srgb, var(--color-text-primary) 5%, transparent); color: var(--color-text-primary); }
+.userMessage { align-self: flex-end; background: var(--color-action-primary); color: var(--color-text-on-action); text-align: right; }
+.messageText { white-space: pre-wrap; }
+.typing { display: flex; align-items: center; align-self: flex-start; gap: .375rem; margin-top: var(--space-1); padding-inline: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-2xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.spinner { width: .875rem; height: .875rem; color: var(--color-action-primary); animation: companion-spin 1s linear infinite; }
+.suggestions { display: flex; gap: var(--space-2); padding-bottom: var(--space-1); overflow-x: auto; user-select: none; scrollbar-width: none; }
+.suggestions::-webkit-scrollbar { display: none; }
+.form { display: flex; gap: var(--space-2); }
+
+@keyframes companion-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }

@@ -1,4 +1,4 @@
-import { getDbPool } from './db';
+import { getDbPool, parseJson } from './db';
 
 type DbRow = Record<string, any>;
 
@@ -7,15 +7,7 @@ export type ReviewDataError = {
   status: number;
 };
 
-function parseJson(value: any, fallback: any) {
-  if (!value) return fallback;
-  if (typeof value !== 'string') return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
+
 
 function monthRange(month: string) {
   const [year, monthNumber] = month.split('-').map(Number);
@@ -58,6 +50,9 @@ export async function validateReviewToken(token: string) {
   if (!tokenData) return { error: 'Token de revisão inválido.', status: 404 } as ReviewDataError;
 
   const expiry = expiresAtMillis(tokenData.expiresAt);
+  if (['revoked','deleted','cancelled'].includes(String(tokenData.status || '').toLowerCase())) {
+    return { error: 'Token de revisão revogado.', status: 410 } as ReviewDataError;
+  }
   if (!expiry || expiry < Date.now()) {
     return { error: 'Token de revisão expirado.', status: 410 } as ReviewDataError;
   }
@@ -125,7 +120,8 @@ async function buildReviewData(clientId: string, month: string, tokenData: DbRow
 
   if (postIds.length) {
     const [commentResult] = await db.query(
-      'SELECT id, postId, authorName, authorRole, content, createdAt FROM post_comments WHERE postId IN (?) ORDER BY createdAt ASC',
+      `SELECT id, postId, authorName, authorRole, content, createdAt FROM post_comments
+       WHERE postId IN (?) ${tokenData ? "AND authorRole = 'cliente'" : ""} ORDER BY createdAt ASC`,
       [postIds],
     );
     comments = commentResult as DbRow[];
@@ -159,7 +155,9 @@ async function buildReviewData(clientId: string, month: string, tokenData: DbRow
     owners,
     posts: postRows.map((post) => ({
       ...post,
-      feedImages: parseJson(post.feedImages, []),
+      feedImages: parseJson(post.feedImages, []).map((url: string) => tokenData?.id && /^\/api\/media\/assets\/([^/]+)\/content$/.test(url)
+        ? `/api/public/review/${encodeURIComponent(tokenData.id)}/media/${encodeURIComponent(url.match(/^\/api\/media\/assets\/([^/]+)\/content$/)![1])}`
+        : url),
       comments: commentsByPost[String(post.id)] || [],
     })),
   };

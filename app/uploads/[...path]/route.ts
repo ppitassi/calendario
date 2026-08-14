@@ -20,7 +20,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   if (!parts?.length || parts.some(part => !part || part === '.' || part === '..' || part.includes('/') || part.includes('\\'))) {
     return new Response('Not found', { status: 404 });
   }
-  const uploadsRoot = path.resolve(process.cwd(), 'server', 'uploads');
+  const uploadsRoot = path.resolve(/* turbopackIgnore: true */
+    process.env.UPLOAD_STORAGE_ROOT ||
+    path.join(/* turbopackIgnore: true */ process.cwd(), 'server', 'uploads'),
+  );
   const filePath = path.resolve(uploadsRoot, ...parts);
   const relativePath = path.relative(uploadsRoot, filePath);
 
@@ -34,6 +37,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       headers: {
         'Content-Type': contentTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
         'Cache-Control': 'public, max-age=31536000, immutable',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Disposition': 'inline',
       },
     });
   } catch {

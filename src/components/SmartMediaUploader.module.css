@@ -1,0 +1,30 @@
+.uploadTrigger { align-items: center; background: color-mix(in srgb, var(--color-action-primary) 5%, transparent); border: 2px dashed color-mix(in srgb, var(--color-action-primary) 40%, transparent); border-radius: var(--radius-card); color: var(--color-action-primary); display: flex; flex-direction: column; gap: var(--space-2); justify-content: center; padding: var(--space-6); transition: background var(--duration-fast) var(--ease-expressive), border-color var(--duration-fast) var(--ease-expressive); width: 100%; }
+.uploadTrigger:hover:not(:disabled) { background: color-mix(in srgb, var(--color-action-primary) 10%, transparent); border-color: var(--color-action-primary); }
+.uploadLabel { font-size: var(--font-size-sm); font-weight: 600; text-transform: uppercase; }
+.root { display: grid; gap: var(--space-6); }
+.thumbnail { position: relative; width: 5rem; height: 5rem; overflow: hidden; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-control); box-shadow: var(--shadow-surface); }
+.thumbnail>img { width: 100%; height: 100%; object-fit: cover; }
+.thumbnailOverlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb,var(--color-bg-inverse) 40%,transparent); opacity: 0; transition: opacity var(--duration-fast); }
+.thumbnail:hover .thumbnailOverlay,.thumbnail:focus-within .thumbnailOverlay { opacity: 1; }
+.versions { padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-card); background: var(--glass-surface); }
+.versions summary { color: var(--color-text-secondary); cursor: pointer; font-size: var(--font-size-2xs); font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.versionList { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.versionRow { display: flex; align-items: center; justify-content: space-between; padding: var(--space-2) var(--space-3); border-radius: var(--radius-control); background: color-mix(in srgb,var(--color-text-primary) 3%,transparent); font-size: var(--font-size-xs); }
+.versionRow span { color: var(--color-text-muted); font-size: var(--font-size-2xs); text-transform: uppercase; }
+.uploadArea { display: flex; flex-direction: column; gap: var(--space-4); }
+.uploadTrigger>svg { width: 1.5rem; height: 1.5rem; transition: transform var(--duration-fast) var(--ease-expressive); }
+.uploadTrigger:hover>svg { transform: scale(1.1); }
+.uploadHint { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.documentList,.failureList { display: grid; gap: var(--space-2); }
+.documentLink { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-control); color: var(--color-text-primary); font-size: var(--font-size-xs); text-decoration: underline; }
+.documentLink svg { width: 1rem; height: 1rem; }
+.failures { padding: var(--space-3); border: 1px solid color-mix(in srgb,var(--color-status-danger) 25%,transparent); border-radius: var(--radius-control); background: color-mix(in srgb,var(--color-status-danger) 5%,transparent); }
+.failureList { font-size: var(--font-size-xs); }
+.failureList span { margin-left: var(--space-1); color: var(--color-text-secondary); }
+.mediaGroup { display: grid; gap: var(--space-4); }
+.mediaSection { display: grid; gap: var(--space-2); }
+.mediaLabel { display: flex; align-items: center; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; }
+.mediaLabel svg { width: 1rem; height: 1rem; }
+.thumbnailList { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.videoFrame { position: relative; overflow: hidden; border: 1px solid var(--glass-border); border-radius: var(--radius-card); background: var(--color-bg-inverse); }
+.videoFrame video { width: 100%; max-height: 18rem; object-fit: contain; }

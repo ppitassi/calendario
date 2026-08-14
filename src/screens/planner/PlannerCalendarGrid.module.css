@@ -1,0 +1,333 @@
+.calendarPane {
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+  transition: width var(--duration-standard) var(--ease-expressive);
+  width: 100%;
+}
+
+.sectionHeader,
+.monthHeader,
+.toolHeader,
+.toolActions {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.sectionHeader {
+  margin-bottom: var(--space-3);
+}
+
+.sectionHeader h3,
+.toolHeader h3 {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.monthSurface {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+}
+
+.monthHeader > span {
+  flex: 1;
+  font-size: var(--font-size-2xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.calendarGrid,
+.weekdayGrid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  text-align: center;
+}
+
+.weekdayLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-3xs);
+  font-weight: 900;
+  padding-block: var(--space-1);
+  text-transform: uppercase;
+}
+
+.emptyExpanded {
+  min-height: 6rem;
+}
+
+.emptyCompact {
+  height: 1.75rem;
+}
+
+.compactDay,
+.weekdayToggle,
+.dayHeader,
+.postTile,
+.freeDay {
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.compactDay {
+  align-items: center;
+  background: transparent;
+  border-radius: var(--radius-control);
+  display: flex;
+  font-size: var(--font-size-2xs);
+  font-weight: 700;
+  height: 1.75rem;
+  justify-content: center;
+  position: relative;
+  width: 1.75rem;
+}
+
+.compactDay:hover,
+.freeDay:hover {
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+.compactDayPopulated {
+  background: color-mix(in srgb, var(--color-action-primary) 10%, transparent);
+  color: var(--color-action-primary);
+  font-weight: 900;
+}
+
+.compactDaySelected {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+  box-shadow: var(--shadow-surface);
+}
+
+.postDot {
+  background: var(--color-action-primary);
+  border-radius: var(--radius-pill);
+  bottom: var(--space-1);
+  height: 0.25rem;
+  position: absolute;
+  width: 0.25rem;
+}
+
+.expandedDay {
+  background: color-mix(in srgb, var(--color-text-primary) 1.5%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  border-radius: var(--radius-control);
+  min-height: 7rem;
+  overflow: hidden;
+  padding: var(--space-2);
+  text-align: left;
+}
+
+.expandedDayPopulated {
+  background: color-mix(in srgb, var(--color-action-primary) 4%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--color-action-primary) 15%,
+    transparent
+  );
+}
+
+.dayHeader {
+  align-items: center;
+  background: transparent;
+  display: flex;
+  font-size: var(--font-size-2xs);
+  font-weight: 900;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+  width: 100%;
+}
+
+.countBadge,
+.totalBadge {
+  background: color-mix(in srgb, var(--color-action-primary) 10%, transparent);
+  border-radius: var(--radius-pill);
+  color: var(--color-action-primary);
+  font-size: var(--font-size-3xs);
+  font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+}
+
+.dayPosts {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.postTile {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-bg-surface) 65%, transparent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-tile);
+  display: flex;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1);
+  text-align: left;
+  width: 100%;
+}
+
+.postTile:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--color-action-primary) 25%,
+    transparent
+  );
+}
+
+.postTileSelected {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+
+.thumbnail,
+.thumbnailFallback {
+  border-radius: var(--radius-thumbnail);
+  flex-shrink: 0;
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+.thumbnail {
+  object-fit: cover;
+}
+
+.thumbnailFallback {
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  display: grid;
+  font-size: var(--font-size-3xs);
+  font-weight: 900;
+  place-items: center;
+  text-transform: uppercase;
+}
+
+.postText {
+  min-width: 0;
+}
+
+.postText strong,
+.postText span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.postText strong {
+  font-size: var(--font-size-3xs);
+}
+
+.postText span,
+.morePosts {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-3xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.freeDay {
+  background: transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  display: grid;
+  font-size: var(--font-size-3xs);
+  min-height: 4rem;
+  place-items: center;
+  width: 100%;
+}
+
+.toolsGrid {
+  display: grid;
+  flex-shrink: 0;
+  gap: var(--space-3);
+}
+
+.toolPanel {
+  background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  border-radius: var(--radius-card);
+  min-width: 0;
+  padding: var(--space-3);
+}
+
+.toolHeader {
+  margin-bottom: var(--space-2);
+}
+
+.toolHeader > span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-3xs);
+}
+
+.warning {
+  color: var(--color-status-warning);
+  font-size: var(--font-size-2xs);
+  margin-top: var(--space-2);
+}
+
+.weekdayGrid {
+  margin-top: var(--space-2);
+}
+
+.weekdayToggle {
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-2xs);
+  font-weight: 700;
+  min-height: 2rem;
+  opacity: 0.55;
+  text-transform: uppercase;
+}
+
+.weekdayToggle:hover {
+  opacity: 0.85;
+}
+
+.weekdayToggleActive {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+  opacity: 1;
+}
+
+.toolActions {
+  margin-top: var(--space-2);
+}
+
+.emptyMessage {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+  padding-block: var(--space-2);
+  text-align: center;
+}
+
+@media (width >= 1024px) {
+  .calendarCompact {
+    width: clamp(250px, 22vw, 300px);
+  }
+
+  .calendarExpanded {
+    width: min(680px, 48vw);
+  }
+
+  .toolsExpanded {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

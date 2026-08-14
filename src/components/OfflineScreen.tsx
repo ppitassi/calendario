@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { RefreshCw, PowerOff } from 'lucide-react';
+import { Button } from './ui/Button/Button';
+import { Modal } from './ui/Modal/Modal';
+import styles from './OfflineScreen.module.css';
 
 function DinoGame() {
   const [score, setScore] = useState(0);
@@ -58,9 +61,13 @@ function DinoGame() {
   return (
     <div 
       onClick={handleJump}
-      className="relative w-full h-40 bg-black/5 dark:bg-white/5 rounded-3xl border border-black/10 dark:border-white/10 overflow-hidden cursor-pointer group"
+      onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleJump(); } }}
+      role="button"
+      tabIndex={0}
+      aria-label="Jogo offline: clique ou pressione espaço para pular"
+      className={styles.game}
     >
-      <div className="absolute top-4 right-6 text-2xl font-display font-bold opacity-30">
+      <div className={styles.score}>
         {score}
       </div>
       
@@ -68,60 +75,58 @@ function DinoGame() {
       <motion.div 
         animate={{ y: isJumping ? -60 : 0 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="absolute bottom-6 left-12 w-8 h-8 bg-[var(--color-primary)] rounded-full shadow-lg shadow-[var(--color-primary)]/40"
+        className={styles.player}
       />
 
       {/* Obstáculo */}
       <div 
         style={{ left: `${obstaclePos}%` }}
-        className="absolute bottom-6 w-4 h-12 bg-red-500/40 rounded-full blur-[1px]"
+        className={styles.obstacle}
       />
 
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div className={styles.gameMessage}>
         {isGameOver && (
-          <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="text-center">
-            <p className="text-red-500 font-bold uppercase tracking-widest text-xs mb-2">Game Over</p>
-            <p className="text-[10px] opacity-40 uppercase font-bold">Aperte ESPAÇO para reiniciar</p>
+          <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }}>
+            <p data-danger="true">Game Over</p>
+            <p>Aperte ESPAÇO para reiniciar</p>
           </motion.div>
         )}
         {!isGameOver && score === 0 && (
-          <p className="text-[10px] opacity-20 uppercase font-bold group-hover:opacity-100 transition-opacity">Aperte ESPAÇO ou Clique para Pular</p>
+          <p>Aperte ESPAÇO ou Clique para Pular</p>
         )}
       </div>
       
-      <div className="absolute bottom-6 w-full h-[1px] bg-black/10 dark:bg-white/10" />
+      <div className={styles.ground} />
     </div>
   );
 }
 
 export function OfflineScreen() {
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-md p-6 overflow-hidden">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="glass max-w-lg w-full rounded-[3rem] p-10 shadow-2xl border border-white/20 text-center relative"
-      >
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-red-500 rounded-full flex items-center justify-center shadow-xl shadow-red-500/20">
-          <PowerOff className="w-10 h-10 text-white animate-pulse" />
+    <Modal open onClose={() => undefined} dismissible={false} className={styles.dialog}>
+      <div className={styles.content}>
+        <div className={styles.offlineIcon}>
+          <PowerOff />
         </div>
 
-        <h1 className="text-3xl font-display font-bold mt-8 mb-4">Servidor Dormindo... 😴</h1>
-        <p className="opacity-60 text-sm leading-relaxed mb-8">
+        <h1>Servidor Dormindo... 😴</h1>
+        <p className={styles.description}>
           Parece que o seu backend (MySQL Bridge) não está respondendo. 
-          Ligue o <span className="font-bold text-[var(--color-primary)]">run_server.bat</span> para voltar ao trabalho!
+          Ligue o <strong>run_server.bat</strong> para voltar ao trabalho!
         </p>
 
         {/* ÁREA DO JOGO - Agora isolada em seu próprio componente para evitar re-renders do backdrop-blur */}
         <DinoGame />
 
-        <button 
+        <Button
           onClick={() => window.location.reload()}
-          className="mt-8 flex items-center justify-center gap-2 mx-auto px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 transition-all text-sm font-bold border border-white/5"
+          className="mt-8 mx-auto"
+          variant="glass"
+          icon={<RefreshCw />}
         >
-          <RefreshCw className="w-4 h-4" /> Tentar Reconectar
-        </button>
-      </motion.div>
-    </div>
+          Tentar Reconectar
+        </Button>
+      </div>
+    </Modal>
   );
 }

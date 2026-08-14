@@ -1,104 +1,31 @@
-// ─── App State ───────────────────────────────────────────────────────────────
-export type AppViewState = 'login' | 'home' | 'client_selection' | 'editor' | 'viewer' | 'admin_roles' | 'data_analysis' | 'client_setup' | 'user_setup' | 'client_strategy' | 'client_management' | 'leia_chat' | 'analytics_growth' | 'analytics_visibility' | 'analytics_primetime' | 'analytics_content';
+export type AppViewState =
+  | "login"
+  | "home"
+  | "client_selection"
+  | "editor"
+  | "planner"
+  | "viewer"
+  | "admin_roles"
+  | "agency_setup"
+  | "client_setup"
+  | "user_setup"
+  | "client_strategy"
+  | "client_management"
+  | "leia_chat"
+  | "production_gallery";
 
-export type PostType = 'post' | 'carousel' | 'reel' | 'story' | 'linkedin' | 'promoted';
+export type PostType =
+  | "post"
+  | "carousel"
+  | "reel"
+  | "story"
+  | "linkedin"
+  | "promoted";
 
-export type ViewMode = 'list' | 'grid';
+export type ViewMode = "list" | "grid";
 
-export type UserRole = 'admin' | 'gerente' | 'atendimento' | 'designer' | 'estagiario' | 'analista' | 'socialmedia';
-
-// ─── Permissions matrix ──────────────────────────────────────────────────────
-export const ROLE_PERMISSIONS: Record<UserRole, {
-  canCreatePosts: boolean;
-  canEditAssignedPosts: boolean;
-  canEditCalendar: boolean; // Mudar datas e prazos
-  canReviewAndSend: boolean;
-  canConfigClients: boolean;
-  canManageRoles: boolean;
-  canViewPresentation: boolean;
-  canComment: boolean;
-}> = {
-  admin: {
-    canCreatePosts: true,
-    canEditAssignedPosts: true,
-    canEditCalendar: true,
-    canReviewAndSend: true,
-    canConfigClients: true,
-    canManageRoles: true,
-    canViewPresentation: true,
-    canComment: true,
-  },
-  gerente: {
-    canCreatePosts: true,
-    canEditAssignedPosts: true,
-    canEditCalendar: true, // Gerentes podem mudar datas e prazos
-    canReviewAndSend: true, // Gerentes podem aprovar e enviar
-    canConfigClients: true,
-    canManageRoles: false, // Mas não gerenciam cargos
-    canViewPresentation: true,
-    canComment: true,
-  },
-  atendimento: {
-    canCreatePosts: false,
-    canEditAssignedPosts: false,
-    canEditCalendar: false,
-    canReviewAndSend: true, // Atendimento envia ao cliente
-    canConfigClients: true,
-    canManageRoles: false,
-    canViewPresentation: true,
-    canComment: true,
-  },
-  designer: {
-    canCreatePosts: true,
-    canEditAssignedPosts: true,
-    canEditCalendar: true,
-    canReviewAndSend: false,
-    canConfigClients: true,
-    canManageRoles: false,
-    canViewPresentation: true,
-    canComment: false, // Designer não comenta
-  },
-  estagiario: {
-    canCreatePosts: false,
-    canEditAssignedPosts: true,
-    canEditCalendar: false,
-    canReviewAndSend: false,
-    canConfigClients: false,
-    canManageRoles: false,
-    canViewPresentation: true,
-    canComment: false, // Estagiário não comenta
-  },
-  analista: {
-    canCreatePosts: false,
-    canEditAssignedPosts: false,
-    canEditCalendar: false,
-    canReviewAndSend: false,
-    canConfigClients: false,
-    canManageRoles: false,
-    canViewPresentation: true,
-    canComment: false, // Analista não comenta
-  },
-  socialmedia: {
-    canCreatePosts: true,
-    canEditAssignedPosts: true,
-    canEditCalendar: true,
-    canReviewAndSend: true,
-    canConfigClients: true,
-    canManageRoles: false,
-    canViewPresentation: true,
-    canComment: true, // Social Media comenta!
-  },
-};
-
-export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: 'Admin',
-  gerente: 'Gerente',
-  atendimento: 'Atendimento',
-  designer: 'Designer',
-  estagiario: 'Estagiário',
-  analista: 'Analista de Dados',
-  socialmedia: 'Social Media',
-};
+export type { UserRole } from "./roles";
+export { ROLE_PERMISSIONS, ROLE_LABELS } from "./roles";
 
 // ─── Data Models ─────────────────────────────────────────────────────────────
 export interface ClientData {
@@ -129,11 +56,14 @@ export interface ClientData {
   };
   owners: string[];
   config?: any;
-  tenant_id?: string;
   // Meta / Instagram
   meta_access_token?: string;
   meta_account_id?: string;
   facebook_page_id?: string;
+  meta_page_name?: string;
+  meta_ig_username?: string;
+  meta_connected?: boolean;
+  meta_connection_status?: string;
   // YouTube
   youtube_token?: string;
   youtube_channel_id?: string;
@@ -155,8 +85,8 @@ export interface ClientData {
   createdAt?: number;
 }
 
-
 export interface PostData {
+  postNumber?: number;
   id?: string;
   date?: string;
   type: PostType;
@@ -166,15 +96,50 @@ export interface PostData {
   objective: string;
   theme?: string;
   script?: string;
-  feedImages: string[] | string;
+  feedImages: string[];
   storyImage?: string;
   coverImage?: string;
   linkedinCover?: string;
   videoUrl?: string;
   assignedTo?: string;
+  assigneeId?: string;
+  createdByUserId?: string;
+  currentAssigneeId?: string;
+  actionAssigneeId?: string;
+  currentStage?:
+    | "briefing"
+    | "copy"
+    | "aguardando_design"
+    | "design"
+    | "revisao_interna"
+    | "aguardando_aprovacao"
+    | "alteracoes_solicitadas"
+    | "aprovado"
+    | "agendado"
+    | "publicado"
+    | "arquivado"
+    | "cancelado";
+  workflowStatus?: string;
+  assignedAt?: string;
+  dueDate?: string;
+  priority?: "low" | "normal" | "high" | "urgent";
+  workVersion?: number;
+  stageEnteredAt?: string;
+  lastActivityAt?: string;
+  artworkCurrentVersion?: number;
   deadline?: string | number;
   comments?: { text: string; author: string; date: number }[];
-  status?: 'pending' | 'producing' | 'review' | 'waiting' | 'approved' | 'planejado' | 'em produção' | 'aguardando aprovação' | 'aprovado' | 'ajuste solicitado';
+  status?:
+    | "pending"
+    | "producing"
+    | "review"
+    | "waiting"
+    | "approved"
+    | "planejado"
+    | "em produção"
+    | "aguardando aprovação"
+    | "aprovado"
+    | "ajuste solicitado";
   createdAt?: number;
   updatedAt?: number;
   title?: string;
@@ -187,7 +152,7 @@ export interface PostData {
   hashtags?: string;
   visualBriefing?: string;
   internalNotes?: string;
-  funnelStage?: 'topo' | 'meio' | 'fundo';
+  funnelStage?: "topo" | "meio" | "fundo";
 }
 
 export interface AppConfig {
@@ -201,24 +166,34 @@ export interface AppConfig {
   targetAudience?: string;
   trafficDef?: string;
   inputs?: string;
-  audioRecordings?: Array<{ id: string; name: string; url: string; createdAt: number; duration?: number }>;
+  audioRecordings?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    createdAt: number;
+    duration?: number;
+  }>;
 }
 
 export interface UserProfile {
   uid: string;
   email: string;
+  password?: string;
   displayName?: string;
   photoURL?: string;
-  role: UserRole;
-  tenant_id?: string;
+  role: import("./roles").UserRole;
   theme_config?: any;
   ui_preferences?: Record<string, any>;
+  permissions?: Record<string, boolean>;
   deadline?: string;
   planning_month?: string;
   deadline_pre?: string;
   deadline_final?: string;
   agencyName?: string;
   birthday?: string;
+  phoneNumber?: string;
+  githubUsername?: string;
+  portfolioUrl?: string;
 }
 
 export interface CompanionSettings {
@@ -234,7 +209,7 @@ export interface ApprovalToken {
   id: string;
   clientId: string;
   month: string;
-  status: 'pending' | 'approved' | 'changes_requested';
+  status: "pending" | "approved" | "changes_requested";
   createdAt: number;
   expiresAt: number;
   clientNote?: string;

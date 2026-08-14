@@ -1,0 +1,13 @@
+.page { display: flex; flex: 1; flex-direction: column; width: 100%; max-width: 72rem; margin-inline: auto; padding: var(--space-12) var(--space-8) var(--space-8); }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-8); }
+.headingGroup { display: flex; align-items: center; gap: var(--space-6); }
+.headingText { display: flex; flex-direction: column; text-align: left; }
+.title { font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 900; letter-spacing: var(--tracking-heavy); }
+.eyebrow { margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-8); padding-bottom: var(--space-4); overflow-x: auto; border-bottom: 1px solid var(--color-border-subtle); }
+.content { flex: 1; }
+
+@media (width < 48rem) {
+  .page { padding: var(--space-6) var(--space-4); }
+  .headingGroup { gap: var(--space-3); }
+}

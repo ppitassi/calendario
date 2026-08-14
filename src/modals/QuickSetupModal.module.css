@@ -1,0 +1,6 @@
+.intro { align-items: center; display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); text-align: center; }
+.intro p { color: var(--color-text-muted); font-size: var(--font-size-2xs); font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.icon { background: color-mix(in srgb, var(--color-action-primary) 10%, transparent); border-radius: var(--radius-card); color: var(--color-action-primary); display: grid; height: 4rem; place-items: center; width: 4rem; }
+.avatar { align-items: center; background: var(--color-action-primary); border-radius: var(--radius-pill); color: var(--color-action-on-primary); display: flex; font-size: 1.5rem; font-weight: 900; height: 5rem; justify-content: center; overflow: hidden; width: 5rem; }
+.avatar img { height: 100%; object-fit: cover; width: 100%; }
+.form { display: grid; gap: var(--space-4); }

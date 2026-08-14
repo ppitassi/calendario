@@ -1,0 +1,12 @@
+.root { display: grid; gap: var(--space-8); }
+.content { display: flex; align-items: center; flex-direction: column; gap: var(--space-8); padding-block: var(--space-12); }
+.logoWrap { position: relative; }
+.logoPreview { display: flex; width: 12rem; height: 12rem; align-items: center; justify-content: center; overflow: hidden; border: 4px dashed var(--glass-border); border-radius: var(--radius-overlay); background: var(--color-bg-muted); }
+.logoPreview>svg { width: 3rem; height: 3rem; color: var(--color-text-muted); opacity: .3; }
+.logo { width: 100%; height: 100%; padding: var(--space-4); object-fit: contain; }
+.uploadOverlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-overlay); background: color-mix(in srgb,var(--color-bg-inverse) 60%,transparent); color: var(--color-text-on-action); cursor: pointer; opacity: 0; transition: opacity var(--duration-fast); }
+.logoWrap:hover .uploadOverlay,.logoWrap:focus-within .uploadOverlay { opacity: 1; }
+.uploadOverlay span { font-size: var(--font-size-xs); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.copy { text-align: center; }
+.copy h4 { font-weight: 700; }
+.copy p { margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs); }

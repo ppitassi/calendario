@@ -1,0 +1,5 @@
+.form-control{width:100%;min-height:var(--control-height-md);border:1px solid var(--glass-border);border-radius:var(--radius-control);background:color-mix(in srgb,var(--glass-surface-strong) 92%,transparent);box-shadow:var(--shadow-control-inset);padding:0 var(--space-4);outline:0;backdrop-filter:blur(var(--blur-control)) saturate(120%)}
+.form-control:focus{border-color:color-mix(in srgb,var(--color-action-primary) 44%,var(--color-static-white));box-shadow:var(--shadow-focus)}.form-control[aria-invalid="true"]{border-color:var(--color-status-danger)}
+textarea.form-control{min-height:7rem;padding-block:var(--space-3);resize:vertical}
+select.form-control{appearance:none;padding-right:2rem;background-image:linear-gradient(45deg,transparent 50%,currentcolor 50%),linear-gradient(135deg,currentcolor 50%,transparent 50%);background-position:calc(100% - 15px) 50%,calc(100% - 11px) 50%;background-size:4px 4px,4px 4px;background-repeat:no-repeat}
+select.form-control option{background:var(--color-bg-surface);color:var(--color-text-primary)}

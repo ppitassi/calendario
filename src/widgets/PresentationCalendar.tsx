@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { getDaysInMonth, startOfMonth, getDay, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUpRight, X, Calendar as CalendarIcon, ImageIcon, Clock } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { ArrowUpRight, ImageIcon, Clock } from 'lucide-react';
 import { DAY_NAMES, POST_TYPES } from '../lib/constants';
 import { PostData } from '../types';
+import { Button } from '../components/ui/Button/Button';
+import styles from './PresentationCalendar.module.css';
 
 interface PresentationCalendarProps {
   currentDate: Date;
@@ -16,13 +16,15 @@ export function PresentationCalendar({ currentDate, posts }: PresentationCalenda
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const handleDayClick = (dateStr: string) => {
-    if (posts[dateStr]) {
+    const postEntry = Object.entries(posts).find(([key, post]) => (post.date || key.split("#")[0]) === dateStr);
+    if (postEntry) {
       setSelectedDate(dateStr === selectedDate ? null : dateStr);
     }
   };
 
   const scrollToPost = (dateStr: string) => {
-    const element = document.getElementById(`post-${dateStr}`);
+    const post = Object.entries(posts).find(([key, item]) => (item.date || key.split("#")[0]) === dateStr)?.[1];
+    const element = document.getElementById(`post-${post?.id || dateStr}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
       setSelectedDate(null);
@@ -30,49 +32,48 @@ export function PresentationCalendar({ currentDate, posts }: PresentationCalenda
   };
 
   return (
-    <div className="print-calendar space-y-12 relative">
-      <div className="text-center space-y-4">
-         <p className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--color-primary)]">Visão Macro</p>
-         <h2 className="text-4xl md:text-6xl font-display font-black ">Calendário Mensal</h2>
+    <div className={`print-calendar ${styles.root}`}>
+      <div className={styles.heading}>
+         <p>Visão Macro</p>
+         <h2>Calendário Mensal</h2>
       </div>
 
-      <div className="glass p-8 md:p-12 rounded-[3rem] border border-white/20 shadow-3xl bg-white/20 dark:bg-black/20 backdrop-blur-3xl overflow-visible relative">
+      <div className={styles.calendarCard}>
          <div className="grid grid-cols-7 gap-2 md:gap-4 max-w-2xl mx-auto relative">
-            {DAY_NAMES.map(name => <div key={name} className="text-center font-bold text-[10px]  uppercase opacity-40 pb-4">{name}</div>)}
+            {DAY_NAMES.map(name => <div key={name} className={styles.dayName}>{name}</div>)}
             
             {Array.from({ length: getDay(startOfMonth(currentDate)) }).map((_, i) => (
-              <div key={`pre-${i}`} className="aspect-square rounded-[1.5rem] bg-black/5 dark:bg-white/5 opacity-10" />
+              <div key={`pre-${i}`} className={styles.emptyDay} />
             ))}
             
             {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
                const day = i + 1;
                const dateStr = format(new Date(currentDate.getFullYear(), currentDate.getMonth(), day), 'yyyy-MM-dd');
-               const post = posts[dateStr];
+               const post = Object.entries(posts).find(([key, item]) => (item.date || key.split("#")[0]) === dateStr)?.[1];
                const postTypeConfig = post ? POST_TYPES.find(pt => pt.id === post.type) : null;
                const Icon = postTypeConfig?.icon;
                const isSelected = selectedDate === dateStr;
 
                return (
                   <div key={day} className="relative">
+                    {/* style-architecture-button-exception: presentation calendar days are feature-specific navigable records. */}
                     <motion.button 
                       onClick={() => handleDayClick(dateStr)}
                       whileHover={post ? { scale: 1.05, y: -2 } : {}}
                       whileTap={post ? { scale: 0.95 } : {}}
-                      className={cn(
-                        "w-full aspect-square rounded-[1.5rem] flex flex-col items-center justify-center gap-1 border transition-all shadow-sm relative overflow-hidden",
-                        post ? "bg-[var(--color-primary)] border-transparent text-white shadow-xl shadow-[var(--color-primary)]/30 z-10 cursor-pointer" : "bg-black/5 dark:bg-white/5 border-transparent opacity-30 cursor-default",
-                        isSelected && "ring-4 ring-white/50 dark:ring-white/20 scale-110 shadow-2xl"
-                      )}
+                      className={styles.day}
+                      data-has-post={Boolean(post) || undefined}
+                      data-selected={isSelected || undefined}
                     >
-                       <span className="text-lg md:text-xl font-display font-bold relative z-10">{day}</span>
+                       <span>{day}</span>
                        {post?.deadline && (
-                          <div className="absolute top-1.5 right-1.5 opacity-80 z-20">
-                             <Clock className="w-3.5 h-3.5 text-white/80" />
+                          <div className={styles.dayDeadline}>
+                             <Clock />
                           </div>
                        )}
                        {post && Icon && (
-                          <div className="absolute bottom-2 right-2 opacity-40">
-                             <Icon className="w-4 h-4" />
+                          <div className={styles.dayType}>
+                             <Icon />
                           </div>
                        )}
                     </motion.button>
@@ -84,28 +85,28 @@ export function PresentationCalendar({ currentDate, posts }: PresentationCalenda
                           initial={{ opacity: 0, y: 10, scale: 0.9, x: '-50%' }}
                           animate={{ opacity: 1, y: -10, scale: 1, x: '-50%' }}
                           exit={{ opacity: 0, y: 10, scale: 0.9, x: '-50%' }}
-                          className="absolute bottom-full left-1/2 z-[100] w-64 glass p-4 rounded-3xl border border-white/40 dark:border-white/10 shadow-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl flex flex-col gap-3 mb-2 origin-bottom pointer-events-auto"
+                          className={styles.popover}
                         >
                           {/* Post Image Preview */}
-                          <div className="w-full aspect-video rounded-2xl bg-black/10 dark:bg-white/10 overflow-hidden relative group">
+                          <div className={styles.preview}>
                             {post.feedImages && post.feedImages.length > 0 ? (
-                              <img src={post.feedImages[0]} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                              <img src={post.feedImages[0]} alt="Preview" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center opacity-20">
-                                <ImageIcon className="w-8 h-8" />
+                              <div className={styles.previewEmpty}>
+                                <ImageIcon />
                               </div>
                             )}
-                            <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg text-[8px] font-bold text-white uppercase tracking-widest">
+                            <div className={styles.typeBadge}>
                                {postTypeConfig?.label || 'Post'}
                             </div>
                           </div>
 
-                          <div className="space-y-1">
-                            <h4 className="text-xs font-display font-black line-clamp-1 uppercase tracking-tight">{post.head || 'Sem título'}</h4>
-                            <p className="text-[10px] opacity-60 line-clamp-2 leading-relaxed">{post.subhead || post.theme || 'Conteúdo estratégico planejado para esta data.'}</p>
+                          <div className={styles.popoverCopy}>
+                            <h4>{post.head || 'Sem título'}</h4>
+                            {(post.subhead || post.theme) && <p>{post.subhead || post.theme}</p>}
                             {post.deadline && (
-                              <div className="flex items-center gap-1 text-[9px] font-black uppercase text-[var(--color-primary)] mt-1.5 bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-md w-fit">
-                                <Clock className="w-2.5 h-2.5" />
+                              <div className={styles.deadlineBadge}>
+                                <Clock />
                                 <span>
                                   Prazo: {(() => {
                                     try {
@@ -129,18 +130,21 @@ export function PresentationCalendar({ currentDate, posts }: PresentationCalenda
                             )}
                           </div>
 
-                          <button 
+                          <Button
                             onClick={(e) => {
                                e.stopPropagation();
                                scrollToPost(dateStr);
                             }}
-                            className="w-full py-3 rounded-xl bg-[var(--color-primary)] text-white text-[10px] font-bold flex items-center justify-center gap-2 hover:bg-[var(--color-primary)]/90 transition-all shadow-lg shadow-[var(--color-primary)]/20"
+                            className="w-full"
+                            variant="primary"
+                            size="small"
+                            icon={<ArrowUpRight />}
                           >
-                            VER POST COMPLETO <ArrowUpRight className="w-3 h-3" />
-                          </button>
+                            VER POST COMPLETO
+                          </Button>
 
                           {/* Arrow pointing down to the button */}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-white/95 dark:border-t-zinc-900/95" />
+                          <div className={styles.arrow} />
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -152,7 +156,7 @@ export function PresentationCalendar({ currentDate, posts }: PresentationCalenda
          {/* Overlay to close when clicking outside */}
          {selectedDate && (
            <div 
-             className="fixed inset-0 z-40" 
+             className={styles.closeLayer}
              onClick={() => setSelectedDate(null)} 
            />
          )}

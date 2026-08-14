@@ -33,8 +33,17 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [systemDark, setSystemDark] = useState(false);
 
   useEffect(() => setTheme(defaultTheme), [defaultTheme]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => setSystemDark(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -42,26 +51,27 @@ export function ThemeProvider({
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
+      const systemTheme = systemDark ? 'dark' : 'light';
 
       root.classList.add(systemTheme);
     } else {
       root.classList.add(theme);
     }
-  }, [theme]);
+  }, [theme, systemDark]);
 
   // Injeção de variáveis de marca
   useEffect(() => {
     const root = window.document.documentElement;
+    root.style.removeProperty('--tenant-primary');
+    root.style.removeProperty('--background-override');
+    root.style.removeProperty('--surface-override');
+    root.style.removeProperty('--glass-bg');
     if (themeConfig) {
       try {
         const config = typeof themeConfig === 'string' ? JSON.parse(themeConfig) : themeConfig;
 
         // Detecta o modo atual (claro ou escuro) usando o estado do tema
-        const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const isDark = theme === 'dark' || (theme === 'system' && systemDark);
         const modeConfig = isDark ? config.dark : config.light;
 
         // Determina a cor primária final (Prioridade para a Global que é a editável)
@@ -80,15 +90,10 @@ export function ThemeProvider({
       } catch (e) {
         console.error("Erro ao aplicar tema da agência", e);
       }
-    } else {
-      root.style.removeProperty('--tenant-primary');
-      root.style.removeProperty('--background-override');
-      root.style.removeProperty('--surface-override');
-      root.style.removeProperty('--glass-bg');
     }
-  }, [themeConfig, theme]);
+  }, [themeConfig, theme, systemDark]);
 
-  const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = theme === 'dark' || (theme === 'system' && systemDark);
 
   const value = {
     theme,

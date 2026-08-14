@@ -1,0 +1,7 @@
+.root { display: grid; gap: var(--space-12); text-align: left; }
+.title { margin-bottom: var(--space-2); font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; letter-spacing: var(--tracking-heavy); }
+.subtitle { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.form { display: grid; max-width: 28rem; gap: var(--space-6); }
+.status { padding: var(--space-4); border: 1px solid; border-radius: var(--radius-card); font-size: var(--font-size-xs); font-weight: 700; }
+.success { border-color: color-mix(in srgb, var(--color-status-success) 20%, transparent); background: color-mix(in srgb, var(--color-status-success) 10%, transparent); color: var(--color-status-success); }
+.error { border-color: color-mix(in srgb, var(--color-status-danger) 20%, transparent); background: color-mix(in srgb, var(--color-status-danger) 10%, transparent); color: var(--color-status-danger); }

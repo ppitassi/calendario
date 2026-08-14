@@ -1,0 +1,223 @@
+.sidebar {
+  display: flex;
+  width: 35%;
+  height: 100%;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-align: left;
+}
+
+.heading h1 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: var(--tracking-heavy);
+}
+
+.heading p {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.searchField {
+  position: relative;
+}
+
+.searchField > svg {
+  position: absolute;
+  top: 50%;
+  left: var(--space-4);
+  z-index: var(--z-content-raised);
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.searchField input {
+  padding-left: var(--space-10);
+  padding-right: var(--space-12);
+}
+
+.filters {
+  display: grid;
+  gap: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-muted);
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.filterField {
+  display: grid;
+  gap: var(--space-1);
+  text-align: left;
+}
+
+.filterField label {
+  margin-left: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.filterActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.clientList {
+  display: grid;
+  align-content: start;
+  flex: 1;
+  gap: var(--space-3);
+  overflow-y: auto;
+  padding-right: var(--space-1);
+  scrollbar-width: none;
+}
+
+.clientRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-card);
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast),
+    box-shadow var(--duration-fast);
+}
+
+.clientRow:hover {
+  background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+}
+
+.clientRow:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.clientRow[data-active="true"] {
+  border-color: color-mix(
+    in srgb,
+    var(--color-action-primary) 30%,
+    transparent
+  );
+  background: color-mix(in srgb, var(--color-action-primary) 10%, transparent);
+  box-shadow: var(--shadow-surface);
+}
+
+.clientIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatar {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-action-primary) 20%, transparent);
+  color: var(--color-action-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.avatar svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.clientCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.clientCopy strong,
+.clientCopy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clientCopy strong {
+  font-size: var(--font-size-xs);
+}
+
+.clientCopy span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: 600;
+}
+
+.clientRow > svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-muted);
+  transition: transform var(--duration-fast);
+}
+
+.clientRow:hover > svg {
+  transform: translateX(var(--space-1));
+}
+
+.clientRow[data-active="true"] > svg {
+  color: var(--color-action-primary);
+}
+
+.loading,
+.empty {
+  padding-block: var(--space-10);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+  text-align: center;
+}
+
+.loading {
+  animation: pulse var(--duration-page) ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading {
+    animation: none;
+  }
+}

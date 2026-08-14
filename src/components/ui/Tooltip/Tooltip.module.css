@@ -1,0 +1,21 @@
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: 16rem;
+  transform: translate(-50%, -100%);
+  border: 1px solid var(--glass-border-highlight);
+  border-radius: var(--radius-control);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--glass-surface-strong) 96%, white 4%),
+    var(--glass-surface)
+  );
+  box-shadow: var(--shadow-overlay);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-align: center;
+  backdrop-filter: blur(var(--blur-overlay)) saturate(140%);
+  pointer-events: none;
+}

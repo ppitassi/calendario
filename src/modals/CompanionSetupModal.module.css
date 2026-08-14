@@ -1,0 +1,15 @@
+.subtitle { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-6); text-transform: uppercase; }
+.section { display: grid; gap: var(--space-3); margin-bottom: var(--space-6); }
+.labelRow { align-items: center; display: flex; justify-content: space-between; }
+.label { color: var(--color-text-muted); font-size: var(--font-size-2xs); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.detected { align-items: center; background: color-mix(in srgb, var(--color-text-primary) 5%, transparent); border-radius: var(--radius-pill); color: var(--color-text-muted); display: inline-flex; font-size: var(--font-size-3xs); font-weight: 700; gap: var(--space-1); padding: var(--space-1) var(--space-2); text-transform: uppercase; }
+.detected svg { color: var(--color-action-primary); height: .625rem; width: .625rem; }
+.locationField { position: relative; }
+.refreshButton { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); }
+.moduleGrid { display: grid; gap: var(--space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.moduleCard { align-items: flex-start; background: color-mix(in srgb, var(--color-text-primary) 5%, transparent); border: 2px solid transparent; border-radius: var(--radius-card); color: var(--color-text-primary); cursor: pointer; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); text-align: left; transition: opacity var(--duration-fast) var(--ease-expressive), transform var(--duration-fast) var(--ease-expressive); }
+.moduleCard:hover { transform: translateY(-1px); }
+.moduleCardActive { background: var(--color-action-primary); border-color: var(--color-action-primary); color: var(--color-action-on-primary); }
+.moduleIcon { align-items: center; display: flex; justify-content: space-between; width: 100%; }
+.moduleIcon svg { height: 1rem; width: 1rem; }
+.moduleCard strong { font-size: var(--font-size-xs); font-weight: 900; text-transform: uppercase; }

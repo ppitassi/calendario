@@ -1,0 +1,14 @@
+.root { display: grid; gap: var(--space-6); text-align: left; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.header h3 { font-size: var(--font-size-lg); font-weight: 700; }
+.header p { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.tableWrap { overflow-x: auto; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-overlay); background: var(--glass-surface-subtle); }
+.tableWrap table { width: 100%; border-collapse: collapse; font-size: var(--font-size-xs); text-align: left; }
+.tableWrap thead { background: var(--color-bg-muted); }
+.tableWrap th,.tableWrap td { padding: var(--space-4); border-bottom: 1px solid var(--color-border-subtle); }
+.tableWrap th { color: var(--color-text-muted); font-size: var(--font-size-2xs); font-weight: 900; text-transform: uppercase; }
+.tableWrap td:first-child { font-weight: 600; }
+.tableWrap [data-centered="true"] { text-align: center; }
+.tableWrap tbody tr { transition: background var(--duration-fast); }
+.tableWrap tbody tr:hover { background: var(--color-bg-muted); }
+.tableWrap tbody tr:last-child td { border-bottom: 0; }

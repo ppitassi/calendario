@@ -1,47 +1,76 @@
 {
-    "name": "content-planner-app",
-    "private": true,
-    "version": "1.0.0",
-    "engines": {
-        "node": ">=20.9 <25"
-    },
-    "scripts": {
-        "dev": "next dev --port=3006",
-        "build": "next build",
-        "lint": "tsc --noEmit",
-        "typecheck": "tsc --noEmit",
-        "db:setup": "node server/setupDb.cjs",
-        "start": "next start --port=3006"
-    },
-    "dependencies": {
-        "axios": "^1.16.0",
-        "bcryptjs": "^3.0.3",
-        "clsx": "^2.1.1",
-        "date-fns": "^4.1.0",
-        "dotenv": "^17.4.2",
-        "groq-sdk": "^1.3.0",
-        "lucide-react": "^0.546.0",
-        "motion": "^12.23.24",
-        "mysql2": "^3.22.3",
-        "next": "^16.2.10",
-        "playwright-core": "^1.57.0",
-        "react": "^19.0.1",
-        "react-dom": "^19.0.1",
-        "react-image-crop": "^11.0.10",
-        "recharts": "^3.8.1",
-        "tailwind-merge": "^3.5.0"
-    },
-    "devDependencies": {
-        "@tailwindcss/postcss": "^4.3.2",
-        "@types/node": "^22.14.0",
-        "@types/react": "19.2.17",
-        "tailwindcss": "^4.1.14",
-        "typescript": "~5.8.2"
-    },
-    "allowScripts": {
-        "sharp@0.34.5": true
-    },
-    "overrides": {
-        "postcss": "8.5.16"
-    }
+  "name": "content-planner-app",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20.9 <25"
+  },
+  "scripts": {
+    "dev": "next dev --port=3006",
+    "build": "next build",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint:css": "stylelint \"{app,src}/**/*.css\"",
+    "lint:styles": "node scripts/check-style-architecture.cjs",
+    "lint:ui": "npm run lint:css && npm run lint:styles",
+    "db:setup": "node server/setupDb.cjs",
+    "assets:backfill": "node server/backfill-media-assets.cjs",
+    "storage:test-nextcloud": "node server/test-nextcloud-storage.cjs",
+    "start": "next start --port=3006",
+    "db:migrate:notifications": "node server/migrate-notifications.cjs",
+    "db:migrate:post-workflow": "node server/migrate-post-workflow.cjs",
+    "db:migrate:production-workflow": "node server/migrate-production-workflow.cjs",
+    "test:production-workflow": "node server/test-production-workflow.cjs",
+    "db:migrate:notification-toast": "node server/migrate-notification-toast.cjs",
+    "db:migrate:local-assets": "node scripts/migrate-local-asset-schema.cjs",
+    "assets:migrate-local:dry": "node scripts/migrate-local-assets.cjs",
+    "assets:migrate-local": "node scripts/migrate-local-assets.cjs --apply",
+    "db:migrate:presentation-pdf": "node scripts/migrate-presentation-pdf.cjs",
+    "db:remove-analytics": "node scripts/remove-analytics.cjs --apply",
+    "pdf:worker": "node server/presentation-pdf-worker.cjs",
+    "test:presentation": "node --experimental-strip-types --test tests/presentation-model.test.mjs",
+    "test:presentation:integration": "node server/test-presentation-pdf.cjs",
+    "test:presentation:visual": "node server/test-presentation-pdf-visual.cjs",
+    "test:presentation:browser": "node server/test-presentation-browser.cjs",
+    "test:presentation:edge": "node server/test-presentation-pdf-edge.cjs",
+    "test:ui:browser": "node server/test-ui-catalog.cjs",
+    "test:ui:responsive": "node server/test-ui-shell-responsive.cjs",
+    "verify": "npm run lint:ui && npm run typecheck && npm run test:presentation && npm run build"
+  },
+  "dependencies": {
+    "axios": "^1.16.0",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.4.2",
+    "groq-sdk": "^1.3.0",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "mysql2": "^3.22.3",
+    "next": "^16.2.10",
+    "playwright-core": "^1.57.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "react-image-crop": "^11.0.10",
+    "recharts": "^3.8.1",
+    "sharp": "^0.34.5",
+    "tailwind-merge": "^3.5.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^22.14.0",
+    "@types/react": "19.2.17",
+    "@types/web-push": "^3.6.4",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0",
+    "tailwindcss": "^4.1.14",
+    "typescript": "~5.8.2"
+  },
+  "allowScripts": {
+    "sharp@0.34.5": true
+  },
+  "overrides": {
+    "postcss": "8.5.16"
+  }
 }
