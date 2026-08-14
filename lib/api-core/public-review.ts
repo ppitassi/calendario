@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes, randomUUID } from "crypto";
-import { exec, rows } from "../db";
+import { exec, parseJson, rows } from "../db";
 import { ApiContext, ApiParams } from "../api-types";
 import { err, ok } from "../api-response";
 import { body, rateLimited, toMysqlDateTime } from "./context";
@@ -134,7 +134,7 @@ export async function handlePublicReviewApi(
       return err(tokenData.error, tokenData.status);
     return ok(
       await rows(
-        "SELECT id,postId,authorName,authorRole,content,createdAt FROM post_comments WHERE postId = ? AND authorRole = 'cliente' ORDER BY createdAt ASC",
+        "SELECT id,work_item_id postId,COALESCE(public_author_name,'Cliente') authorName,'cliente' authorRole,body content,created_at createdAt FROM comments WHERE work_item_id=? AND user_id IS NULL AND deleted_at IS NULL ORDER BY created_at",
         [params.postId],
       ),
     );
@@ -146,8 +146,8 @@ export async function handlePublicReviewApi(
     if (await rateLimited(`review-comment:${params.token}`, 20, 60_000)) return err("Limite de comentários excedido.", 429);
     const data=await body(req); const content=String(data.content||"").trim(); const authorName=String(data.authorName||"Cliente").trim().slice(0,120)||"Cliente";
     if(!content)return err("Comentário obrigatório.",400); if(content.length>5000)return err("Comentário muito extenso.",400);
-    const result:any=await exec("INSERT INTO post_comments (postId,authorName,authorRole,content,commentType,createdAt) VALUES (?,?,'cliente',?,'comment',NOW())",[params.postId,authorName,content]);
-    return ok({id:result.insertId});
+    const id=randomUUID();await exec("INSERT INTO comments (id,work_item_id,public_author_name,body) VALUES (?,?,?,?)",[id,params.postId,authorName,content]);await exec("INSERT INTO work_item_events (work_item_id,event_type,data_json) VALUES (?,'PUBLIC_COMMENT_ADDED',?)",[params.postId,JSON.stringify({commentId:id,authorName})]);
+    return ok({id},201);
   }
 
   if (
@@ -174,7 +174,7 @@ export async function handlePublicReviewApi(
 
   if (route === "/clients/[id]/send-for-review" && method === "POST") {
     const found = await rows(
-      "SELECT name, whatsappGroupId FROM clients WHERE id = ?",
+      "SELECT name,integrations_json FROM clients WHERE id = ? AND archived_at IS NULL",
       [params.id],
     );
     const client = found[0];
@@ -183,15 +183,14 @@ export async function handlePublicReviewApi(
     const month = /^\d{4}-\d{2}$/.test(requestData.month || "")
       ? requestData.month
       : new Date().toISOString().slice(0, 7);
-    const reviewToken = randomBytes(32).toString("hex");
-    await exec(
-      "INSERT INTO approval_tokens (id, clientId, month, status, expiresAt, createdAt) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())",
-      [reviewToken, params.id, month, "pending"],
-    );
+    const calendar=(await rows("SELECT id FROM work_items WHERE client_id=? AND type='DEMAND' AND title=? AND deleted_at IS NULL LIMIT 1",[params.id,`Calendário ${month}`]))[0],workItemId=calendar?.id||randomUUID();if(!calendar)await exec("INSERT INTO work_items (id,type,title,client_id,status,priority,created_by,due_at) VALUES (?,'DEMAND',?,?,'TODO','NORMAL',?,LAST_DAY(?))",[workItemId,`Calendário ${month}`,params.id,ctx.userUid,`${month}-01`]);
+    const reviewToken = randomBytes(32).toString("base64url"),recordId=randomUUID();
+    await exec("INSERT INTO public_approval_tokens (id,token_hash,client_id,work_item_id,period_key,status,expires_at,created_by) VALUES (?,?,?,?,?,'PENDING',DATE_ADD(NOW(),INTERVAL 30 DAY),?)",[recordId,createHash("sha256").update(reviewToken).digest("hex"),params.id,workItemId,month,ctx.userUid]);
     const reviewUrl = `${process.env.APP_URL || url.origin}/review/${reviewToken}`;
-    if (client.whatsappGroupId)
+    const whatsappGroupId=parseJson(client.integrations_json,{}).whatsappGroupId;
+    if (whatsappGroupId)
       await sendWAMessage(
-        client.whatsappGroupId,
+        whatsappGroupId,
         `Planejamento disponÃ­vel: ${reviewUrl}`,
       );
     return ok({ token: reviewToken, url: reviewUrl });

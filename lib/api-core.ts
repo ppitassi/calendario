@@ -83,6 +83,7 @@ export async function handleApi(
 
     if (route === "/cron/deadlines" && method === "GET") {
       if (!validCronSecret(req)) return err("Não autorizado.", 401);
+      const dueItems=await rows(`SELECT wi.id,wi.title,wi.due_at,a.user_id,DATEDIFF(wi.due_at,CURRENT_DATE) days_left FROM work_items wi JOIN work_item_assignees a ON a.work_item_id=wi.id AND a.removed_at IS NULL WHERE wi.deleted_at IS NULL AND wi.archived_at IS NULL AND wi.status NOT IN ('DONE','CANCELLED') AND wi.due_at IS NOT NULL AND wi.due_at<DATE_ADD(CURRENT_DATE,INTERVAL 3 DAY)`);let created=0;for(const item of dueItems){const type=Number(item.days_left)<0?"WORK_ITEM_OVERDUE":"WORK_ITEM_DUE_SOON",dedupe=`deadline:${item.id}:${item.user_id}:${new Date().toISOString().slice(0,10)}`,result=await exec("INSERT IGNORE INTO notifications (id,recipient_user_id,type,work_item_id,data_json,deduplication_key) VALUES (UUID(),?,?,?,?,?)",[item.user_id,type,item.id,JSON.stringify({title:item.title,dueAt:item.due_at,daysLeft:Number(item.days_left)}),dedupe]);created+=Number(result.affectedRows||0);}return ok({success:true,notifications:created,itemsChecked:dueItems.length});
       const parts = new Intl.DateTimeFormat("en-CA", {
         timeZone: process.env.APP_TIMEZONE || "America/Sao_Paulo",
         year: "numeric",

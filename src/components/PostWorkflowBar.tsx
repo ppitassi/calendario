@@ -180,7 +180,7 @@ export function PostWorkflowBar({
                     workVersion: r.workVersion,
                   });
                   await load();
-                  toast("Postagem aguardando aprova??o.", "success");
+                  toast("Postagem enviada para revisão interna.", "success");
                 } catch (e: any) {
                   toast(
                     e?.response?.data?.error || "A arte ainda n?o est? pronta.",
@@ -194,7 +194,7 @@ export function PostWorkflowBar({
               size="small"
               variant="glass"
             >
-              Marcar aguardando aprova??o
+              Enviar para revisão interna
               <Check />
             </Button>
           )}

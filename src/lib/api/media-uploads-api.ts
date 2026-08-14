@@ -16,8 +16,8 @@ export async function uploadBrandManual(file: File): Promise<BrandManualDigest> 
 }
 
 export async function getPostMediaAssets(ownerId: string): Promise<MediaAssetSummary[]> {
-  const response = await axios.get(`${API_URL}/media/assets`, { params: { ownerId } });
-  return response.data;
+  const response = await axios.get(`${API_URL}/work-items/${ownerId}/assets`);
+  return response.data.map((asset:any)=>({assetId:asset.id,originalName:asset.originalName,mimeType:asset.mimeType,sizeBytes:Number(asset.byteSize),checksum:"",logicalPath:"",visibility:asset.category==="post_document"?"protected":"public",url:asset.url}));
 }
 
 export async function uploadImage(
@@ -110,6 +110,7 @@ export async function uploadMediaFile(
   category = "media",
   itemIndex?: number,
 ): Promise<{ url: string; provider: string; assetId: string; logicalPath: string; checksum: string; visibility: "public" | "protected"; mirrorState: string }> {
+  if(ownerId){const form=new FormData();form.append("file",file);form.append("category",category);if(itemIndex!=null)form.append("sortOrder",String(itemIndex));const response=await axios.post(`${API_URL}/work-items/${ownerId}/assets`,form);return{url:response.data.url,provider:"local",assetId:response.data.id,logicalPath:"",checksum:"",visibility:category.includes("document")?"protected":"public",mirrorState:"local"};}
   let initialized;
   try {
     initialized = await axios.post(`${API_URL}/uploads/media/init`, {

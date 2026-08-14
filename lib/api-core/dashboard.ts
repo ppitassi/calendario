@@ -163,26 +163,28 @@ export async function handleDashboardApi(
   }
 
   if (route === "/admin/dashboard-stats" && method === "GET") {
-    const clients = await rows(
-      "SELECT COUNT(*) as total FROM clients",
-    );
-    const posts = await rows(
-      "SELECT COUNT(*) as total FROM work_items WHERE type='TASK' AND deleted_at IS NULL",
-    );
-    const users = await rows(
-      "SELECT COUNT(*) as total FROM users",
-    );
+    const [clients,posts,users,work,throughput,time,photos,externals] = await Promise.all([
+      rows("SELECT COUNT(*) total FROM clients WHERE archived_at IS NULL"),
+      rows("SELECT COUNT(*) total FROM content_items"),
+      rows("SELECT COUNT(*) total FROM users WHERE active=TRUE AND deleted_at IS NULL"),
+      rows(`SELECT SUM(type='PROJECT' AND status NOT IN ('DONE','CANCELLED')) activeProjects,SUM(type='DEMAND' AND status NOT IN ('DONE','CANCELLED')) openDemands,SUM(type='TASK' AND status NOT IN ('DONE','CANCELLED')) openTasks,SUM(status='BLOCKED') blocked,SUM(due_at<NOW() AND status NOT IN ('DONE','CANCELLED')) overdue FROM work_items WHERE deleted_at IS NULL AND archived_at IS NULL`),
+      rows("SELECT COUNT(*) completedMonth FROM work_items WHERE completed_at>=DATE_FORMAT(CURRENT_DATE,'%Y-%m-01') AND completed_at<DATE_ADD(LAST_DAY(CURRENT_DATE),INTERVAL 1 DAY)"),
+      rows("SELECT COALESCE(SUM(duration_seconds),0) trackedSeconds FROM work_item_time_entries WHERE started_at>=DATE_FORMAT(CURRENT_DATE,'%Y-%m-01')"),
+      rows("SELECT COALESCE(SUM(edited_count),0) edited,COALESCE(SUM(exported_count),0) exported FROM photo_jobs"),
+      rows("SELECT COUNT(*) total,COALESCE(AVG(TIMESTAMPDIFF(MINUTE,actual_start,actual_end)),0) averageMinutes FROM external_operations WHERE status='COMPLETED'"),
+    ]);
     return ok({
       clients: clients[0]?.total || 0,
       posts: posts[0]?.total || 0,
       users: users[0]?.total || 0,
+      work: work[0]||{},throughput:Number(throughput[0]?.completedMonth||0),trackedHours:Math.round(Number(time[0]?.trackedSeconds||0)/36)/100,photos:photos[0]||{},externalOperations:externals[0]||{},
     });
   }
 
   if (route === "/admin/workload-stats" && method === "GET")
     return ok(
       await rows(
-        "SELECT u.id uid,u.name displayName,COUNT(a.id) total FROM users u LEFT JOIN work_item_assignees a ON a.user_id=u.id AND a.removed_at IS NULL GROUP BY u.id,u.name",
+        `SELECT u.id uid,u.name displayName,COUNT(DISTINCT CASE WHEN wi.status NOT IN ('DONE','CANCELLED') THEN wi.id END) total,COUNT(DISTINCT CASE WHEN wi.status='BLOCKED' THEN wi.id END) blocked,COUNT(DISTINCT CASE WHEN wi.due_at<NOW() AND wi.status NOT IN ('DONE','CANCELLED') THEN wi.id END) overdue,COALESCE(SUM(te.duration_seconds),0) trackedSeconds FROM users u LEFT JOIN work_item_assignees a ON a.user_id=u.id AND a.removed_at IS NULL LEFT JOIN work_items wi ON wi.id=a.work_item_id AND wi.deleted_at IS NULL LEFT JOIN work_item_time_entries te ON te.work_item_id=wi.id AND te.user_id=u.id AND te.started_at>=DATE_FORMAT(CURRENT_DATE,'%Y-%m-01') WHERE u.active=TRUE AND u.deleted_at IS NULL GROUP BY u.id,u.name ORDER BY total DESC,u.name`,
       ),
     );
 
