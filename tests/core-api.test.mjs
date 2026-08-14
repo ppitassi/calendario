@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { test } from "node:test";
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local", quiet: true });
 
 const base = "http://127.0.0.1:3016/api";
 async function waitForServer() {
@@ -42,6 +46,8 @@ async function request(path, options = {}, cookie = "") {
 }
 
 test("auth and universal work item hierarchy", async () => {
+  const createdWorkIds = [];
+  const createdClientIds = [];
   const server = spawn(
     process.execPath,
     ["node_modules/next/dist/bin/next", "start", "--port=3016"],
@@ -66,12 +72,15 @@ test("auth and universal work item hierarchy", async () => {
         (role) => role.key === "ADMIN" && Array.isArray(role.permissions),
       ),
     );
-    const create = async (type, title, parentId) =>
-      request(
+    const create = async (type, title, parentId) => {
+      const result = await request(
         "/work-items",
         { method: "POST", body: JSON.stringify({ type, title, parentId }) },
         login.cookie,
       );
+      if (result.payload?.id) createdWorkIds.push(result.payload.id);
+      return result;
+    };
     const project = await create("PROJECT", "Projeto de teste");
     assert.equal(project.response.status, 201);
     const demand = await create(
@@ -103,6 +112,7 @@ test("auth and universal work item hierarchy", async () => {
     );
     assert.equal(detail.payload.parent_id, demand.payload.id);
     const clientId = crypto.randomUUID();
+    createdClientIds.push(clientId);
     const client = await request(
       "/clients",
       {
@@ -161,6 +171,7 @@ test("auth and universal work item hierarchy", async () => {
       },
       login.cookie,
     );
+    if (contentTask.payload?.id) createdWorkIds.push(contentTask.payload.id);
     assert.equal(contentTask.response.status, 201);
     const content = await request(
       `/work-items/${contentTask.payload.id}/content`,
@@ -341,6 +352,7 @@ test("auth and universal work item hierarchy", async () => {
       },
       login.cookie,
     );
+    if (editorial.payload?.id) createdWorkIds.push(editorial.payload.id);
     assert.equal(editorial.response.status, 200);
     const calendar = await request(`/posts/${clientId}`, {}, login.cookie);
     assert.equal(calendar.response.status, 200);
@@ -350,6 +362,67 @@ test("auth and universal work item hierarchy", async () => {
       ),
     );
   } finally {
-    server.kill();
+    let db;
+    try {
+      db = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT || 3306),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+      });
+      const [clientWork] = createdClientIds.length
+        ? await db.query("SELECT id FROM work_items WHERE client_id IN (?)", [
+            createdClientIds,
+          ])
+        : [[]];
+      const cleanupIds = [
+        ...new Set([...createdWorkIds, ...clientWork.map((entry) => entry.id)]),
+      ];
+      if (cleanupIds.length) {
+        await db.query(
+          "DELETE FROM public_approval_tokens WHERE work_item_id IN (?)",
+          [cleanupIds],
+        );
+        await db.query("DELETE FROM approval_flows WHERE work_item_id IN (?)", [
+          cleanupIds,
+        ]);
+        await db.query("DELETE FROM comments WHERE work_item_id IN (?)", [
+          cleanupIds,
+        ]);
+        await db.query(
+          "DELETE FROM work_item_assignees WHERE work_item_id IN (?)",
+          [cleanupIds],
+        );
+        await db.query(
+          "DELETE FROM work_item_events WHERE work_item_id IN (?)",
+          [cleanupIds],
+        );
+        await db.query(
+          "DELETE FROM work_item_time_entries WHERE work_item_id IN (?)",
+          [cleanupIds],
+        );
+        await db.query("UPDATE work_items SET parent_id=NULL WHERE id IN (?)", [
+          cleanupIds,
+        ]);
+        await db.query("DELETE FROM work_items WHERE id IN (?)", [cleanupIds]);
+      }
+      if (createdClientIds.length) {
+        await db.query("DELETE FROM client_contacts WHERE client_id IN (?)", [
+          createdClientIds,
+        ]);
+        await db.query("DELETE FROM client_members WHERE client_id IN (?)", [
+          createdClientIds,
+        ]);
+        await db.query("DELETE FROM clients WHERE id IN (?)", [
+          createdClientIds,
+        ]);
+      }
+    } catch (error) {
+      console.warn("test cleanup failed", error.message);
+    } finally {
+      if (db) await db.end();
+      server.kill();
+    }
   }
 });
