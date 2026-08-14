@@ -1,2 +1,13 @@
-﻿import {NextRequest,NextResponse} from 'next/server';import {getDbPool} from '../../../../../lib/db';import {createNotificationEvent,notificationSession} from '../../../../../lib/notifications';
-export async function POST(req:NextRequest){const s=await notificationSession(req);if(!s)return NextResponse.json({error:'SessÃ£o expirada.'},{status:401});const id=await createNotificationEvent({type:'push_test',category:'security',entityType:'user',entityId:s.uid,title:'NotificaÃ§Ã£o de teste',body:'As notificaÃ§Ãµes deste navegador estÃ£o funcionando.',route:'/',recipientUserIds:[s.uid]});if(!id){const [r]:any=await getDbPool().execute(`INSERT INTO notifications(type,category,entityType,entityId,title,body,route) VALUES('push_test','security','user',?,'NotificaÃ§Ã£o de teste','As notificaÃ§Ãµes deste navegador estÃ£o funcionando.','/')`,[s.uid]);await getDbPool().execute('INSERT INTO notification_recipients(notificationId,userId) VALUES(?)',[r.insertId,s.uid]);await getDbPool().execute(`INSERT IGNORE INTO notification_outbox(notificationId,recipientUserId,channel) VALUES(?,'browser_push')`,[r.insertId,s.uid]);}return NextResponse.json({success:true});}
+import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { getDbPool } from "../../../../../lib/db";
+import { notificationSession } from "../../../../../lib/notifications";
+
+export async function POST(req:NextRequest) {
+  const session=await notificationSession(req);
+  if(!session)return NextResponse.json({error:"Sessão expirada."},{status:401});
+  const id=randomUUID(),data={category:"security",entityType:"user",entityId:session.uid,title:"Notificação de teste",body:"As notificações deste navegador estão funcionando.",route:"/"};
+  await getDbPool().execute("INSERT INTO notifications (id,recipient_user_id,type,data_json) VALUES (?,?,?,?)",[id,session.uid,"push_test",JSON.stringify(data)]);
+  await getDbPool().execute("INSERT INTO notification_outbox (id,notification_id,channel) VALUES (?,?,?)",[randomUUID(),id,"browser_push"]);
+  return NextResponse.json({success:true,id});
+}
