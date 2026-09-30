@@ -57,8 +57,9 @@ function assertNoPersistentState() {
   }
 }
 
-if (!fs.existsSync(path.join(standalone, "server.js"))) {
-  throw new Error("Build standalone ausente.");
+if (process.env.VERCEL || !fs.existsSync(path.join(standalone, "server.js"))) {
+  console.log("[presentation-studio] Build Vercel/serverless detectado; pulando empacotamento standalone.");
+  process.exit(0);
 }
 
 assertNoPersistentState();
