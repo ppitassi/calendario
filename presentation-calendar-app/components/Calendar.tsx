@@ -3,7 +3,7 @@
 
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, Users, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Users, CalendarDays, Trash2 } from "lucide-react";
 import { dateKey, monthLabel, shiftMonth } from "../lib/date";
 import type { ContentItem } from "../lib/types";
 
@@ -285,19 +285,23 @@ export function Calendar({
         )}
       </button>
 
-      {/* UI: ação destrutiva secundária, disponível somente quando há itens no mês. */}
+      {/* UI: ação de limpar mês para excluir todas as postagens do mês atual de uma só vez */}
       {onClearMonth && items.length > 0 && (
         <button
           type="button"
-          className="clearMonthTextBtn"
+          className="clearMonthActionBtn"
           onClick={() => {
-            if (window.confirm("Tem certeza que deseja excluir todas as publicações deste mês?")) {
+            if (
+              window.confirm(
+                `Deseja realmente apagar todas as ${items.length} postagens deste mês? Essa ação não pode ser desfeita.`
+              )
+            ) {
               onClearMonth();
             }
           }}
-          title="Excluir todas as postagens do mês"
+          title="Excluir todas as postagens deste mês"
         >
-          Limpar mês
+          <Trash2 size={13} /> Limpar mês ({items.length})
         </button>
       )}
     </aside>
