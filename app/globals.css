@@ -343,24 +343,29 @@
   background: #fff;
   color: var(--accent);
 }
-.clearMonthTextBtn {
+.clearMonthActionBtn {
   margin-top: 10px;
   width: 100%;
-  border: none;
-  background: transparent;
-  color: #94a3b8;
+  border: 1px dashed rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.03);
+  color: #dc2626;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   transition: all 0.15s ease;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
-.clearMonthTextBtn:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.06);
+.clearMonthActionBtn:hover {
+  color: #ffffff;
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }
 
 /* Caixa de perfis e publicação colaborativa no editor. */
