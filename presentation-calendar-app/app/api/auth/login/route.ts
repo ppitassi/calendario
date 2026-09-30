@@ -27,6 +27,14 @@ export async function POST(request: Request) {
     `).get(cleanUsername)) as (SafeUser & { password_hash: string }) | undefined;
 
     if (!user) {
+      // Verifica se o banco está completamente vazio para orientar o primeiro cadastro
+      const countRow = await db.prepare("SELECT COUNT(*) as count FROM users").get();
+      if (Number(countRow?.count || 0) === 0) {
+        return NextResponse.json({
+          error: "Nenhum usuário cadastrado ainda. Use a aba 'Solicitar Acesso' para criar o primeiro administrador.",
+          needsSetup: true,
+        }, { status: 400 });
+      }
       return NextResponse.json({ error: "Usuário ou senha inválidos." }, { status: 401 });
     }
 

@@ -72,6 +72,12 @@ export function AuthScreen({
         }
         if (!res.ok) throw new Error(data?.error || "Falha ao registrar");
 
+        if (data?.user) {
+          // Se for o primeiro usuário do banco, ele já se tornou Administrador automaticamente!
+          onLoginSuccess(data.user);
+          return;
+        }
+
         setSuccessMessage(
           "Solicitação enviada com sucesso! O administrador recebeu uma notificação e precisa aprovar sua conta antes do primeiro acesso."
         );
@@ -90,7 +96,12 @@ export function AuthScreen({
           const raw = await res.text().catch(() => "");
           throw new Error(raw && raw.length < 200 ? raw : `Erro de conexão (${res.status}). Verifique as variáveis do banco PostgreSQL na Vercel.`);
         }
-        if (!res.ok) throw new Error(data?.error || "Falha ao autenticar");
+        if (!res.ok) {
+          if (data?.needsSetup) {
+            setIsRegister(true);
+          }
+          throw new Error(data?.error || "Falha ao autenticar");
+        }
 
         onLoginSuccess(data.user);
       }
