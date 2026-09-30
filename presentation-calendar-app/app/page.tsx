@@ -13,6 +13,7 @@ import type { SafeUser } from "@/lib/auth";
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   /** Consulta a sessão atual e detecta se o sistema precisa de setup inicial. */
@@ -24,13 +25,18 @@ export default function Home() {
       if (data.user) {
         setCurrentUser(data.user);
         setNeedsSetup(false);
+        setDbError(null);
       } else {
         setCurrentUser(null);
         setNeedsSetup(Boolean(data.needsSetup));
+        if (data.dbError) {
+          setDbError(data.dbError);
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Auth check failed:", err);
       setCurrentUser(null);
+      setDbError(err?.message || "Erro de conexão com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -63,9 +69,11 @@ export default function Home() {
     return (
       <AuthScreen
         isFirstSetup={needsSetup}
+        initialError={dbError}
         onLoginSuccess={(user: SafeUser) => {
           setCurrentUser(user);
           setNeedsSetup(false);
+          setDbError(null);
         }}
       />
     );
