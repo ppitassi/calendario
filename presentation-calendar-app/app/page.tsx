@@ -54,7 +54,7 @@ export default function Home() {
     return (
       <div className="fullScreenLoader">
         <div className="loaderSpinner" />
-        <p>Carregando Content Planner Studio...</p>
+        <p>Carregando Calendário...</p>
       </div>
     );
   }
