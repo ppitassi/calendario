@@ -43,7 +43,7 @@ export type Client = {
 export type CalendarStatus = "draft" | "sent_to_designer" | "in_production" | "sent_to_social_media" | "approved";
 
 /** Formatos editoriais aceitos para uma publicação. */
-export type ContentType = "Post" | "Carrossel" | "Reel" | "Story";
+export type ContentType = "Feed" | "Story" | "Carrossel" | "Reel" | "Post";
 /** Estados de execução de uma publicação dentro do calendário. */
 export type ContentStatus = "Ideia" | "Produção" | "Revisão" | "Aprovado";
 

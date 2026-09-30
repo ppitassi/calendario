@@ -212,7 +212,7 @@ export async function PUT(
             id,
             item.date || "",
             item.title || "Nova publicação",
-            item.type || "Post",
+            item.type === "Post" ? "Feed" : item.type || "Feed",
             item.status || "Ideia",
             item.channel || "Instagram",
             item.objective || "",

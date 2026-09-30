@@ -169,7 +169,7 @@ async function main() {
               id: crypto.randomUUID(),
               date: `${month}-01`,
               title: "Publicação de validação",
-              type: "Post",
+              type: "Feed",
               status: "Ideia",
               channel: "Instagram",
               profile: "@validacao",

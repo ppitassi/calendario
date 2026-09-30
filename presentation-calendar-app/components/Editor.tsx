@@ -151,10 +151,10 @@ export function Editor({
             <label>
               <span>Formato</span>
               <select
-                value={item.type}
+                value={item.type === "Post" ? "Feed" : item.type}
                 onChange={(e) => field("type", e.target.value as ContentType)}
               >
-                {["Post", "Carrossel", "Reel", "Story"].map((value) => (
+                {["Feed", "Story", "Carrossel", "Reel"].map((value) => (
                   <option key={value}>{value}</option>
                 ))}
               </select>
