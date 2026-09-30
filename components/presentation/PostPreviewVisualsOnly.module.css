@@ -1,0 +1,201 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar a visualização de mídia sem o conteúdo textual do post.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Superfície comum à mídia carregada e ao marcador de pendência. */
+.cardCommon {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  overflow: hidden;
+  margin-inline: auto;
+  border: 3px solid #ffffff;
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 40px -16px rgba(20, 29, 52, 0.16);
+  transition: transform var(--duration-fast, 140ms);
+  background: #f8fafc;
+}
+
+/* Contêiner interativo que permite ampliar a arte. */
+.preview {
+  composes: cardCommon;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview:hover {
+  transform: scale(1.02);
+}
+
+/* Marcador claro usado enquanto nenhuma mídia foi enviada. */
+.placeholder {
+  composes: cardCommon;
+  cursor: default;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Proporções reservadas conforme o formato editorial. */
+.aspectPost {
+  aspect-ratio: 1 / 1;
+  min-height: 18rem;
+}
+
+.aspectCarousel {
+  aspect-ratio: 4 / 5;
+  min-height: 20rem;
+}
+
+.aspectVideo {
+  aspect-ratio: 9 / 16;
+  max-width: 16rem;
+  min-height: 25rem;
+}
+
+.placeholderContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  z-index: 2;
+  width: 100%;
+}
+
+.iconCircle {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: grid;
+  place-items: center;
+  margin-bottom: 1rem;
+}
+
+.placeholderIcon {
+  width: 2rem;
+  height: 2rem;
+  color: #64748b;
+}
+
+.placeholderTitle {
+  font-family: var(--font-display, "Segoe UI", sans-serif);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.placeholderSubtitle {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #64748b;
+  max-width: 85%;
+}
+
+/* Preserva a mídia inteira com `contain`; não recorta quadrado, retrato ou story. */
+.image,
+.video {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  object-fit: contain;
+  display: block;
+}
+
+.video {
+  background: #0f172a;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.35);
+  opacity: 0;
+  transition: opacity var(--duration-fast, 140ms);
+}
+
+.preview:hover .overlay,
+.preview:focus-within .overlay {
+  opacity: 1;
+}
+
+.expandLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transform: translateY(0.5rem);
+  transition: transform var(--duration-fast, 140ms);
+}
+
+.preview:hover .expandLabel,
+.preview:focus-within .expandLabel {
+  transform: translateY(0);
+}
+
+.expandLabel svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.carouselBadge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  z-index: 5;
+}
+
+.carouselBadge svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.videoPlayBadge {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  z-index: 5;
+}

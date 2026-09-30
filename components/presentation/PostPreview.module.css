@@ -1,0 +1,299 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar a simulação completa de um post dentro da apresentação.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Espaçamento do cartão completo dentro da sequência de posts. */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--space-4, 1rem);
+}
+
+.heading h2 {
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Superfície principal que combina texto editorial e mídia. */
+.card {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: var(--space-5, 1.25rem);
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface, rgba(255, 255, 255, 0.74));
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+}
+
+.glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 25rem;
+  height: 25rem;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 10%, transparent);
+  filter: blur(var(--blur-ambient-md, 6.25rem));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  transition: transform var(--duration-page, 220ms) var(--ease-expressive, ease);
+}
+
+.card:hover .glow {
+  transform: scale(1.1);
+}
+
+/* Conteúdo acima do brilho decorativo; conserva largura mínima para textos longos. */
+.content {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  display: flex;
+  min-width: 0;
+  min-height: 25rem;
+  flex-direction: column;
+}
+
+.overview {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--space-8, 2rem);
+  margin-bottom: var(--space-6, 1.5rem);
+  text-align: left;
+}
+
+.copy {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Linha flexível de número, data, formato, funil e perfis. */
+.metadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-6, 1.5rem);
+}
+
+.postNumberGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+}
+
+.postNumber,
+.postArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  border-radius: var(--radius-card, 1rem);
+  background: var(--color-action-primary, #e3002f);
+  color: var(--color-text-on-action, #fff);
+}
+
+.postNumber {
+  padding: var(--space-2, 0.5rem) var(--space-5, 1.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.postArrow {
+  width: 2.5rem;
+  box-shadow: var(--shadow-surface, 0 8px 24px -16px rgba(30, 41, 70, 0.34));
+}
+
+.postArrow svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.metaPill,
+.funnelPill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  min-height: 2.5rem;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  border: 1px solid var(--color-border-subtle, hsl(222, 22%, 87%));
+  border-radius: var(--radius-card, 1rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.metaPill {
+  background: var(--color-bg-muted, hsl(224, 24%, 92%));
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
+}
+
+.metaPill svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.funnelPill {
+  border-color: color-mix(
+    in srgb,
+    var(--color-action-primary, #e3002f) 20%,
+    transparent
+  );
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 10%, transparent);
+  color: var(--color-action-primary, #e3002f);
+  font-weight: 900;
+}
+
+/* Hierarquia editorial de título, subtítulo e legenda. */
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-6, 1.5rem);
+}
+
+.titleBlock h1 {
+  color: var(--color-text-primary, #171924);
+  font-family: var(--font-display);
+  font-size: clamp(1.875rem, 5vw, 3rem);
+  font-weight: 900;
+  line-height: 1.02;
+  overflow-wrap: break-word;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.titleBlock h2 {
+  color: var(--color-action-primary, #e3002f);
+  font-size: var(--font-size-lg, 1.125rem);
+  font-style: italic;
+  font-weight: 500;
+  margin: 0;
+}
+
+.caption {
+  position: relative;
+  margin-bottom: var(--space-6, 1.5rem);
+  padding-block: var(--space-5, 1.25rem);
+  border-block: 1px solid var(--color-border-subtle, hsl(222, 22%, 87%));
+}
+
+.caption p {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  line-height: 1.625;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Roteiro específico de vídeo e objetivo estratégico da publicação. */
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.scriptCard {
+  display: grid;
+  max-width: 36rem;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-6, 1.5rem);
+  border: 1px solid var(--color-border-subtle, hsl(222, 22%, 87%));
+  border-radius: var(--radius-card, 1rem);
+  background: var(--glass-surface-subtle, rgba(255, 255, 255, 0.56));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+}
+
+.scriptCard span,
+.objective span {
+  display: block;
+  margin-bottom: var(--space-1, 0.25rem);
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  font-size: var(--font-size-2xs, 0.625rem);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scriptCard strong,
+.objective strong {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.scriptText {
+  padding-left: var(--space-3, 0.75rem);
+  border-left: 2px solid
+    color-mix(in srgb, var(--color-action-primary, #e3002f) 30%, transparent);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.objective {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.objectiveIcon {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-bg-muted, hsl(224, 24%, 92%));
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
+}
+
+.objectiveIcon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Coluna da arte, separada do briefing em telas largas. */
+.visuals {
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: var(--space-4, 1rem);
+}
+
+/* Em telas maiores, separa briefing e arte em duas colunas. */
+@media (width >= 640px) {
+  .card {
+    padding: var(--space-6, 1.5rem);
+  }
+}
+
+@media (width >= 768px) {
+  .card {
+    padding: var(--space-8, 2rem);
+  }
+
+  .overview {
+    flex-direction: row;
+  }
+
+  .visuals {
+    width: 20rem;
+    padding-top: 0;
+  }
+}

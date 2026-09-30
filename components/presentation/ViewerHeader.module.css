@@ -1,0 +1,106 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar o cabeçalho da apresentação e seus controles de navegação.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Cabeçalho fixo, identidade da marca e navegação mensal. */
+.appHeader,
+.identity,
+.monthNav,
+.actions {
+  align-items: center;
+  display: flex;
+}
+
+.appHeader {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header, 100);
+  background: var(--glass-surface, rgba(255, 255, 255, 0.88));
+  backdrop-filter: blur(var(--glass-blur, 19px)) saturate(120%);
+  border-bottom: 1px solid var(--color-border-subtle, hsl(222, 22%, 87%));
+  flex-wrap: wrap;
+  gap: var(--space-6, 1.5rem);
+  justify-content: space-between;
+  padding: var(--space-4, 1rem) 2.5rem;
+  width: 100%;
+}
+
+.identity {
+  gap: var(--space-4, 1rem);
+}
+
+.avatar {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 15%, transparent);
+  border-radius: var(--radius-control, 0.75rem);
+  color: var(--color-action-primary, #e3002f);
+  display: flex;
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 900;
+  height: 2.5rem;
+  justify-content: center;
+  text-transform: uppercase;
+  width: 2.5rem;
+}
+
+.appTitle {
+  display: flex;
+  flex-direction: column;
+}
+
+.appTitle h1 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: var(--tracking-heavy, 0.015em);
+  margin: 0;
+}
+
+.appTitle span {
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  font-size: var(--font-size-2xs, 0.625rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.monthNav {
+  background: color-mix(in srgb, var(--color-text-primary, #171924) 5%, transparent);
+  border: 1px solid var(--color-border-subtle, hsl(222, 22%, 87%));
+  border-radius: var(--radius-card, 1rem);
+  box-shadow: inset var(--shadow-surface, 0 8px 24px -16px rgba(30, 41, 70, 0.34));
+  gap: var(--space-4, 1rem);
+  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+}
+
+.monthNav > span {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  min-width: 8rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Grupo de impressão, compartilhamento e fechamento. */
+.actions {
+  gap: var(--space-3, 0.75rem);
+}
+
+/* Em telas estreitas, oculta textos secundários e reduz os controles. */
+@media (width < 768px) {
+  .appHeader {
+    align-items: stretch;
+    flex-direction: column;
+    padding-inline: var(--space-4, 1rem);
+  }
+  .monthNav {
+    justify-content: space-between;
+  }
+  .actions {
+    flex-wrap: wrap;
+  }
+}

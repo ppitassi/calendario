@@ -1,0 +1,606 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar o catálogo operacional de clientes e o estado mensal de seus calendários.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Área rolável do catálogo de clientes. */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Cabeçalho, seletor de mês e criação de cliente. */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.titleArea h1 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.25rem;
+  color: var(--color-text-primary);
+}
+
+.titleArea p {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.monthSwitcher {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.monthSwitcher button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: all 0.15s;
+}
+
+.monthSwitcher button:hover {
+  background: var(--color-bg-subtle);
+  color: var(--tenant-primary);
+}
+
+.monthLabel {
+  padding: 0 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+}
+
+.newClientBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--tenant-primary);
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 14px rgba(227, 0, 47, 0.25);
+  transition: all 0.15s;
+}
+
+.newClientBtn:hover {
+  background: #c90029;
+  transform: translateY(-1px);
+}
+
+/* Grade dos quatro indicadores mensais. */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Aparência comum dos cartões de KPI. */
+.kpiCard {
+  background: #fff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s;
+}
+
+.kpiCard:hover {
+  transform: translateY(-2px);
+}
+
+.kpiInfo span {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.kpiInfo strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.kpiIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpiIconTotal {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.kpiIconReady {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.kpiIconProgress {
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+}
+
+.kpiIconPending {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+/* Barra de busca local por cliente ou segmento. */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #fff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchBox input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  width: 100%;
+}
+
+.searchBox svg {
+  color: var(--color-text-muted);
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Catálogo em linhas com identidade, estado mensal e ações. */
+.clientsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.clientRow {
+  background: #fff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  padding: 1rem 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.clientRow:hover {
+  border-color: rgba(227, 0, 47, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.clientIdentity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 260px;
+}
+
+.clientAvatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.clientDetails h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--color-text-primary);
+  margin: 0 0 0.2rem;
+}
+
+.clientDetails span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  display: block;
+}
+
+/* Coluna e selos do estado do calendário mensal. */
+.statusColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 200px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.statusPillReady {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.statusPillProgress {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.statusPillPending {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.statusDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusPillReady .statusDot {
+  background: #16a34a;
+}
+
+.statusPillProgress .statusDot {
+  background: #d97706;
+}
+
+.statusPillPending .statusDot {
+  background: #94a3b8;
+}
+
+.postVolumeInfo {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+/* Agrupamento dos botões operacionais de cada linha. */
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* Ações para planejar, apresentar, editar e excluir o cliente. */
+.actionBtnPlan {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border-subtle);
+  background: #fff;
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.15s;
+}
+
+.actionBtnPlan:hover {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-strong);
+  color: #000;
+}
+
+.actionBtnPresent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.65rem;
+  border: none;
+  background: var(--tenant-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 12px rgba(227, 0, 47, 0.2);
+  transition: all 0.15s;
+}
+
+.actionBtnPresent:hover {
+  background: #c90029;
+  transform: translateY(-1px);
+}
+
+.actionBtnEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border-subtle);
+  background: #fff;
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.15s;
+}
+
+.actionBtnEdit:hover {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-strong);
+  color: #000;
+  transform: translateY(-1px);
+}
+
+.deleteClientBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  transition: all 0.15s;
+}
+
+.deleteClientBtn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+/* Estado exibido quando a busca não encontra clientes. */
+.emptyState {
+  background: #fff;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 1.25rem;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Ícone e textos do estado vazio do catálogo. */
+.emptyState svg {
+  color: var(--color-text-muted);
+  width: 3rem;
+  height: 3rem;
+}
+
+.emptyState h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 900;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.emptyState p {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.5rem;
+}
+
+/* Backdrop que contém o formulário de criação ou edição. */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* Painel do modal, cabeçalho, corpo rolável e rodapé. */
+.modal {
+  background: #fff;
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.modalHeader h2 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 900;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.modalClose {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+}
+
+.modalClose:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+.modalBody {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+/* Rótulos, entradas e seletor de cor do cliente. */
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.formField label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.formField input {
+  padding: 0.625rem 0.85rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.formField input:focus {
+  border-color: var(--tenant-primary);
+}
+
+.colorPickerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.colorPickerRow input[type="color"] {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  padding: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  background: #f8fafc;
+}
+
+.modalCancelBtn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border-subtle);
+  background: #fff;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.modalSubmitBtn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: var(--tenant-primary);
+  color: #fff;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(227, 0, 47, 0.25);
+}
