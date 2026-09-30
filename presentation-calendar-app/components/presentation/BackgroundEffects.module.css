@@ -1,0 +1,57 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar os elementos decorativos de fundo usados nas apresentações.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Camada fixa, não interativa, posicionada atrás de todo o documento. */
+.root {
+  position: fixed;
+  z-index: var(--z-background, -1);
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.blur {
+  position: absolute;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 15%, transparent);
+  filter: blur(var(--blur-ambient-lg, 7.5rem));
+  mix-blend-mode: multiply;
+}
+
+.blurPrimary {
+  top: 0;
+  left: 0;
+  width: 60vw;
+  height: 60vw;
+}
+
+.blurSecondary {
+  right: 0;
+  bottom: 0;
+  width: 50vw;
+  height: 50vw;
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 10%, transparent);
+  filter: blur(var(--blur-ambient-xl, 8.125rem));
+}
+
+.asterisk {
+  position: absolute;
+  color: transparent;
+  font-weight: 700;
+  opacity: 0.4;
+  -webkit-text-stroke: 2px var(--color-action-primary, #e3002f);
+}
+
+:global(.dark) .blur {
+  mix-blend-mode: screen;
+}
+
+/* Respeita a preferência do sistema e desativa movimento decorativo. */
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    display: none;
+  }
+}

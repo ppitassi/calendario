@@ -1,0 +1,292 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar a apresentação para leitura, compartilhamento e impressão.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Documento da apresentação e sua área rolável principal. */
+.root {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-bg-canvas, hsl(225, 33%, 97%));
+  font-family: var(--font-body);
+  letter-spacing: 0.025em;
+  color: var(--color-text-primary, #171924);
+}
+
+.main {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  width: 100%;
+  flex: 1;
+  margin-inline: auto;
+  padding: var(--space-8, 2rem) var(--space-4, 1rem) var(--space-12, 3rem);
+  display: grid;
+  max-width: 90rem;
+  gap: var(--space-12, 3rem);
+}
+
+.hero,
+.postsSection {
+  position: relative;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  padding: var(--space-10, 2.5rem);
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface, rgba(255, 255, 255, 0.74));
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+}
+
+.hero {
+  min-height: 38dvh;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.logo {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  display: flex;
+  width: 8rem;
+  height: 8rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: var(--space-10, 2.5rem);
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface-strong, rgba(255, 255, 255, 0.88));
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+}
+
+.heroLogoImage {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  display: block;
+  height: 8rem;
+  max-width: 100%;
+  object-fit: contain;
+  margin-bottom: var(--space-10, 2.5rem);
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  padding: var(--space-3, 0.75rem);
+  object-fit: contain;
+}
+
+.logo span {
+  color: var(--color-action-primary, #e3002f);
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 900;
+}
+
+.heroTitle {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  margin-bottom: var(--space-4, 1rem);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  overflow-wrap: break-word;
+  margin-top: 0;
+}
+
+.heroTitle span {
+  color: var(--color-action-primary, #e3002f);
+}
+
+.heroSubtitle {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  max-width: 38rem;
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
+  font-size: clamp(var(--font-size-lg, 1.125rem), 2vw, 1.5rem);
+  font-weight: 500;
+  margin: 0;
+}
+
+.heroSubtitle strong {
+  color: var(--color-action-primary, #e3002f);
+}
+
+.sectionHeading {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  width: 100%;
+  margin-bottom: var(--space-12, 3rem);
+  text-align: center;
+}
+
+.sectionHeading p {
+  margin-bottom: var(--space-4, 1rem);
+  color: var(--color-action-primary, #e3002f);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 0;
+}
+
+.sectionHeading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  font-weight: 900;
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+/* Sequência vertical das publicações do mês. */
+.postsList {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+/* Âncora e separação visual de cada publicação. */
+.postItem {
+  scroll-margin-top: 6rem;
+}
+
+.postDate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+  margin-bottom: var(--space-4, 1rem);
+  padding-left: var(--space-6, 1.5rem);
+  color: var(--color-action-primary, #e3002f);
+}
+
+.postDate h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.postDate > div:first-child {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: currentcolor;
+}
+
+.postDate > div:last-child {
+  height: 1px;
+  flex: 1;
+  background: currentcolor;
+  opacity: 0.2;
+}
+
+.separator {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-block: var(--space-12, 3rem);
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+}
+
+.separator > div {
+  width: 100%;
+  max-width: 20rem;
+  height: 1px;
+  background: linear-gradient(to right, transparent, currentcolor, transparent);
+}
+
+.separator svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-inline: var(--space-4, 1rem);
+}
+
+/* Rodapé com agência, marca e competência apresentada. */
+.footer {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-12, 3rem);
+  padding-top: var(--space-8, 2rem);
+  border-top: 1px solid var(--color-border-subtle, hsl(222, 22%, 87%));
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  font-size: var(--font-size-2xs, 0.625rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  overflow-wrap: break-word;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Estado vazio quando a competência não possui publicações. */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding-block: var(--space-12, 3rem);
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  text-align: center;
+}
+
+.empty > svg {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: var(--space-6, 1.5rem);
+  opacity: 0.3;
+}
+
+.empty h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.empty p {
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
+  margin-top: var(--space-2, 0.5rem);
+}
+
+/* Em telas largas, amplia a capa e distribui cartões com mais respiro. */
+@media (width >= 768px) {
+  .main {
+    gap: 8rem;
+  }
+
+  .hero,
+  .postsSection {
+    padding: var(--space-12, 3rem);
+  }
+
+  .logo {
+    width: 11rem;
+    height: 11rem;
+  }
+
+  .logo span {
+    font-size: 3.5rem;
+  }
+}
+
+@media (width >= 1024px) {
+  .main {
+    padding-inline: var(--space-8, 2rem);
+  }
+}

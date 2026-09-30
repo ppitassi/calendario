@@ -1,0 +1,20 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar o fundo vetorial curvo que identifica visualmente a apresentação.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Camada vetorial fixa, decorativa e sem interação com o conteúdo. */
+.root {
+  position: fixed;
+  z-index: var(--z-background, -1);
+  inset: 0;
+  overflow: hidden;
+  color: var(--color-action-primary, #e3002f);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.curves {
+  width: 100%;
+  height: 100%;
+}

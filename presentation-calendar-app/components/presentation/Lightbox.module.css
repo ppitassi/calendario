@@ -1,0 +1,61 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar a ampliação modal de uma mídia da apresentação.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Backdrop ocupa a janela, bloqueia o documento e centraliza a mídia. */
+.backdrop {
+  position: fixed;
+  z-index: var(--z-modal-overlay, 900);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4, 1rem);
+  background: color-mix(in srgb, var(--color-static-black, #000) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+/* Controles absolutos permanecem acima da imagem ampliada. */
+.closeButton,
+.previousButton,
+.nextButton {
+  position: absolute;
+  z-index: 10;
+}
+
+.closeButton {
+  top: var(--space-6, 1.5rem);
+  right: var(--space-6, 1.5rem);
+}
+
+.previousButton,
+.nextButton {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.previousButton {
+  left: var(--space-6, 1.5rem);
+}
+
+.nextButton {
+  right: var(--space-6, 1.5rem);
+}
+
+/* A mídia usa a maior área possível sem ultrapassar nem recortar a janela. */
+.image {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: var(--radius-card, 1rem);
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(0, 0, 0, 0.7));
+  cursor: default;
+}
+
+/* Em telas largas, afasta as setas da mídia para ampliar a área de visualização. */
+@media (width >= 64rem) {
+  .backdrop {
+    padding: var(--space-12, 3rem);
+  }
+}

@@ -1,0 +1,70 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar o botão compacto destinado a ações representadas por ícone.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Caixa quadrada base e transições do controle por ícone. */
+.button {
+  display: inline-grid;
+  width: var(--control-height-md, 2.75rem);
+  height: var(--control-height-md, 2.75rem);
+  place-items: center;
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 0.75rem);
+  background: transparent;
+  color: var(--color-text-primary, #171924);
+  cursor: pointer;
+  transition:
+    transform var(--duration-instant, 100ms) var(--ease-expressive, ease),
+    background var(--duration-fast, 140ms),
+    border-color var(--duration-fast, 140ms);
+}
+
+/* Feedback de hover/press sem afetar controles desabilitados. */
+.button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text-primary, #171924) 6%, transparent);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+/* Tamanhos mantêm largura e altura iguais para preservar a área circular. */
+.small {
+  width: var(--control-height-sm, 2.25rem);
+  height: var(--control-height-sm, 2.25rem);
+}
+
+.large {
+  width: var(--control-height-lg, 3.25rem);
+  height: var(--control-height-lg, 3.25rem);
+}
+
+/* Variantes visuais usadas sobre superfícies claras, vidro e ações críticas. */
+.glass {
+  border-color: var(--glass-border, rgba(37, 48, 76, 0.12));
+  background: color-mix(in srgb, var(--glass-surface-strong, rgba(255, 255, 255, 0.88)) 94%, transparent);
+  backdrop-filter: blur(var(--blur-glass-control, 12px));
+}
+
+.primary {
+  background: var(--color-action-primary, #e3002f);
+  color: var(--color-action-on-primary, #fff);
+}
+
+.danger {
+  color: var(--color-status-danger, #e11d48);
+}
+
+/* Estado inativo remove a indicação de clique e reduz contraste. */
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Normaliza ícones de bibliotecas diferentes dentro da mesma área útil. */
+.button > svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
