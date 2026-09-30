@@ -18,6 +18,7 @@ export async function GET() {
       ok: true,
       database: db.isPostgres ? "postgres-ready" : "sqlite-ready",
       postgresConfigured: hasPgUrl,
+      blobConfigured: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
       isVercel: Boolean(process.env.VERCEL),
       nodeVersion: process.version,
       timestamp: new Date().toISOString(),

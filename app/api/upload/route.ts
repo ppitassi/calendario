@@ -95,23 +95,22 @@ export async function POST(request: Request) {
       console.error("[studio-upload] Falha ao persistir imagem no banco de dados:", dbErr);
     }
 
-    // 2. Se estiver conectado ao Vercel Blob, envia também para lá
+    let publicUrl = `/api/uploads/${filename}`;
+
+    // 2. Se estiver conectado ao Vercel Blob, envia com prioridade para a CDN da Vercel
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const { put } = await import("@vercel/blob");
-        try {
-          await put(`uploads/${filename}`, buffer, {
-            access: "private",
-            contentType: file.type,
-          });
-        } catch {
-          await put(`uploads/${filename}`, buffer, {
-            access: "public",
-            contentType: file.type,
-          });
+        const blobResult = await put(`uploads/${filename}`, buffer, {
+          access: "public",
+          contentType: file.type,
+          addRandomSuffix: false,
+        });
+        if (blobResult?.url) {
+          publicUrl = blobResult.url;
         }
       } catch (blobErr) {
-        console.warn("[studio-upload] Falha ao salvar no Vercel Blob:", blobErr);
+        console.warn("[studio-upload] Falha ao salvar no Vercel Blob, usando fallback do banco:", blobErr);
       }
     }
 
@@ -126,10 +125,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      url: `/api/uploads/${filename}`,
+      url: publicUrl,
       filename,
       size: buffer.length,
       mimeType: file.type,
+      storage: publicUrl.startsWith("http") ? "vercel-blob" : "postgres-database",
     });
   } catch (error) {
     console.error("[studio-upload]", error);
