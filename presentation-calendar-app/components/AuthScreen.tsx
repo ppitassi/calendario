@@ -49,9 +49,10 @@ export function AuthScreen({
 
         let data: any = null;
         try {
-          data = await res.json();
+          data = await res.clone().json();
         } catch {
-          throw new Error(`Erro no servidor (${res.status} ${res.statusText || "Falha interna"}).`);
+          const raw = await res.text().catch(() => "");
+          throw new Error(raw && raw.length < 200 ? raw : `Erro no servidor (${res.status}). Verifique a conexão com o banco de dados.`);
         }
         if (!res.ok) throw new Error(data?.error || "Falha ao configurar administrador inicial.");
 
@@ -64,11 +65,10 @@ export function AuthScreen({
         });
         let data: any = null;
         try {
-          data = await res.json();
+          data = await res.clone().json();
         } catch {
-          throw new Error(
-            `Erro de comunicação com o servidor (${res.status} ${res.statusText || "Falha interna"}). Verifique se o backend está ativo.`
-          );
+          const raw = await res.text().catch(() => "");
+          throw new Error(raw && raw.length < 200 ? raw : `Erro no servidor (${res.status}). Verifique se o banco de dados está ativo.`);
         }
         if (!res.ok) throw new Error(data?.error || "Falha ao registrar");
 
@@ -85,11 +85,10 @@ export function AuthScreen({
         });
         let data: any = null;
         try {
-          data = await res.json();
+          data = await res.clone().json();
         } catch {
-          throw new Error(
-            `Erro de comunicação com o servidor (${res.status} ${res.statusText || "Falha interna"}). Verifique os logs do servidor.`
-          );
+          const raw = await res.text().catch(() => "");
+          throw new Error(raw && raw.length < 200 ? raw : `Erro de conexão (${res.status}). Verifique as variáveis do banco PostgreSQL na Vercel.`);
         }
         if (!res.ok) throw new Error(data?.error || "Falha ao autenticar");
 

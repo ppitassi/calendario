@@ -358,8 +358,15 @@ function createSqliteAdapter(): StudioDb {
   const getSqliteDb = () => {
     if (!global.__studioSqliteDb) {
       // Importa dinamicamente node:sqlite apenas quando necessário no fallback
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { DatabaseSync } = require("node:sqlite");
+      let DatabaseSync: any;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        DatabaseSync = require("node:sqlite").DatabaseSync;
+      } catch {
+        throw new Error(
+          "Banco de dados não configurado. Adicione a variável DATABASE_URL ou POSTGRES_URL no painel da Vercel para conectar ao banco PostgreSQL."
+        );
+      }
       const dbDir = studioDataDirectory();
       if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });

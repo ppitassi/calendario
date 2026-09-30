@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Produz o servidor mínimo iniciado pelo PM2, sem depender de `next start`.
-  output: "standalone",
+  // Produz saída standalone apenas fora da Vercel (ex: PM2/Docker local).
+  output: process.env.VERCEL ? undefined : "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
-  // SQLite e pg usam módulos nativos/externos fora do bundle.
-  serverExternalPackages: ["pg", "node:sqlite"],
+  // pg usa módulos nativos/externos fora do bundle.
+  serverExternalPackages: ["pg"],
   // Estado local jamais pode entrar no trace nem no bundle enviado ao servidor.
   outputFileTracingExcludes: {
     "/*": [
