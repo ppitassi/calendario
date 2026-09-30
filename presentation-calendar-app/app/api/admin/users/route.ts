@@ -14,7 +14,7 @@ export async function GET() {
     }
 
     const db = getDb();
-    const users = db.prepare(`
+    const users = await db.prepare(`
       SELECT id, username, name, role, status, created_at, updated_at
       FROM users
       ORDER BY
@@ -55,15 +55,15 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Nome, usuário e senha são obrigatórios." }, { status: 400 });
       }
 
-      if (password.length < 12) {
-        return NextResponse.json({ error: "A senha deve ter no mínimo 12 caracteres." }, { status: 400 });
+      if (password.length < 8) {
+        return NextResponse.json({ error: "A senha deve ter no mínimo 8 caracteres." }, { status: 400 });
       }
 
       const cleanUsername = String(username).trim().toLowerCase();
       const cleanName = String(name).trim();
       const cleanRole = ["admin", "social_media", "designer"].includes(role) ? role : "social_media";
 
-      const existing = db.prepare("SELECT id FROM users WHERE LOWER(username) = ?").get(cleanUsername);
+      const existing = await db.prepare("SELECT id FROM users WHERE LOWER(username) = ?").get(cleanUsername);
       if (existing) {
         return NextResponse.json({ error: "Este nome de usuário já está em uso." }, { status: 400 });
       }
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       const newUserId = crypto.randomUUID();
       const passwordHash = hashPassword(password);
 
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO users (id, username, name, password_hash, role, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, 'approved', ?, ?)
       `).run(newUserId, cleanUsername, cleanName, passwordHash, cleanRole, now, now);
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ação ou usuário inválido." }, { status: 400 });
     }
 
-    const targetUser = db.prepare("SELECT id, name, username, role FROM users WHERE id = ?").get(userId) as {
+    const targetUser = (await db.prepare("SELECT id, name, username, role FROM users WHERE id = ?").get(userId)) as {
       id: string;
       name: string;
       username: string;
@@ -115,13 +115,13 @@ export async function POST(request: Request) {
 
       // Impede rebaixar o último administrador aprovado e deixar o sistema sem gestão.
       if (targetUser.role === "admin" && targetRole !== "admin") {
-        const adminCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin' AND status = 'approved'").get() as { count: number };
-        if (adminCount.count <= 1) {
+        const adminCount = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin' AND status = 'approved'").get()) as { count: number };
+        if (Number(adminCount?.count || 0) <= 1) {
           return NextResponse.json({ error: "Não é possível alterar a função do único administrador ativo do sistema." }, { status: 400 });
         }
       }
 
-      db.prepare("UPDATE users SET role = ?, updated_at = ? WHERE id = ?").run(targetRole, now, userId);
+      await db.prepare("UPDATE users SET role = ?, updated_at = ? WHERE id = ?").run(targetRole, now, userId);
 
       const roleLabels: Record<string, string> = {
         admin: "Administrador",
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       };
 
       const notifId = crypto.randomUUID();
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
         VALUES (?, ?, 'role_change', 'Função atualizada', ?, '/', 0, ?)
       `).run(notifId, userId, `Sua função no sistema foi atualizada para ${roleLabels[targetRole] || targetRole}.`, now);
@@ -146,27 +146,27 @@ export async function POST(request: Request) {
     if (action === "approve") {
       const approvedRole = role && ["admin", "social_media", "designer"].includes(role) ? role : undefined;
       if (approvedRole) {
-        db.prepare("UPDATE users SET status = 'approved', role = ?, updated_at = ? WHERE id = ?").run(approvedRole, now, userId);
+        await db.prepare("UPDATE users SET status = 'approved', role = ?, updated_at = ? WHERE id = ?").run(approvedRole, now, userId);
       } else {
-        db.prepare("UPDATE users SET status = 'approved', updated_at = ? WHERE id = ?").run(now, userId);
+        await db.prepare("UPDATE users SET status = 'approved', updated_at = ? WHERE id = ?").run(now, userId);
       }
 
       const notifId = crypto.randomUUID();
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
         VALUES (?, ?, 'approval', 'Conta aprovada', 'Seu cadastro foi aprovado! Você já pode utilizar todas as ferramentas.', '/', 0, ?)
       `).run(notifId, userId, now);
       return NextResponse.json({ success: true, message: `Usuário ${targetUser.name} aprovado com sucesso!` });
     } else if (action === "reject") {
       // Rejeitar bloqueia o login; não cria notificação para uma conta sem acesso.
-      db.prepare("UPDATE users SET status = 'rejected', updated_at = ? WHERE id = ?").run(now, userId);
+      await db.prepare("UPDATE users SET status = 'rejected', updated_at = ? WHERE id = ?").run(now, userId);
       return NextResponse.json({ success: true, message: `Usuário ${targetUser.name} recusado.` });
     } else if (action === "delete") {
       // A autoexclusão é proibida para não invalidar a sessão no meio da operação.
       if (targetUser.id === currentUser.id) {
         return NextResponse.json({ error: "Você não pode excluir sua própria conta enquanto conectado." }, { status: 400 });
       }
-      db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+      await db.prepare("DELETE FROM users WHERE id = ?").run(userId);
       return NextResponse.json({ success: true, message: `Usuário ${targetUser.name} excluído do banco.` });
     }
 

@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 
     query += " ORDER BY cal.updated_at DESC";
 
-    const calendars = db.prepare(query).all(...params);
+    const calendars = await db.prepare(query).all(...params);
     return NextResponse.json({ calendars });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     }
 
     const db = getDb();
-    const client = db.prepare("SELECT name, accent FROM clients WHERE id = ?").get(clientId) as { name: string; accent: string } | undefined;
+    const client = (await db.prepare("SELECT name, accent FROM clients WHERE id = ?").get(clientId)) as { name: string; accent: string } | undefined;
     if (!client) {
       return NextResponse.json({ error: "Cliente não encontrado." }, { status: 404 });
     }
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     const effectiveProject = project?.trim() || title;
     const effectiveAccent = accent || client.accent || "#ef5d3d";
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO calendars (
         id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, created_by_id, assigned_to_id, created_at, updated_at
       )
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     // Uma atribuição para outra pessoa gera um aviso direcionado a ela.
     if (assignedToId && assignedToId !== user.id) {
       const notifId = crypto.randomUUID();
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
         VALUES (?, ?, 'calendar_assigned', 'Novo calendário atribuído', ?, ?, 0, ?)
       `).run(
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const created = db.prepare("SELECT * FROM calendars WHERE id = ?").get(id);
+    const created = await db.prepare("SELECT * FROM calendars WHERE id = ?").get(id);
     return NextResponse.json({ calendar: created, success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

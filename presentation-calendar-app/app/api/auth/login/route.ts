@@ -20,11 +20,11 @@ export async function POST(request: Request) {
     const db = getDb();
     const cleanUsername = String(username).trim().toLowerCase();
 
-    const user = db.prepare(`
+    const user = (await db.prepare(`
       SELECT id, username, name, password_hash, role, status, created_at
       FROM users
       WHERE LOWER(username) = ?
-    `).get(cleanUsername) as (SafeUser & { password_hash: string }) | undefined;
+    `).get(cleanUsername)) as (SafeUser & { password_hash: string }) | undefined;
 
     if (!user) {
       return NextResponse.json({ error: "Usuário ou senha inválidos." }, { status: 401 });
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    const { token, expiresAt } = createSession(user.id);
+    const { token, expiresAt } = await createSession(user.id);
 
     const safeUser: SafeUser = {
       id: user.id,

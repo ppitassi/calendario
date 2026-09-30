@@ -22,7 +22,7 @@ export async function GET(
     const { id } = await params;
     const db = getDb();
 
-    const calendar = db.prepare(`
+    const calendar = (await db.prepare(`
       SELECT
         cal.*,
         c.name as client_name,
@@ -38,7 +38,7 @@ export async function GET(
       LEFT JOIN users creator ON creator.id = cal.created_by_id
       LEFT JOIN users assigned ON assigned.id = cal.assigned_to_id
       WHERE cal.id = ?
-    `).get(id) as any;
+    `).get(id)) as any;
 
     if (!calendar) {
       return NextResponse.json({ error: "Calendário não encontrado." }, { status: 404 });
@@ -58,7 +58,7 @@ export async function GET(
     }
     calendar.posting_days = parsedPostingDays;
 
-    const items = db.prepare(`
+    const items = await db.prepare(`
       SELECT
         id,
         date,
@@ -122,14 +122,13 @@ export async function PUT(
     } = body;
 
     const db = getDb();
-    const existing = db.prepare("SELECT * FROM calendars WHERE id = ?").get(id) as any;
+    const existing = (await db.prepare("SELECT * FROM calendars WHERE id = ?").get(id)) as any;
     if (!existing) {
       return NextResponse.json({ error: "Calendário não encontrado." }, { status: 404 });
     }
 
     const now = new Date().toISOString();
 
-    // Campo ausente preserva o valor persistido; vazio explícito continua sendo vazio.
     const finalTitle = title !== undefined ? title : existing.title;
     const finalMonth = month !== undefined ? month : existing.month;
     const finalBrand = brand !== undefined ? brand : existing.brand;
@@ -141,8 +140,7 @@ export async function PUT(
     const finalStatus = status !== undefined ? status : existing.status;
     const finalAssignedTo = assignedToId !== undefined ? (assignedToId || null) : existing.assigned_to_id;
 
-    // Persiste o conjunto final de metadados depois de aplicar os fallbacks acima.
-    db.prepare(`
+    await db.prepare(`
       UPDATE calendars
       SET
         title = ?,
@@ -172,19 +170,17 @@ export async function PUT(
       id
     );
 
-    // Dias enviados valem para o mês e também viram padrão dos próximos meses do cliente.
     if (postingDays !== undefined && Array.isArray(postingDays)) {
       const pDaysStr = JSON.stringify(postingDays);
-      db.prepare(`UPDATE calendars SET posting_days = ? WHERE id = ?`).run(pDaysStr, id);
+      await db.prepare(`UPDATE calendars SET posting_days = ? WHERE id = ?`).run(pDaysStr, id);
       if (existing.client_id) {
-        db.prepare(`UPDATE clients SET posting_days = ? WHERE id = ?`).run(pDaysStr, existing.client_id);
+        await db.prepare(`UPDATE clients SET posting_days = ? WHERE id = ?`).run(pDaysStr, existing.client_id);
       }
     }
 
-    // Só uma atribuição nova, feita para outra pessoa, produz notificação.
     if (assignedToId && assignedToId !== user.id && assignedToId !== existing.assigned_to_id) {
       const notifId = crypto.randomUUID();
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
         VALUES (?, ?, 'assignment', 'Calendário transferido para você', ?, ?, 0, ?)
       `).run(
@@ -196,13 +192,11 @@ export async function PUT(
       );
     }
 
-    // Operação destrutiva controlada: apaga e reinsere toda a lista, com rollback em falha.
     if (Array.isArray(items)) {
-      db.exec("BEGIN TRANSACTION;");
-      try {
-        db.prepare("DELETE FROM calendar_items WHERE calendar_id = ?").run(id);
+      await db.transaction(async (tx) => {
+        await tx.prepare("DELETE FROM calendar_items WHERE calendar_id = ?").run(id);
 
-        const insertItem = db.prepare(`
+        const insertItem = tx.prepare(`
           INSERT INTO calendar_items (
             id, calendar_id, date, title, type, status, channel, objective, head, subhead,
             caption, visual, image_url, cta, hashtags, funnel_stage, internal_notes,
@@ -213,7 +207,7 @@ export async function PUT(
 
         for (const item of items) {
           const itemId = item.id || crypto.randomUUID();
-          insertItem.run(
+          await insertItem.run(
             itemId,
             id,
             item.date || "",
@@ -238,11 +232,7 @@ export async function PUT(
             now
           );
         }
-        db.exec("COMMIT;");
-      } catch (err) {
-        db.exec("ROLLBACK;");
-        throw err;
-      }
+      });
     }
 
     return NextResponse.json({ success: true, updated_at: now });
@@ -252,7 +242,7 @@ export async function PUT(
   }
 }
 
-/** Remove o calendário; os itens associados são apagados pela cascata do SQLite. */
+/** Remove o calendário; os itens associados são apagados pela cascata. */
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -265,7 +255,7 @@ export async function DELETE(
 
     const { id } = await params;
     const db = getDb();
-    db.prepare("DELETE FROM calendars WHERE id = ?").run(id);
+    await db.prepare("DELETE FROM calendars WHERE id = ?").run(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -1,23 +1,29 @@
 "use client";
-/** Alterna entre autenticação de conta aprovada e solicitação de um novo acesso. */
-
+/** Alterna entre autenticação de conta aprovada, solicitação de novo acesso ou setup inicial. */
 
 import { useState } from "react";
-import { UserCheck, Lock, User, AlertCircle, ArrowRight } from "lucide-react";
+import { UserCheck, Lock, User, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
 import type { SafeUser } from "@/lib/auth";
 
-/** Entrega ao contêiner somente o usuário devolvido por um login bem-sucedido. */
-export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser) => void }) {
+/** Entrega ao contêiner somente o usuário devolvido por login ou setup bem-sucedido. */
+export function AuthScreen({
+  onLoginSuccess,
+  isFirstSetup = false,
+}: {
+  onLoginSuccess: (user: SafeUser) => void;
+  isFirstSetup?: boolean;
+}) {
   const [isRegister, setIsRegister] = useState(false);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(isFirstSetup ? "admin" : "");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState(isFirstSetup ? "Administrador" : "");
   const [role, setRole] = useState<"social_media" | "designer">("social_media");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  /** No cadastro cria uma solicitação pendente; no login devolve o usuário ao AppShell. */
+  /** No setup cria a conta mestre; no cadastro cria pendente; no login entra. */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -25,7 +31,30 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
     setLoading(true);
 
     try {
-      if (isRegister) {
+      if (isFirstSetup) {
+        if (password.length < 8) {
+          throw new Error("A senha deve ter no mínimo 8 caracteres.");
+        }
+        if (password !== confirmPassword) {
+          throw new Error("A confirmação da senha não coincide.");
+        }
+
+        const res = await fetch("/api/auth/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, name }),
+        });
+
+        let data: any = null;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error(`Erro no servidor (${res.status} ${res.statusText || "Falha interna"}).`);
+        }
+        if (!res.ok) throw new Error(data?.error || "Falha ao configurar administrador inicial.");
+
+        onLoginSuccess(data.user);
+      } else if (isRegister) {
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -73,37 +102,44 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
 
   return (
     <div className="authWrapper">
-      {/* UI: painel central que alterna entre login e solicitação de acesso. */}
       <div className="authCard">
-        {/* UI: identifica o produto antes dos dois fluxos de autenticação. */}
         <header className="authHeader">
           <div className="authLogo">CP</div>
           <h1>Content Planner</h1>
-          <p className="authSubtitle">Presentation Studio & Gestão Editorial</p>
+          <p className="authSubtitle">
+            {isFirstSetup ? "Configuração Inicial do Sistema" : "Presentation Studio & Gestão Editorial"}
+          </p>
         </header>
 
-        <div className="authTabs">
-          <button
-            type="button"
-            className={!isRegister ? "active" : ""}
-            onClick={() => {
-              setIsRegister(false);
-              setError(null);
-            }}
-          >
-            Entrar
-          </button>
-          <button
-            type="button"
-            className={isRegister ? "active" : ""}
-            onClick={() => {
-              setIsRegister(true);
-              setError(null);
-            }}
-          >
-            Solicitar Acesso
-          </button>
-        </div>
+        {isFirstSetup ? (
+          <div className="authAlert" style={{ background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)", color: "#818cf8" }}>
+            <ShieldCheck size={18} />
+            <span>Nenhum usuário cadastrado. Crie a conta do primeiro administrador para iniciar.</span>
+          </div>
+        ) : (
+          <div className="authTabs">
+            <button
+              type="button"
+              className={!isRegister ? "active" : ""}
+              onClick={() => {
+                setIsRegister(false);
+                setError(null);
+              }}
+            >
+              Entrar
+            </button>
+            <button
+              type="button"
+              className={isRegister ? "active" : ""}
+              onClick={() => {
+                setIsRegister(true);
+                setError(null);
+              }}
+            >
+              Solicitar Acesso
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="authAlert error">
@@ -119,17 +155,16 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
           </div>
         )}
 
-        {/* UI: nome e função só aparecem no cadastro; usuário e senha servem aos dois fluxos. */}
         <form onSubmit={handleSubmit} className="authForm">
-          {isRegister && (
+          {(isFirstSetup || isRegister) && (
             <label className="formField">
-              <span>Seu Nome Completo</span>
+              <span>{isFirstSetup ? "Nome do Administrador" : "Seu Nome Completo"}</span>
               <div className="inputBox">
                 <User size={16} />
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Ana Silva"
+                  placeholder="Ex: Leonardo Pitassi"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -156,18 +191,35 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
             <span>Senha</span>
             <div className="inputBox">
               <Lock size={16} />
-                <input
-                  type="password"
-                  required
-                  minLength={isRegister ? 12 : undefined}
-                  placeholder="••••••••"
+              <input
+                type="password"
+                required
+                minLength={isFirstSetup ? 8 : isRegister ? 8 : undefined}
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </label>
 
-          {isRegister && (
+          {isFirstSetup && (
+            <label className="formField">
+              <span>Confirmar Senha</span>
+              <div className="inputBox">
+                <Lock size={16} />
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </label>
+          )}
+
+          {!isFirstSetup && isRegister && (
             <div className="formField">
               <span>Sua Função na Equipe</span>
               <div className="rolePicker">
@@ -207,6 +259,10 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
           <button type="submit" disabled={loading} className="primaryButton full submitBtn">
             {loading ? (
               "Processando..."
+            ) : isFirstSetup ? (
+              <>
+                Criar Administrador e Iniciar <ArrowRight size={16} />
+              </>
             ) : isRegister ? (
               <>
                 Enviar Solicitação <ArrowRight size={16} />
@@ -219,7 +275,7 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
           </button>
         </form>
 
-        {!isRegister && (
+        {!isFirstSetup && !isRegister && (
           <footer className="authFooter">
             <small>
               As credenciais iniciais são definidas no ambiente da instalação.

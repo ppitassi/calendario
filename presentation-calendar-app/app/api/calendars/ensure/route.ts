@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const db = getDb();
 
     // Procura primeiro o registro existente para não duplicar cliente/mês.
-    let calendar = db
+    let calendar = (await db
       .prepare(
         `SELECT
           cal.*,
@@ -44,12 +44,12 @@ export async function POST(request: Request) {
         WHERE cal.client_id = ? AND cal.month = ?
         LIMIT 1`
       )
-      .get(clientId, month) as any;
+      .get(clientId, month)) as any;
 
     if (!calendar) {
-      const client = db
+      const client = (await db
         .prepare("SELECT * FROM clients WHERE id = ?")
-        .get(clientId) as any;
+        .get(clientId)) as any;
 
       if (!client) {
         return NextResponse.json(
@@ -58,7 +58,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // `posting_days` é JSON no SQLite; conteúdo inválido não bloqueia a criação.
       let clientPostingDays: number[] = [];
       try {
         clientPostingDays = JSON.parse(client.posting_days || "[]");
@@ -70,7 +69,7 @@ export async function POST(request: Request) {
       const now = new Date().toISOString();
       const title = `Planejamento ${month}`;
 
-      db.prepare(
+      await db.prepare(
         `INSERT INTO calendars (
           id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, created_by_id, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -113,7 +112,7 @@ export async function POST(request: Request) {
           const d = new Date(y, m, day);
           if (clientPostingDays.includes(d.getDay())) {
             const dateStr = `${month}-${String(day).padStart(2, "0")}`;
-            insertItem.run(
+            await insertItem.run(
               crypto.randomUUID(),
               id,
               dateStr,
@@ -141,7 +140,7 @@ export async function POST(request: Request) {
         }
       }
 
-      calendar = db
+      calendar = (await db
         .prepare(
           `SELECT
             cal.*,
@@ -155,10 +154,9 @@ export async function POST(request: Request) {
           LEFT JOIN clients c ON c.id = cal.client_id
           WHERE cal.id = ?`
         )
-        .get(id) as any;
+        .get(id)) as any;
     }
 
-    // A interface sempre recebe um vetor, nunca o JSON textual armazenado no banco.
     if (calendar) {
       try {
         calendar.posting_days = JSON.parse(calendar.posting_days || "[]");

@@ -1,6 +1,6 @@
 /**
  * Lê o cookie de sessão, resolve o usuário aprovado e cria ou remove sessões
- * persistidas no SQLite. O hash de senha pertence a `lib/db.ts`.
+ * persistidas no banco. O hash de senha pertence a `lib/db.ts`.
  */
 
 import { cookies } from "next/headers";
@@ -29,31 +29,31 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
   const db = getDb();
   const now = new Date().toISOString();
 
-  const session = db.prepare(`
+  const session = (await db.prepare(`
     SELECT user_id, expires_at
     FROM sessions
     WHERE token = ? AND expires_at > ?
-  `).get(token, now) as { user_id: string; expires_at: string } | undefined;
+  `).get(token, now)) as { user_id: string; expires_at: string } | undefined;
 
   if (!session) return null;
 
-  const user = db.prepare(`
+  const user = (await db.prepare(`
     SELECT id, username, name, role, status, created_at
     FROM users
     WHERE id = ? AND status = 'approved'
-  `).get(session.user_id) as SafeUser | undefined;
+  `).get(session.user_id)) as SafeUser | undefined;
 
   return user || null;
 }
 
 /** Gera um token aleatório, grava uma sessão de 30 dias e devolve sua expiração. */
-export function createSession(userId: string): { token: string; expiresAt: Date } {
+export async function createSession(userId: string): Promise<{ token: string; expiresAt: Date }> {
   const db = getDb();
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000);
   const now = new Date().toISOString();
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO sessions (token, user_id, expires_at, created_at)
     VALUES (?, ?, ?, ?)
   `).run(token, userId, expiresAt.toISOString(), now);
@@ -61,10 +61,10 @@ export function createSession(userId: string): { token: string; expiresAt: Date 
   return { token, expiresAt };
 }
 
-/** Apaga do SQLite a sessão identificada pelo token recebido. */
-export function deleteSession(token: string) {
+/** Apaga do banco a sessão identificada pelo token recebido. */
+export async function deleteSession(token: string): Promise<void> {
   const db = getDb();
-  db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+  await db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
 }
 
 export { SESSION_COOKIE };

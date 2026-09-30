@@ -17,7 +17,7 @@ export async function DELETE(
 
     const { id } = await params;
     const db = getDb();
-    db.prepare("DELETE FROM clients WHERE id = ?").run(id);
+    await db.prepare("DELETE FROM clients WHERE id = ?").run(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -41,7 +41,7 @@ export async function PUT(
     const { name, segment, accent, logo_url, has_multiple_profiles } = body;
 
     const db = getDb();
-    const existing = db.prepare("SELECT * FROM clients WHERE id = ?").get(id) as any;
+    const existing = (await db.prepare("SELECT * FROM clients WHERE id = ?").get(id)) as any;
 
     if (!existing) {
       return NextResponse.json({ error: "Cliente não encontrado." }, { status: 404 });
@@ -49,7 +49,7 @@ export async function PUT(
 
     const now = new Date().toISOString();
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE clients
       SET
         name = ?,
@@ -69,7 +69,7 @@ export async function PUT(
       id
     );
 
-    const updated = db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
+    const updated = await db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
     return NextResponse.json({ client: updated, success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

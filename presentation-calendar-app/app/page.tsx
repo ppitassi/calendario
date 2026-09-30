@@ -1,23 +1,21 @@
 "use client";
 /**
  * Decide, no navegador, qual tela ocupa a rota inicial.
- *
- * Enquanto `/api/auth/me` confirma o cookie de sessão, mostra o carregamento;
- * sem usuário exibe o acesso e, com usuário aprovado, monta o aplicativo.
+ * Se o banco de dados for novo/vazio, direciona para o primeiro acesso.
  */
-
 
 import { useEffect, useState } from "react";
 import { AuthScreen } from "@/components/AuthScreen";
 import { AppShell } from "@/components/AppShell";
 import type { SafeUser } from "@/lib/auth";
 
-/** Coordena a descoberta da sessão e alterna entre carregamento, acesso e Studio. */
+/** Coordena a descoberta da sessão e alterna entre carregamento, setup, acesso e Studio. */
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  /** Consulta a sessão atual e garante que uma falha de rede resulte na tela de acesso. */
+  /** Consulta a sessão atual e detecta se o sistema precisa de setup inicial. */
   const checkAuth = async () => {
     try {
       setLoading(true);
@@ -25,8 +23,10 @@ export default function Home() {
       const data = await res.json();
       if (data.user) {
         setCurrentUser(data.user);
+        setNeedsSetup(false);
       } else {
         setCurrentUser(null);
+        setNeedsSetup(Boolean(data.needsSetup));
       }
     } catch (err) {
       console.error("Auth check failed:", err);
@@ -36,7 +36,6 @@ export default function Home() {
     }
   };
 
-  // A sessão é consultada uma única vez ao montar a página; o login atualiza o estado diretamente.
   useEffect(() => {
     checkAuth();
   }, []);
@@ -51,25 +50,26 @@ export default function Home() {
     }
   };
 
-  // UI: ocupa a janela inteira para impedir interação enquanto a identidade é desconhecida.
   if (loading) {
     return (
       <div className="fullScreenLoader">
         <div className="loaderSpinner" />
-        <p>Conectando ao banco de dados SQLite...</p>
+        <p>Carregando Content Planner Studio...</p>
       </div>
     );
   }
 
-  // UI: a autenticação fica isolada do restante do aplicativo e só devolve um usuário seguro.
   if (!currentUser) {
     return (
       <AuthScreen
-        onLoginSuccess={(user: SafeUser) => setCurrentUser(user)}
+        isFirstSetup={needsSetup}
+        onLoginSuccess={(user: SafeUser) => {
+          setCurrentUser(user);
+          setNeedsSetup(false);
+        }}
       />
     );
   }
 
-  // UI: somente usuários aprovados alcançam o contêiner autenticado.
   return <AppShell currentUser={currentUser} onLogout={handleLogout} />;
 }

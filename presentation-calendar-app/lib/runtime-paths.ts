@@ -7,6 +7,14 @@
  */
 import path from "node:path";
 
+function isPostgresConfigured() {
+  return Boolean(
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL
+  );
+}
+
 function isProductionRuntime() {
   return (
     process.env.NODE_ENV === "production" &&
@@ -17,6 +25,10 @@ function isProductionRuntime() {
 /** Resolve uma variável de diretório e rejeita caminho relativo em produção. */
 function resolveDirectory(variable: string, fallback: string) {
   const configured = String(process.env[variable] || "").trim();
+  // Quando usando Postgres no Vercel/nuvem, diretório em disco local não é obrigatório
+  if (isPostgresConfigured()) {
+    return path.resolve(configured || fallback);
+  }
   if (isProductionRuntime() && !configured) {
     throw new Error(`${variable}_NOT_CONFIGURED`);
   }
@@ -28,20 +40,19 @@ function resolveDirectory(variable: string, fallback: string) {
 
 /** Diretório do SQLite e de outros estados duráveis do Studio. */
 export function studioDataDirectory() {
-  return resolveDirectory("STUDIO_DATA_DIR", path.join(process.cwd(), "data"));
+  const defaultDir = process.env.VERCEL ? "/tmp/presentation-studio/data" : path.join(process.cwd(), "data");
+  return resolveDirectory("STUDIO_DATA_DIR", defaultDir);
 }
 
 /** Diretório dos uploads; por padrão, é uma subpasta do volume de dados. */
 export function studioUploadsDirectory() {
   const configured = String(process.env.STUDIO_UPLOAD_DIR || "").trim();
-  if (isProductionRuntime() && !configured) {
-    throw new Error("STUDIO_UPLOAD_DIR_NOT_CONFIGURED");
-  }
   if (configured) {
-    if (isProductionRuntime() && !path.isAbsolute(configured)) {
+    if (isProductionRuntime() && !isPostgresConfigured() && !path.isAbsolute(configured)) {
       throw new Error("STUDIO_UPLOAD_DIR_MUST_BE_ABSOLUTE");
     }
     return path.resolve(configured);
   }
-  return path.join(studioDataDirectory(), "uploads");
+  const defaultUploads = process.env.VERCEL ? "/tmp/presentation-studio/uploads" : path.join(process.cwd(), "data", "uploads");
+  return defaultUploads;
 }
