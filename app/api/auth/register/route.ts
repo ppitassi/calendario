@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { getDb, hashPassword } from "@/lib/db";
+import { createSession, SafeUser, SESSION_COOKIE } from "@/lib/auth";
 import crypto from "node:crypto";
 
 /**
@@ -35,13 +36,51 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const passwordHash = hashPassword(password);
 
-    // O cadastro nasce pendente; somente um administrador pode liberá-lo.
+    // Se não houver administradores aprovados, o primeiro usuário se torna o Administrador Master automaticamente!
+    const adminCountRow = await db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin' AND status = 'approved'").get();
+    const adminCount = Number(adminCountRow?.count || 0);
+    const isFirstAdmin = adminCount === 0;
+
+    const finalRole = isFirstAdmin ? "admin" : assignedRole;
+    const finalStatus = isFirstAdmin ? "approved" : "pending";
+
     await db.prepare(`
       INSERT INTO users (id, username, name, password_hash, role, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)
-    `).run(userId, cleanUsername, cleanName, passwordHash, assignedRole, now, now);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(userId, cleanUsername, cleanName, passwordHash, finalRole, finalStatus, now, now);
 
-    // Cada administrador recebe seu próprio registro de notificação.
+    if (isFirstAdmin) {
+      const { token, expiresAt } = await createSession(userId);
+      const safeUser: SafeUser = {
+        id: userId,
+        username: cleanUsername,
+        name: cleanName,
+        role: "admin",
+        status: "approved",
+        created_at: now,
+      };
+
+      const response = NextResponse.json({
+        success: true,
+        user: safeUser,
+        isFirstAdmin: true,
+        message: "Primeiro administrador configurado com sucesso!",
+      });
+
+      response.cookies.set({
+        name: SESSION_COOKIE,
+        value: token,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        expires: expiresAt,
+        path: "/",
+      });
+
+      return response;
+    }
+
+    // Cada administrador existente recebe seu próprio registro de notificação.
     const admins = (await db.prepare("SELECT id FROM users WHERE role = 'admin'").all()) as { id: string }[];
     const roleLabel = assignedRole === "designer" ? "Designer" : "Social Media";
     for (const admin of admins) {
