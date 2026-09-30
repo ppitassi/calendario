@@ -165,6 +165,25 @@
 .mediaUrlRow code{background:#f3f4f6;padding:3px 8px;border-radius:6px;font-size:10px;color:#374151;word-break:break-all}
 .noMediaNotice{color:var(--muted);font-size:12px;text-align:center;padding:24px 0}
 
+/* Seção visual inline de arte no editor */
+.editorMediaSection{margin:14px 0 16px;border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.03)}
+.editorMediaSectionHeader{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.editorSectionTitle{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#1e293b}
+.editorMediaActions{display:inline-flex;align-items:center;gap:6px}
+.secondarySmallBtn{display:inline-flex;align-items:center;gap:4px;border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.secondarySmallBtn:hover{background:#f1f5f9;border-color:#94a3b8}
+.dangerSmallBtn{display:inline-flex;align-items:center;gap:4px;border:1px solid #fee2e2;background:#fff5f5;color:#dc2626;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.dangerSmallBtn:hover{background:#fee2e2}
+.editorMediaThumbnailBox{position:relative;width:100%;max-height:220px;min-height:110px;border-radius:8px;overflow:hidden;background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center}
+.editorMediaThumbnail{max-width:100%;max-height:210px;width:auto;height:auto;object-fit:contain;border-radius:6px}
+.uploadingOverlay{position:absolute;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(2px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff;font-size:12px;font-weight:600;z-index:2}
+.smallSpinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.editorMediaDropPrompt{margin:12px 0 16px;border:2px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;color:#475569}
+.editorMediaDropPrompt:hover,.editorMediaDropPrompt.dragging{border-color:var(--accent);background:rgba(255,23,79,0.03);color:#1e293b}
+.editorMediaDropPrompt strong{display:block;font-size:12px;color:#0f172a}
+.editorMediaDropPrompt small{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+
+
 /* Indicadores de arte real nas células do calendário. */
 .compactCalendar button.hasImage i.imgIndicator{background:#10b981;width:4px;height:4px}
 

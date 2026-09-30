@@ -26,7 +26,7 @@ export async function GET(
   const ext = path.extname(filename).toLowerCase();
   const contentType = MIME_MAP[ext] || "application/octet-stream";
 
-  // Se estiver conectado ao Vercel Blob, tenta buscar do storage na nuvem primeiro
+  // 1. Se estiver conectado ao Vercel Blob, tenta buscar do storage na nuvem primeiro
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
       const { get } = await import("@vercel/blob");
@@ -50,10 +50,30 @@ export async function GET(
         });
       }
     } catch (blobErr) {
-      console.warn("[studio-blob] Falha ao recuperar blob, tentando disco local:", blobErr);
+      console.warn("[studio-blob] Falha ao recuperar blob:", blobErr);
     }
   }
 
+  // 2. Busca do banco de dados persistente (PostgreSQL / SQLite)
+  try {
+    const { getUploadedFile } = await import("@/lib/db");
+    const file = await getUploadedFile(filename);
+    if (file) {
+      return new NextResponse(file.data as any, {
+        status: 200,
+        headers: {
+          "Content-Type": file.mimeType || contentType,
+          "Cache-Control": "public, max-age=31536000, immutable",
+          "X-Content-Type-Options": "nosniff",
+          "Content-Disposition": "inline",
+        },
+      });
+    }
+  } catch (dbErr) {
+    console.warn("[studio-uploads-db] Falha ao consultar arquivo no banco:", dbErr);
+  }
+
+  // 3. Fallback para disco local (instâncias persistentes ou dev local)
   const filePath = path.join(studioUploadsDirectory(), filename);
   try {
     const fileBuffer = await fs.readFile(filePath);
@@ -67,7 +87,6 @@ export async function GET(
       },
     });
   } catch {
-    // Arquivo ausente e erro de leitura são indistinguíveis para o visitante.
     return new NextResponse("Arquivo não encontrado", { status: 404 });
   }
 }

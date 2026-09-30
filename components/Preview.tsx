@@ -2,6 +2,7 @@
 /** Prévia compacta do post selecionado, alimentada pelo mesmo objeto do editor. */
 
 
+import { useState, useEffect } from "react";
 import { Heart, MessageCircle, MoreHorizontal, Send, Image as ImageIcon } from "lucide-react";
 import type { ContentItem, ContentStatus } from "../lib/types";
 
@@ -15,6 +16,12 @@ export function Preview({
   brand: string;
   onChange: (item: ContentItem) => void;
 }) {
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [item.imageUrl]);
+
   return (
     <div className="previewRoot">
       {/* UI: status editável e etapa do funil da publicação selecionada. */}
@@ -72,17 +79,18 @@ export function Preview({
           </header>
 
           <div className="feedMedia">
-            {item.imageUrl ? (
+            {item.imageUrl && !imageError ? (
               <img
                 src={item.imageUrl}
                 alt={item.title}
                 className="feedRealImg"
+                onError={() => setImageError(true)}
               />
             ) : (
               <div className="feedEmptyMedia">
                 <ImageIcon size={32} />
-                <span>Nenhuma mídia enviada</span>
-                <small>Faça o upload na aba Mídia</small>
+                <span>{imageError ? "Falha ao exibir imagem" : "Nenhuma mídia enviada"}</span>
+                <small>{imageError ? "Envie a arte novamente ou verifique o link" : "Anexe arte no editor ou cole (Ctrl+V)"}</small>
               </div>
             )}
           </div>
