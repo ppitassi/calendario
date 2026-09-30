@@ -147,12 +147,13 @@ export function ViewerScreen({
                   { locale: ptBR }
                 );
                 const postTypeConfig = POST_TYPES.find(
-                  (pt) =>
-                    pt.id === post.type.toLowerCase() ||
-                    ((pt.id === "feed" || pt.id === "post") && (post.type === "Feed" || post.type === "Post")) ||
-                    (pt.id === "carousel" && post.type === "Carrossel") ||
-                    (pt.id === "reel" && post.type === "Reel") ||
-                    (pt.id === "story" && (post.type === "Story" || (post.type as string) === "Stories"))
+                  (pt) => {
+                    const t = post.type.toLowerCase();
+                    return pt.id === t ||
+                      (pt.id === "feed" && (t === "feed" || t === "post")) ||
+                      (pt.id === "story" && (t === "story" || t === "stories")) ||
+                      (pt.id === "feed e story" && !["feed", "story", "stories", "post"].includes(t));
+                  }
                 );
 
                 return (

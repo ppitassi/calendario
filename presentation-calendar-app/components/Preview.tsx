@@ -46,7 +46,7 @@ export function Preview({
 
       {/* UI: simulação compacta do feed usando exatamente os campos do editor. */}
       <div className="previewArea">
-        <span className="sectionLabel">Prévia do Card (Feed Real)</span>
+        <span className="sectionLabel">Prévia do Card ({item.type || "Feed e Story"})</span>
         {/* UI: cartão visual completo, da identidade do perfil à legenda. */}
         <article className="feedCard">
           {/* UI: perfil principal e, quando ativado, o parceiro da publicação collab. */}

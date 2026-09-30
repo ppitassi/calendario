@@ -47,11 +47,6 @@
   min-height: 18rem;
 }
 
-.aspectCarousel {
-  aspect-ratio: 4 / 5;
-  min-height: 20rem;
-}
-
 .aspectVideo {
   aspect-ratio: 9 / 16;
   max-width: 16rem;
@@ -105,18 +100,13 @@
   max-width: 85%;
 }
 
-/* Preserva a mídia inteira com `contain`; não recorta quadrado, retrato ou story. */
-.image,
-.video {
+/* Preserva a mídia inteira com `contain`; não recorta quadrado ou story. */
+.image {
   width: 100%;
   height: auto;
   max-height: 68vh;
   object-fit: contain;
   display: block;
-}
-
-.video {
-  background: #0f172a;
 }
 
 .overlay {
@@ -160,30 +150,7 @@
   height: 1rem;
 }
 
-.carouselBadge {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.75);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 800;
-  z-index: 5;
-}
-
-.carouselBadge svg {
-  width: 0.9rem;
-  height: 0.9rem;
-}
-
-.videoPlayBadge {
+.storyBadge {
   position: absolute;
   bottom: 0.75rem;
   left: 0.75rem;
@@ -192,10 +159,11 @@
   gap: 0.4rem;
   padding: 0.3rem 0.65rem;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.75);
+  background: linear-gradient(135deg, #ec4899, #a855f7);
   backdrop-filter: blur(8px);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 800;
   z-index: 5;
 }
+
