@@ -11,13 +11,18 @@ import { getDb } from "@/lib/db";
  */
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    const db = getDb();
+    let user = null;
+    try {
+      user = await getCurrentUser();
+    } catch (authErr) {
+      console.error("Auth resolve error:", authErr);
+    }
 
     if (!user) {
       // Verifica se o sistema precisa de configuração inicial
       let totalUsers = 0;
       try {
+        const db = getDb();
         const countRow = await db.prepare("SELECT COUNT(*) as count FROM users;").get();
         totalUsers = Number(countRow?.count || 0);
       } catch (dbErr: any) {
@@ -25,7 +30,7 @@ export async function GET() {
         return NextResponse.json({
           user: null,
           needsSetup: true,
-          dbError: dbErr?.message || "Conexão com o banco de dados em inicialização.",
+          dbError: dbErr?.message || "Banco de dados desconectado ou em inicialização.",
         });
       }
 
@@ -35,19 +40,25 @@ export async function GET() {
       });
     }
 
+    const db = getDb();
     let pendingUsersCount = 0;
     if (user.role === "admin") {
-      const row = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE status = 'pending'").get()) as { count: number };
-      pendingUsersCount = Number(row?.count || 0);
+      try {
+        const row = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE status = 'pending'").get()) as { count: number };
+        pendingUsersCount = Number(row?.count || 0);
+      } catch {}
     }
 
-    const notifications = await db.prepare(`
-      SELECT id, type, title, message, link, is_read, created_at
-      FROM notifications
-      WHERE user_id = ?
-      ORDER BY created_at DESC
-      LIMIT 10
-    `).all(user.id);
+    let notifications: any[] = [];
+    try {
+      notifications = await db.prepare(`
+        SELECT id, type, title, message, link, is_read, created_at
+        FROM notifications
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 10
+      `).all(user.id);
+    } catch {}
 
     return NextResponse.json({
       user,
@@ -57,6 +68,10 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error("Error in /api/auth/me:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({
+      user: null,
+      needsSetup: true,
+      dbError: error.message || "Falha na verificação de autenticação.",
+    });
   }
 }
