@@ -9,31 +9,31 @@ export const dynamic = "force-dynamic";
 
 /** Valida dependências sem revelar caminhos, credenciais ou conteúdo do banco. */
 export async function GET() {
+  const hasPgUrl = Boolean(getPostgresConnectionString());
   try {
     const db = getDb();
     await db.prepare("SELECT 1 AS ok").get();
 
-    // Se estiver em modo SQLite local, confirma diretório de dados
-    if (!getPostgresConnectionString()) {
-      try {
-        fs.accessSync(studioDataDirectory(), fs.constants.R_OK | fs.constants.W_OK);
-      } catch {}
-    }
-
-    try {
-      fs.accessSync(studioUploadsDirectory(), fs.constants.R_OK | fs.constants.W_OK);
-    } catch {}
-
     return NextResponse.json({
       ok: true,
       database: db.isPostgres ? "postgres-ready" : "sqlite-ready",
-      uploads: "ready",
+      postgresConfigured: hasPgUrl,
+      isVercel: Boolean(process.env.VERCEL),
+      nodeVersion: process.version,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     console.error("Health check failed:", error);
     return NextResponse.json(
-      { ok: false, database: "unavailable", error: error.message },
+      {
+        ok: false,
+        database: "unavailable",
+        postgresConfigured: hasPgUrl,
+        isVercel: Boolean(process.env.VERCEL),
+        nodeVersion: process.version,
+        error: error.message || String(error),
+        timestamp: new Date().toISOString(),
+      },
       { status: 503 },
     );
   }
