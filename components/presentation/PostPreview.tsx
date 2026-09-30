@@ -28,7 +28,8 @@ export function PostPreview({
   const headline = post.head || post.title || "Sem título";
   const subhead = post.subhead;
   const caption = post.caption;
-  const images = post.imageUrl ? [post.imageUrl] : [];
+  const imgUrl = post.imageUrl || (post as any).image_url || (post as any).imageurl || "";
+  const images = imgUrl ? [imgUrl] : [];
 
   return (
     <div className={styles.root}>
@@ -125,11 +126,11 @@ export function PostPreview({
                 <SlideshowViewer images={images} expandable />
               ) : (
                 <PostPreviewVisualsOnly
-                  imageUrl={post.imageUrl}
+                  imageUrl={imgUrl}
                   type={post.type}
                   carouselCount={images.length}
                   onClick={() => {
-                    if (post.imageUrl || images.length > 0) setLightboxOpen(true);
+                    if (imgUrl || images.length > 0) setLightboxOpen(true);
                   }}
                 />
               )}

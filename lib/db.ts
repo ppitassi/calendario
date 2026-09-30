@@ -51,7 +51,7 @@ export function toPostgresSql(sql: string): string {
   return sql.replace(/\?/g, () => `$${paramIndex++}`);
 }
 
-/** Converte colunas agregadas de contagem (ex: count, calendars_count) de string para number */
+/** Converte colunas agregadas e normaliza identificadores para camelCase esperado pelo frontend */
 function normalizeRow(row: any): any {
   if (!row || typeof row !== "object") return row;
   const normalized: any = { ...row };
@@ -63,6 +63,40 @@ function normalizeRow(row: any): any {
       }
     }
   }
+
+  // Normalização de casing do PostgreSQL para chaves camelCase consumidas no frontend
+  const img = normalized.imageUrl ?? normalized.image_url ?? normalized.imageurl ?? "";
+  normalized.imageUrl = img;
+  normalized.image_url = img;
+
+  const funnel = normalized.funnelStage ?? normalized.funnel_stage ?? normalized.funnelstage ?? "Topo";
+  normalized.funnelStage = funnel;
+  normalized.funnel_stage = funnel;
+
+  const notes = normalized.internalNotes ?? normalized.internal_notes ?? normalized.internalnotes ?? "";
+  normalized.internalNotes = notes;
+  normalized.internal_notes = notes;
+
+  const isCollabVal = normalized.isCollab ?? normalized.is_collab ?? normalized.iscollab;
+  normalized.isCollab = Boolean(Number(isCollabVal) || isCollabVal === true || isCollabVal === "1");
+  normalized.is_collab = normalized.isCollab ? 1 : 0;
+
+  const collabProf = normalized.collabProfile ?? normalized.collab_profile ?? normalized.collabprofile ?? "";
+  normalized.collabProfile = collabProf;
+  normalized.collab_profile = collabProf;
+
+  const logo = normalized.logoUrl ?? normalized.logo_url ?? normalized.logourl ?? "";
+  if (logo) {
+    normalized.logoUrl = logo;
+    normalized.logo_url = logo;
+  }
+
+  const clientLogo = normalized.clientLogoUrl ?? normalized.client_logo_url ?? normalized.clientlogourl ?? "";
+  if (clientLogo) {
+    normalized.clientLogoUrl = clientLogo;
+    normalized.client_logo_url = clientLogo;
+  }
+
   return normalized;
 }
 

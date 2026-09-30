@@ -71,14 +71,19 @@ export async function GET(
         subhead,
         caption,
         visual,
-        image_url as imageUrl,
+        image_url as "imageUrl",
+        image_url,
         cta,
         hashtags,
-        funnel_stage as funnelStage,
-        internal_notes as internalNotes,
+        funnel_stage as "funnelStage",
+        funnel_stage,
+        internal_notes as "internalNotes",
+        internal_notes,
         profile,
-        is_collab as isCollab,
-        collab_profile as collabProfile
+        is_collab as "isCollab",
+        is_collab,
+        collab_profile as "collabProfile",
+        collab_profile
       FROM calendar_items
       WHERE calendar_id = ?
       ORDER BY date ASC, created_at ASC
@@ -220,14 +225,14 @@ export async function PUT(
             item.subhead || "",
             item.caption || "",
             item.visual || "",
-            item.imageUrl || item.image_url || "",
+            item.imageUrl || item.image_url || item.imageurl || "",
             item.cta || "",
             item.hashtags || "",
-            item.funnelStage || item.funnel_stage || "Topo",
-            item.internalNotes || item.internal_notes || "",
+            item.funnelStage || item.funnel_stage || item.funnelstage || "Topo",
+            item.internalNotes || item.internal_notes || item.internalnotes || "",
             item.profile || "",
-            item.isCollab ? 1 : 0,
-            item.collabProfile || "",
+            item.isCollab || item.is_collab || item.iscollab ? 1 : 0,
+            item.collabProfile || item.collab_profile || item.collabprofile || "",
             now,
             now
           );
