@@ -4,8 +4,8 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
-  // SQLite usa uma API nativa do Node e precisa permanecer fora do bundle.
-  serverExternalPackages: ["node:sqlite"],
+  // SQLite e pg usam módulos nativos/externos fora do bundle.
+  serverExternalPackages: ["pg", "node:sqlite"],
   // Estado local jamais pode entrar no trace nem no bundle enviado ao servidor.
   outputFileTracingExcludes: {
     "/*": [

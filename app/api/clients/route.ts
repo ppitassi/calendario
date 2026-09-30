@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     let clients: any[];
 
     if (month) {
-      clients = db
+      clients = await db
         .prepare(
           `SELECT
             c.id,
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         )
         .all(month);
     } else {
-      clients = db
+      clients = await db
         .prepare(
           `SELECT
             c.id,
@@ -70,7 +70,6 @@ export async function GET(request: Request) {
     }
 
     const formattedClients = clients.map((c: any) => {
-      // O SQLite guarda os dias como JSON; conteúdo legado inválido vira lista vazia.
       let pDays: number[] = [];
       try {
         pDays = JSON.parse(c.posting_days || "[]");
@@ -89,7 +88,7 @@ export async function GET(request: Request) {
   }
 }
 
-/** Cria um cliente, aplica a cor padrão e converte múltiplos perfis para 0/1 no SQLite. */
+/** Cria um cliente, aplica a cor padrão e salva os metadados. */
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -111,12 +110,12 @@ export async function POST(request: Request) {
     const cleanSegment = segment?.trim() || "";
     const cleanAccent = accent || "#ef5d3d";
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO clients (id, name, segment, accent, logo_url, has_multiple_profiles, created_by_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, cleanName, cleanSegment, cleanAccent, logo_url || null, has_multiple_profiles ? 1 : 0, user.id, now, now);
 
-    const client = db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
+    const client = await db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
     return NextResponse.json({ client, success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

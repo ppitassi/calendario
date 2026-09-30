@@ -17,8 +17,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Nome, usuário e senha são obrigatórios." }, { status: 400 });
     }
 
-    if (password.length < 12) {
-      return NextResponse.json({ error: "A senha deve conter no mínimo 12 caracteres." }, { status: 400 });
+    if (password.length < 8) {
+      return NextResponse.json({ error: "A senha deve conter no mínimo 8 caracteres." }, { status: 400 });
     }
 
     const assignedRole = role === "designer" ? "designer" : "social_media";
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const cleanName = String(name).trim();
 
     const db = getDb();
-    const existing = db.prepare("SELECT id FROM users WHERE LOWER(username) = ?").get(cleanUsername);
+    const existing = await db.prepare("SELECT id FROM users WHERE LOWER(username) = ?").get(cleanUsername);
     if (existing) {
       return NextResponse.json({ error: "Este nome de usuário já está em uso." }, { status: 400 });
     }
@@ -36,17 +36,17 @@ export async function POST(request: Request) {
     const passwordHash = hashPassword(password);
 
     // O cadastro nasce pendente; somente um administrador pode liberá-lo.
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO users (id, username, name, password_hash, role, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)
     `).run(userId, cleanUsername, cleanName, passwordHash, assignedRole, now, now);
 
     // Cada administrador recebe seu próprio registro de notificação.
-    const admins = db.prepare("SELECT id FROM users WHERE role = 'admin'").all() as { id: string }[];
+    const admins = (await db.prepare("SELECT id FROM users WHERE role = 'admin'").all()) as { id: string }[];
     const roleLabel = assignedRole === "designer" ? "Designer" : "Social Media";
     for (const admin of admins) {
       const notifId = crypto.randomUUID();
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO notifications (id, user_id, type, title, message, link, is_read, created_at)
         VALUES (?, ?, 'user_registration', 'Novo cadastro pendente', ?, '/admin', 0, ?)
       `).run(

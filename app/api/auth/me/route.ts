@@ -7,22 +7,31 @@ import { getDb } from "@/lib/db";
 /**
  * Retorna usuário, dez notificações recentes e, para administradores, o total
  * de cadastros pendentes; sem sessão válida responde com `user: null`.
+ * Se o banco não possuir nenhum usuário, sinaliza `needsSetup: true`.
  */
 export async function GET() {
   try {
     const user = await getCurrentUser();
+    const db = getDb();
+
     if (!user) {
-      return NextResponse.json({ user: null });
+      // Verifica se o sistema precisa de configuração inicial
+      const countRow = await db.prepare("SELECT COUNT(*) as count FROM users;").get();
+      const totalUsers = Number(countRow?.count || 0);
+
+      return NextResponse.json({
+        user: null,
+        needsSetup: totalUsers === 0,
+      });
     }
 
-    const db = getDb();
     let pendingUsersCount = 0;
     if (user.role === "admin") {
-      const row = db.prepare("SELECT COUNT(*) as count FROM users WHERE status = 'pending'").get() as { count: number };
-      pendingUsersCount = row?.count || 0;
+      const row = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE status = 'pending'").get()) as { count: number };
+      pendingUsersCount = Number(row?.count || 0);
     }
 
-    const notifications = db.prepare(`
+    const notifications = await db.prepare(`
       SELECT id, type, title, message, link, is_read, created_at
       FROM notifications
       WHERE user_id = ?
@@ -34,6 +43,7 @@ export async function GET() {
       user,
       pendingUsersCount,
       notifications,
+      needsSetup: false,
     });
   } catch (error: any) {
     console.error("Error in /api/auth/me:", error);
