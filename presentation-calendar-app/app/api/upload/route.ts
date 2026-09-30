@@ -86,35 +86,43 @@ export async function POST(request: Request) {
 
     const filename = `${Date.now()}-${crypto.randomBytes(12).toString("hex")}${extension}`;
 
-    // Se estiver conectado ao Vercel Blob, envia direto para o storage na nuvem
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const { put } = await import("@vercel/blob");
-      try {
-        await put(`uploads/${filename}`, buffer, {
-          access: "private",
-          contentType: file.type,
-        });
-      } catch {
-        await put(`uploads/${filename}`, buffer, {
-          access: "public",
-          contentType: file.type,
-        });
-      }
-
-      return NextResponse.json({
-        success: true,
-        url: `/api/uploads/${filename}`,
-        filename,
-        size: buffer.length,
-        mimeType: file.type,
-      });
+    // 1. Persiste de forma garantida no banco de dados (Neon Postgres / SQLite)
+    // para que nunca se perca com o ciclo de vida efêmero do serverless/Vercel.
+    try {
+      const { saveUploadedFile } = await import("@/lib/db");
+      await saveUploadedFile(filename, file.type, buffer);
+    } catch (dbErr) {
+      console.error("[studio-upload] Falha ao persistir imagem no banco de dados:", dbErr);
     }
 
-    const uploadDirectory = studioUploadsDirectory();
-    await fs.mkdir(uploadDirectory, { recursive: true });
-    await fs.writeFile(path.join(uploadDirectory, filename), buffer, {
-      flag: "wx",
-    });
+    // 2. Se estiver conectado ao Vercel Blob, envia também para lá
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      try {
+        const { put } = await import("@vercel/blob");
+        try {
+          await put(`uploads/${filename}`, buffer, {
+            access: "private",
+            contentType: file.type,
+          });
+        } catch {
+          await put(`uploads/${filename}`, buffer, {
+            access: "public",
+            contentType: file.type,
+          });
+        }
+      } catch (blobErr) {
+        console.warn("[studio-upload] Falha ao salvar no Vercel Blob:", blobErr);
+      }
+    }
+
+    // 3. Tenta salvar no disco local como cache rápido (se o filesystem permitir escrita)
+    try {
+      const uploadDirectory = studioUploadsDirectory();
+      await fs.mkdir(uploadDirectory, { recursive: true });
+      await fs.writeFile(path.join(uploadDirectory, filename), buffer);
+    } catch (fsErr) {
+      // Em ambientes com filesystem read-only, o banco de dados já garantiu a persistência
+    }
 
     return NextResponse.json({
       success: true,

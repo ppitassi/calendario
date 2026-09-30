@@ -2,6 +2,7 @@
 /** Visualização isolada da mídia, sem repetir o texto editorial do post. */
 
 
+import { useState, useEffect } from "react";
 import {
   Image as ImageIcon,
   LayoutTemplate,
@@ -29,6 +30,11 @@ export function PostPreviewVisualsOnly({
   carouselCount = 1,
   onClick,
 }: PostPreviewVisualsOnlyProps) {
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    setLoadError(false);
+  }, [imageUrl]);
   const normType = (type || "Feed").toLowerCase();
   const isVideo =
     normType.includes("reel") ||
@@ -56,8 +62,8 @@ export function PostPreviewVisualsOnly({
     Icon = LayoutTemplate;
   }
 
-  // Sem arquivo, mantém a proporção final para a apresentação não saltar de layout.
-  if (!imageUrl && !videoUrl) {
+  // Sem arquivo ou em caso de erro, mantém a proporção final para a apresentação não saltar de layout.
+  if ((!imageUrl && !videoUrl) || loadError) {
     return (
       <div className={cn(styles.placeholder, aspectClass)}>
         {/* UI: ícone e mensagem explicam qual entrega de mídia ainda está pendente. */}
@@ -65,8 +71,12 @@ export function PostPreviewVisualsOnly({
           <div className={styles.iconCircle}>
             <Icon className={styles.placeholderIcon} />
           </div>
-          <strong className={styles.placeholderTitle}>{placeholderTitle}</strong>
-          <p className={styles.placeholderSubtitle}>{placeholderSubtitle}</p>
+          <strong className={styles.placeholderTitle}>
+            {loadError ? "Arte Indisponível" : placeholderTitle}
+          </strong>
+          <p className={styles.placeholderSubtitle}>
+            {loadError ? "A imagem não pôde ser carregada do servidor." : placeholderSubtitle}
+          </p>
         </div>
       </div>
     );
@@ -95,7 +105,12 @@ export function PostPreviewVisualsOnly({
           onClick={(event) => event.stopPropagation()}
         />
       ) : (
-        <img src={imageUrl} alt="Arte" className={styles.image} />
+        <img
+          src={imageUrl}
+          alt="Arte"
+          className={styles.image}
+          onError={() => setLoadError(true)}
+        />
       )}
 
       {/* UI: camada de foco e hover anuncia que a mídia pode ser ampliada. */}

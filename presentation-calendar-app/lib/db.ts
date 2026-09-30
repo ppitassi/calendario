@@ -195,6 +195,14 @@ async function initPgSchema(pool: Pool | PoolClient) {
       is_read INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      filename TEXT PRIMARY KEY,
+      mime_type TEXT NOT NULL,
+      data TEXT NOT NULL,
+      size_bytes INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
   `);
 
   // Compatibilidade com colunas legadas
@@ -521,6 +529,14 @@ function initSqliteSchema(db: any) {
       is_read INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      filename TEXT PRIMARY KEY,
+      mime_type TEXT NOT NULL,
+      data TEXT NOT NULL,
+      size_bytes INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
   `);
 
   try { db.exec("ALTER TABLE calendar_items ADD COLUMN profile TEXT DEFAULT '';"); } catch {}
@@ -578,3 +594,44 @@ export function verifyPassword(password: string, stored: string): boolean {
     return false;
   }
 }
+
+/** Persiste arquivo enviado no banco de dados para sobreviver a ambientes serverless/Vercel */
+export async function saveUploadedFile(
+  filename: string,
+  mimeType: string,
+  buffer: Buffer
+): Promise<void> {
+  const db = getDb();
+  const base64Data = buffer.toString("base64");
+  const now = new Date().toISOString();
+  if (db.isPostgres) {
+    await db.prepare(`
+      INSERT INTO uploaded_files (filename, mime_type, data, size_bytes, created_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT (filename) DO UPDATE SET
+        mime_type = EXCLUDED.mime_type,
+        data = EXCLUDED.data,
+        size_bytes = EXCLUDED.size_bytes,
+        created_at = EXCLUDED.created_at;
+    `).run(filename, mimeType, base64Data, buffer.length, now);
+  } else {
+    await db.prepare(`
+      INSERT OR REPLACE INTO uploaded_files (filename, mime_type, data, size_bytes, created_at)
+      VALUES (?, ?, ?, ?, ?);
+    `).run(filename, mimeType, base64Data, buffer.length, now);
+  }
+}
+
+/** Recupera arquivo enviado do banco de dados persistente */
+export async function getUploadedFile(
+  filename: string
+): Promise<{ data: Buffer; mimeType: string } | null> {
+  const db = getDb();
+  const row = await db.prepare("SELECT mime_type, data FROM uploaded_files WHERE filename = ?").get(filename);
+  if (!row || !row.data) return null;
+  return {
+    mimeType: row.mime_type || "application/octet-stream",
+    data: Buffer.from(row.data, "base64"),
+  };
+}
+

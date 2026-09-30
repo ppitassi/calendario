@@ -3,7 +3,7 @@
 
 
 import { useRef, useState, useMemo } from "react";
-import { Trash2, Upload, CheckCircle, FileImage } from "lucide-react";
+import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon } from "lucide-react";
 import type { ContentItem, ContentStatus, ContentType } from "../lib/types";
 
 /** Edita uma cópia controlada do item e devolve toda alteração ao estado do Studio. */
@@ -23,6 +23,10 @@ export function Editor({
   const [tab, setTab] = useState<"content" | "media" | "notes">("content");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [optimisticPreview, setOptimisticPreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [customUrl, setCustomUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /** Atualiza um único campo sem descartar os demais valores e entrega a cópia a `onChange`. */
@@ -41,6 +45,8 @@ export function Editor({
   /** Envia a imagem como multipart, grava a URL retornada no item e expõe falhas no painel. */
   const handleFileUpload = async (file: File) => {
     if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    setOptimisticPreview(localUrl);
     setUploading(true);
     setUploadError(null);
 
@@ -57,10 +63,28 @@ export function Editor({
       if (!res.ok) throw new Error(data.error || "Erro ao realizar upload");
 
       field("imageUrl", data.url);
+      setOptimisticPreview(null);
     } catch (err: any) {
       setUploadError(err.message || "Erro no upload");
+      setOptimisticPreview(null);
     } finally {
       setUploading(false);
+    }
+  };
+
+  /** Captura imagens coladas com Ctrl+V diretamente na tela do editor. */
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const clipItems = e.clipboardData?.items;
+    if (!clipItems) return;
+    for (let i = 0; i < clipItems.length; i++) {
+      if (clipItems[i].type.startsWith("image/")) {
+        const file = clipItems[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          handleFileUpload(file);
+          break;
+        }
+      }
     }
   };
 
@@ -72,8 +96,18 @@ export function Editor({
     }
   };
 
+  const handleApplyUrl = () => {
+    if (customUrl.trim()) {
+      field("imageUrl", customUrl.trim());
+      setCustomUrl("");
+      setShowUrlInput(false);
+    }
+  };
+
+  const activeImage = optimisticPreview || item.imageUrl;
+
   return (
-    <div className="editorRoot">
+    <div className="editorRoot" onPaste={handlePaste}>
       {/* UI: abas separam conteúdo, arquivo publicado e anotações privadas da equipe. */}
       <div className="editorTabs">
         {/* UI: a aba ativa determina apenas o painel visível; o item permanece o mesmo. */}
@@ -275,6 +309,77 @@ export function Editor({
             )}
           </div>
 
+          {/* UI: Bloco de arte visual da publicação acessível diretamente no Conteúdo */}
+          {activeImage ? (
+            <div className="editorMediaSection">
+              <div className="editorMediaSectionHeader">
+                <span className="editorSectionTitle">
+                  <FileImage size={15} /> Arte da Publicação Anexada
+                </span>
+                <div className="editorMediaActions">
+                  <button
+                    type="button"
+                    className="secondarySmallBtn"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    <Upload size={12} /> {uploading ? "Enviando..." : "Trocar Arte"}
+                  </button>
+                  <button
+                    type="button"
+                    className="dangerSmallBtn"
+                    onClick={() => {
+                      setOptimisticPreview(null);
+                      field("imageUrl", "");
+                    }}
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+              <div className="editorMediaThumbnailBox">
+                <img
+                  src={activeImage}
+                  alt={item.title}
+                  className="editorMediaThumbnail"
+                />
+                {uploading && (
+                  <div className="uploadingOverlay">
+                    <div className="smallSpinner" />
+                    <span>Salvando imagem no banco...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`editorMediaDropPrompt ${isDragging ? "dragging" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                setIsDragging(false);
+                handleDrop(e);
+              }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={22} className="uploadIcon" />
+              <div>
+                <strong>Anexar arte desta publicação (Feed / Story)</strong>
+                <small>Clique para escolher, arraste o arquivo aqui ou cole com <b>Ctrl+V</b></small>
+              </div>
+              {uploading && <div className="smallSpinner" />}
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="uploadAlert error" style={{ marginBottom: 12 }}>
+              <span>{uploadError}</span>
+            </div>
+          )}
+
           {/* UI: copy, objetivo, briefing, funil, CTA e hashtags que compõem o post. */}
           <div className="copyGrid">
             <label>
@@ -390,40 +495,89 @@ export function Editor({
           )}
 
           {/* UI: mídia persistida, com remoção, prévia integral e URL utilizada pelas apresentações. */}
-          {item.imageUrl ? (
+          {activeImage ? (
             <div className="uploadedMediaCard">
               {/* UI: confirmação do upload e ação que desvincula a mídia do item. */}
               <div className="mediaCardTop">
                 <span className="mediaStatusLabel">
-                  <CheckCircle size={14} color="#10b981" /> Mídia Carregada com Sucesso
+                  <CheckCircle size={14} color="#10b981" /> Arte Visual Vinculada
                 </span>
-                <button
-                  className="removeMediaBtn"
-                  onClick={() => field("imageUrl", "")}
-                >
-                  Remover Mídia
-                </button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    type="button"
+                    className="secondarySmallBtn"
+                    onClick={() => window.open(activeImage, "_blank")}
+                  >
+                    Abrir Original
+                  </button>
+                  <button
+                    className="removeMediaBtn"
+                    onClick={() => {
+                      setOptimisticPreview(null);
+                      field("imageUrl", "");
+                    }}
+                  >
+                    Remover Mídia
+                  </button>
+                </div>
               </div>
 
               {/* UI: mostra exatamente o endereço salvo no campo `imageUrl`. */}
               <div className="mediaRealPreviewWrapper">
                 <img
-                  src={item.imageUrl}
+                  src={activeImage}
                   alt={item.title}
                   className="mediaRealImg"
                 />
               </div>
 
               <div className="mediaUrlRow">
-                <small>URL no Servidor:</small>
-                <code>{item.imageUrl}</code>
+                <small>Endereço salvo:</small>
+                <code>{item.imageUrl || "Enviando para o banco de dados..."}</code>
               </div>
             </div>
           ) : (
             <div className="noMediaNotice">
-              <p>Nenhuma imagem associada a este card ainda. Faça o upload acima.</p>
+              <p>Nenhuma imagem associada a este card ainda. Faça o upload acima ou cole com <b>Ctrl+V</b>.</p>
             </div>
           )}
+
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+            {!showUrlInput ? (
+              <button
+                type="button"
+                className="secondarySmallBtn"
+                style={{ alignSelf: "flex-start" }}
+                onClick={() => setShowUrlInput(true)}
+              >
+                <LinkIcon size={12} /> Ou colar link direto de imagem externa
+              </button>
+            ) : (
+              <div style={{ display: "flex", gap: 6, width: "100%", maxWidth: 540 }}>
+                <input
+                  type="url"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="https://exemplo.com/imagem.png"
+                  style={{ flex: 1, padding: "6px 10px", fontSize: 12, borderRadius: 6, border: "1px solid var(--border)" }}
+                />
+                <button
+                  type="button"
+                  className="primaryButton compactBtn"
+                  onClick={handleApplyUrl}
+                >
+                  Salvar Link
+                </button>
+                <button
+                  type="button"
+                  className="secondarySmallBtn"
+                  onClick={() => setShowUrlInput(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
