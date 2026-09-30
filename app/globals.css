@@ -192,21 +192,127 @@
 .loaderSpinner{width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Impressão da apresentação: remove controles e preserva a área exportável. */
+/* ==========================================================================
+   EXPORTAÇÃO DE PDF / IMPRESSÃO PROFISSIONAL DA APRESENTAÇÃO
+   Regra: somente o conteúdo interno da div de apresentação (<main id="presentation-print-area">)
+   é exportado para o PDF. Cabeçalho, sidebar, menus, botões de ação e efeitos de fundo são ignorados.
+   ========================================================================== */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 1.2cm;
+    margin: 1.2cm 1cm;
   }
-  body {
-    background: #fff !important;
-    color: #000 !important;
+
+  /* Reset global do documento para impressão limpa */
+  html, body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  /* Oculta tudo que NÃO seja a área de impressão da apresentação */
   header,
   nav,
+  aside,
   button,
-  [aria-hidden="true"] {
+  [role="tablist"],
+  [aria-hidden="true"],
+  .sidebar,
+  [class*="sidebar"],
+  [class*="ViewerHeader"],
+  [class*="modeTabs"],
+  [class*="overlay"],
+  [class*="BackgroundEffects"],
+  [class*="PresentationCurveBg"] {
     display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Força contêineres pai a liberarem altura e removerem overflows que cortam páginas */
+  body > div,
+  [class*="shell"],
+  [class*="mainArea"] {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    position: static !important;
+  }
+
+  /* A div principal da apresentação é o único foco imprimível */
+  #presentation-print-area,
+  .presentationPrintArea {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Capa (Hero) ocupa a primeira página com elegância */
+  [class*="hero"] {
+    break-after: page !important;
+    page-break-after: always !important;
+    min-height: 80vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  /* Resumo estratégico e calendário mensal */
+  [class*="PresentationStrategy_root"],
+  [class*="PresentationCalendar_root"],
+  .print-calendar {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    margin-bottom: 2rem !important;
+    background: #ffffff !important;
+  }
+
+  /* Cada card de postagem individual nunca deve ser fatiado ao meio entre duas folhas */
+  [class*="PostPreview_root"],
+  [class*="postItem"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 2rem !important;
+  }
+
+  [class*="PostPreview_card"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  /* Garante fidelidade de cor nas imagens e artes do PDF */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 /* Estados extras para múltiplos posts e seleção de dia no calendário. */

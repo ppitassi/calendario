@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import type { CalendarRecord, ContentItem } from "@/lib/types";
 import { POST_TYPES } from "@/lib/constants";
 import { shiftMonth } from "@/lib/date";
+import { cn } from "@/lib/utils";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { PresentationCurveBg } from "./PresentationCurveBg";
 import { ViewerHeader } from "./ViewerHeader";
@@ -61,8 +62,8 @@ export function ViewerScreen({
         onNextMonth={() => onMonthChange && onMonthChange(shiftMonth(month, 1))}
       />
 
-      {/* UI: documento contínuo que também serve de base para impressão/PDF. */}
-      <main className={styles.main}>
+      {/* UI: documento contínuo que também serve de base para impressão/PDF isolado. */}
+      <main id="presentation-print-area" className={cn(styles.main, "presentationPrintArea")}>
         {/* UI: capa com logo, marca e contexto da proposta. */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}

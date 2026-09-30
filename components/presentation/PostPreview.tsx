@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowUpRight, Target, Image as ImageIcon } from "lucide-react";
 import type { ContentItem } from "@/lib/types";
-import { PostPreviewVisualsOnly } from "./PostPreviewVisualsOnly";
+import { InstagramMockup } from "./InstagramMockup";
 import { Lightbox } from "./Lightbox";
 import styles from "./PostPreview.module.css";
 
@@ -107,11 +107,12 @@ export function PostPreview({
             </div>
 
             <div className={styles.visuals}>
-              <PostPreviewVisualsOnly
-                imageUrl={imgUrl}
-                type={post.type}
-                onClick={() => {
-                  if (imgUrl || images.length > 0) setLightboxOpen(true);
+              <InstagramMockup
+                post={post}
+                brand={post.profile || "Instagram"}
+                allowModeSwitch={true}
+                onImageClick={(url) => {
+                  if (url) setLightboxOpen(true);
                 }}
               />
             </div>
