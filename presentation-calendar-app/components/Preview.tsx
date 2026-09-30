@@ -79,20 +79,26 @@ export function Preview({
           </header>
 
           <div className="feedMedia">
-            {item.imageUrl && !imageError ? (
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="feedRealImg"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div className="feedEmptyMedia">
-                <ImageIcon size={32} />
-                <span>{imageError ? "Falha ao exibir imagem" : "Nenhuma mídia enviada"}</span>
-                <small>{imageError ? "Envie a arte novamente ou verifique o link" : "Anexe arte no editor ou cole (Ctrl+V)"}</small>
-              </div>
-            )}
+            {(() => {
+              const currentImg =
+                item.imageUrl ||
+                (item as any).image_url ||
+                (item as any).imageurl;
+              return currentImg && !imageError ? (
+                <img
+                  src={currentImg}
+                  alt={item.title}
+                  className="feedRealImg"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="feedEmptyMedia">
+                  <ImageIcon size={32} />
+                  <span>{imageError ? "Falha ao exibir imagem" : "Nenhuma mídia enviada"}</span>
+                  <small>{imageError ? "Envie a arte novamente ou verifique o link" : "Anexe arte no editor ou cole (Ctrl+V)"}</small>
+                </div>
+              );
+            })()}
           </div>
 
           {/* UI: ícones decorativos reproduzem ações do feed; não executam comandos. */}

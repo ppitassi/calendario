@@ -28,10 +28,12 @@ export function Editor({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [customUrl, setCustomUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const itemRef = useRef(item);
+  itemRef.current = item;
 
   /** Atualiza um único campo sem descartar os demais valores e entrega a cópia a `onChange`. */
   const field = (key: keyof ContentItem, value: any) =>
-    onChange({ ...item, [key]: value });
+    onChange({ ...itemRef.current, [key]: value });
 
   // Reúne perfis conhecidos, marca e valores atuais do post, removendo duplicados.
   const profileSuggestions = useMemo(() => {
@@ -104,7 +106,11 @@ export function Editor({
     }
   };
 
-  const activeImage = optimisticPreview || item.imageUrl;
+  const activeImage =
+    optimisticPreview ||
+    item.imageUrl ||
+    (item as any).image_url ||
+    (item as any).imageurl;
 
   return (
     <div className="editorRoot" onPaste={handlePaste}>
