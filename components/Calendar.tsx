@@ -208,7 +208,7 @@ export function Calendar({
                   onClick={() => onSelect(post)}
                 >
                   <span style={{ fontWeight: 800 }}>#{idx + 1}</span>
-                  <strong>{post.title || (post.type === "Post" ? "Feed" : post.type)}</strong>
+                  <strong>{post.title || post.type}</strong>
                   {post.isCollab && (
                     <span title="Collab" style={{ display: "inline-flex", alignItems: "center", color: "var(--accent)" }}>
                       <Users size={10} />

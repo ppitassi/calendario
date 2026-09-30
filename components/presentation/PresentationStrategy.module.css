@@ -98,17 +98,16 @@
   background: var(--color-status-instagram, #ec4899);
 }
 
-.reel,
+.feedStory {
+  background: linear-gradient(135deg, var(--color-status-info, #2563eb), var(--color-status-instagram, #ec4899));
+}
+
 .middle {
   background: color-mix(
     in srgb,
     var(--color-status-info, #2563eb) 55%,
     var(--color-status-instagram, #ec4899)
   );
-}
-
-.carousel {
-  background: var(--color-status-warning, #d97706);
 }
 
 .bottom {

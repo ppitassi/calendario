@@ -6,7 +6,6 @@ import { ptBR } from "date-fns/locale";
 import { ArrowUpRight, Target, Image as ImageIcon } from "lucide-react";
 import type { ContentItem } from "@/lib/types";
 import { PostPreviewVisualsOnly } from "./PostPreviewVisualsOnly";
-import { SlideshowViewer } from "./SlideshowViewer";
 import { Lightbox } from "./Lightbox";
 import styles from "./PostPreview.module.css";
 
@@ -92,20 +91,6 @@ export function PostPreview({
               </div>
 
               <div className={styles.details}>
-                {post.type === "Reel" && (
-                  <div className={styles.scriptCard}>
-                    <div>
-                      <span>Tema</span>
-                      <strong>{post.title || "Tema do Reel"}</strong>
-                    </div>
-                    {post.visual && (
-                      <div>
-                        <span>Rascunho de Roteiro / Direção</span>
-                        <div className={styles.scriptText}>{post.visual}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 <div className={styles.objective}>
                   <div className={styles.objectiveIcon}>
@@ -122,18 +107,13 @@ export function PostPreview({
             </div>
 
             <div className={styles.visuals}>
-              {post.type === "Carrossel" && images.length > 1 ? (
-                <SlideshowViewer images={images} expandable />
-              ) : (
-                <PostPreviewVisualsOnly
-                  imageUrl={imgUrl}
-                  type={post.type}
-                  carouselCount={images.length}
-                  onClick={() => {
-                    if (imgUrl || images.length > 0) setLightboxOpen(true);
-                  }}
-                />
-              )}
+              <PostPreviewVisualsOnly
+                imageUrl={imgUrl}
+                type={post.type}
+                onClick={() => {
+                  if (imgUrl || images.length > 0) setLightboxOpen(true);
+                }}
+              />
             </div>
           </div>
         </div>

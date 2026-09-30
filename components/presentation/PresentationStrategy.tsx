@@ -13,17 +13,16 @@ export function PresentationStrategy({
   calendar: CalendarRecord;
   items: ContentItem[];
 }) {
-  /** Distribui os posts por formato e funil; valores desconhecidos caem em Post e Topo. */
+  /** Distribui os posts por formato e funil; valores desconhecidos caem em Feed e Story e Topo. */
   const metrics = useMemo(() => {
     const total = items.length;
     if (total === 0) {
       return {
         total: 0,
         formats: [
+          { label: "Feed e Story", value: 0, tone: styles.feedStory },
           { label: "Feed", value: 0, tone: styles.feed },
           { label: "Stories", value: 0, tone: styles.story },
-          { label: "Reels", value: 0, tone: styles.reel },
-          { label: "Carrosséis", value: 0, tone: styles.carousel },
         ],
         funnel: [
           { label: "Topo", value: 0, tone: styles.top },
@@ -33,21 +32,18 @@ export function PresentationStrategy({
       };
     }
 
-    const counts = { Feed: 0, Story: 0, Reel: 0, Carrossel: 0 };
+    const counts = { "Feed e Story": 0, Feed: 0, Story: 0 };
     const funnelCounts = { Topo: 0, Meio: 0, Fundo: 0 };
 
     for (const item of items) {
       const rawType = (item.type || "").toLowerCase();
-      if (rawType === "feed" || rawType === "post") {
+      if (rawType === "feed") {
         counts.Feed++;
       } else if (rawType === "story" || rawType === "stories") {
         counts.Story++;
-      } else if (rawType === "reel" || rawType === "reels") {
-        counts.Reel++;
-      } else if (rawType.includes("carrossel") || rawType.includes("carousel")) {
-        counts.Carrossel++;
       } else {
-        counts.Feed++;
+        // "feed e story", "post", "carrossel", "reel" e qualquer outro → Feed e Story
+        counts["Feed e Story"]++;
       }
 
       const stage = item.funnelStage || "Topo";
@@ -61,10 +57,9 @@ export function PresentationStrategy({
     return {
       total,
       formats: [
+        { label: "Feed e Story", value: pct(counts["Feed e Story"]), tone: styles.feedStory },
         { label: "Feed", value: pct(counts.Feed), tone: styles.feed },
         { label: "Stories", value: pct(counts.Story), tone: styles.story },
-        { label: "Reels", value: pct(counts.Reel), tone: styles.reel },
-        { label: "Carrosséis", value: pct(counts.Carrossel), tone: styles.carousel },
       ],
       funnel: [
         { label: "Topo", value: pct(funnelCounts.Topo), tone: styles.top },
