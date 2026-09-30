@@ -26,31 +26,16 @@ export async function GET(
   const ext = path.extname(filename).toLowerCase();
   const contentType = MIME_MAP[ext] || "application/octet-stream";
 
-  // 1. Se estiver conectado ao Vercel Blob, tenta buscar do storage na nuvem primeiro
+  // 1. Se estiver conectado ao Vercel Blob, redireciona diretamente para a CDN global
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
-      const { get } = await import("@vercel/blob");
-      let result = null;
-      try {
-        result = await get(`uploads/${filename}`, { access: "private" });
-      } catch {
-        // Fallback se o blob foi gravado sem restrição privada
-        result = await get(`uploads/${filename}`, { access: "public" });
-      }
-
-      if (result && result.statusCode === 200 && result.stream) {
-        return new NextResponse(result.stream as any, {
-          status: 200,
-          headers: {
-            "Content-Type": result.blob?.contentType || contentType,
-            "Cache-Control": "public, max-age=31536000, immutable",
-            "X-Content-Type-Options": "nosniff",
-            "Content-Disposition": "inline",
-          },
-        });
+      const { head } = await import("@vercel/blob");
+      const blobInfo = await head(`uploads/${filename}`);
+      if (blobInfo?.url) {
+        return NextResponse.redirect(blobInfo.url, { status: 307 });
       }
     } catch (blobErr) {
-      console.warn("[studio-blob] Falha ao recuperar blob:", blobErr);
+      // Não interrompe: segue para o banco de dados
     }
   }
 
