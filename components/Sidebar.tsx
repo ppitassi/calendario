@@ -4,6 +4,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
+  Calendar,
   CalendarDays,
   MonitorPlay,
   Shield,
@@ -132,10 +133,12 @@ export function Sidebar({
     >
       {/* UI: marca e nome do produto; o texto some no modo recolhido. */}
       <div className={styles.brand}>
-        <div className={styles.brandLogo}>CP</div>
+        <div className={styles.brandLogo}>
+          <Calendar size={18} strokeWidth={2.2} />
+        </div>
         {isPinned && (
           <div className={styles.brandText}>
-            <span className={styles.brandTitle}>Content Planner</span>
+            <span className={styles.brandTitle}>Calendário</span>
             <span className={styles.brandSubtitle}>Design Ops Studio</span>
           </div>
         )}

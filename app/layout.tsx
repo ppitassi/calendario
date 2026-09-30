@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Presentation Studio",
+  title: "Calendário",
   description: "Calendário editorial e apresentações de conteúdo.",
 };
 

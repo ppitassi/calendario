@@ -2,7 +2,7 @@
 /** Alterna entre autenticação de conta aprovada, solicitação de novo acesso ou setup inicial. */
 
 import { useState } from "react";
-import { UserCheck, Lock, User, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { UserCheck, Lock, User, AlertCircle, ArrowRight, ShieldCheck, Calendar } from "lucide-react";
 import type { SafeUser } from "@/lib/auth";
 
 /** Entrega ao contêiner somente o usuário devolvido por login ou setup bem-sucedido. */
@@ -104,8 +104,10 @@ export function AuthScreen({
     <div className="authWrapper">
       <div className="authCard">
         <header className="authHeader">
-          <div className="authLogo">CP</div>
-          <h1>Content Planner</h1>
+          <div className="authLogo">
+            <Calendar size={24} strokeWidth={2.2} />
+          </div>
+          <h1>Calendário</h1>
           <p className="authSubtitle">
             {isFirstSetup ? "Configuração Inicial do Sistema" : "Presentation Studio & Gestão Editorial"}
           </p>
