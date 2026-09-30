@@ -16,8 +16,18 @@ export async function GET() {
 
     if (!user) {
       // Verifica se o sistema precisa de configuração inicial
-      const countRow = await db.prepare("SELECT COUNT(*) as count FROM users;").get();
-      const totalUsers = Number(countRow?.count || 0);
+      let totalUsers = 0;
+      try {
+        const countRow = await db.prepare("SELECT COUNT(*) as count FROM users;").get();
+        totalUsers = Number(countRow?.count || 0);
+      } catch (dbErr: any) {
+        console.error("Database check in /api/auth/me failed:", dbErr);
+        return NextResponse.json({
+          user: null,
+          needsSetup: true,
+          dbError: dbErr?.message || "Conexão com o banco de dados em inicialização.",
+        });
+      }
 
       return NextResponse.json({
         user: null,

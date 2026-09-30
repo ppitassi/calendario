@@ -16,8 +16,18 @@ export function getPostgresConnectionString(): string | null {
     process.env.POSTGRES_URL ||
     process.env.DATABASE_URL ||
     process.env.POSTGRES_PRISMA_URL ||
-    process.env.POSTGRES_URL_NON_POOLING;
-  return url ? String(url).trim() : null;
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED ||
+    process.env.POSTGRES_URL_NO_SSL;
+  if (url) return String(url).trim();
+
+  if (process.env.PGHOST && process.env.PGUSER && process.env.PGDATABASE) {
+    const port = process.env.PGPORT || "5432";
+    const pass = process.env.PGPASSWORD ? `:${encodeURIComponent(process.env.PGPASSWORD)}` : "";
+    return `postgres://${encodeURIComponent(process.env.PGUSER)}${pass}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}`;
+  }
+
+  return null;
 }
 
 export interface PreparedQuery {
@@ -80,11 +90,17 @@ function getPgPool(connectionString: string): Pool {
       connectionString.includes("localhost") ||
       connectionString.includes("127.0.0.1");
 
+    // Limpa parâmetros sslmode para não sobrescrever configuração explícita de ssl do Pool
+    const cleanConnectionString = connectionString
+      .replace(/([?&])sslmode=[^&]+(&|$)/, "$1")
+      .replace(/[?&]$/, "");
+
     global.__studioPgPool = new Pool({
-      connectionString,
+      connectionString: cleanConnectionString,
       ssl: isLocal ? false : { rejectUnauthorized: false },
       max: 10,
       idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
     });
   }
   return global.__studioPgPool;
@@ -223,7 +239,11 @@ async function initPgSchema(pool: Pool | PoolClient) {
 function createPostgresAdapter(pool: Pool): StudioDb {
   const ensureSchema = async () => {
     if (!global.__studioSchemaPromise) {
-      global.__studioSchemaPromise = initPgSchema(pool);
+      global.__studioSchemaPromise = initPgSchema(pool).catch((err) => {
+        global.__studioSchemaPromise = undefined;
+        console.error("Erro ao inicializar esquema do PostgreSQL:", err);
+        throw err;
+      });
     }
     return global.__studioSchemaPromise;
   };

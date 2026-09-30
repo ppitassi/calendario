@@ -11,7 +11,11 @@ function isPostgresConfigured() {
   return Boolean(
     process.env.POSTGRES_URL ||
     process.env.DATABASE_URL ||
-    process.env.POSTGRES_PRISMA_URL
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED ||
+    process.env.POSTGRES_URL_NO_SSL ||
+    (process.env.PGHOST && process.env.PGUSER && process.env.PGDATABASE)
   );
 }
 
@@ -25,8 +29,8 @@ function isProductionRuntime() {
 /** Resolve uma variável de diretório e rejeita caminho relativo em produção. */
 function resolveDirectory(variable: string, fallback: string) {
   const configured = String(process.env[variable] || "").trim();
-  // Quando usando Postgres no Vercel/nuvem, diretório em disco local não é obrigatório
-  if (isPostgresConfigured()) {
+  // No Vercel ou quando Postgres estiver configurado, diretório persistente em disco não é obrigatório
+  if (isPostgresConfigured() || Boolean(process.env.VERCEL)) {
     return path.resolve(configured || fallback);
   }
   if (isProductionRuntime() && !configured) {

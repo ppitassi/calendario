@@ -9,9 +9,11 @@ import type { SafeUser } from "@/lib/auth";
 export function AuthScreen({
   onLoginSuccess,
   isFirstSetup = false,
+  initialError = null,
 }: {
   onLoginSuccess: (user: SafeUser) => void;
   isFirstSetup?: boolean;
+  initialError?: string | null;
 }) {
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState(isFirstSetup ? "admin" : "");
@@ -20,7 +22,7 @@ export function AuthScreen({
   const [name, setName] = useState(isFirstSetup ? "Administrador" : "");
   const [role, setRole] = useState<"social_media" | "designer">("social_media");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   /** No setup cria a conta mestre; no cadastro cria pendente; no login entra. */
