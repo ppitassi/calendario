@@ -89,14 +89,21 @@ export async function POST(request: Request) {
     // Se estiver conectado ao Vercel Blob, envia direto para o storage na nuvem
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       const { put } = await import("@vercel/blob");
-      const blob = await put(`uploads/${filename}`, buffer, {
-        access: "public",
-        contentType: file.type,
-      });
+      try {
+        await put(`uploads/${filename}`, buffer, {
+          access: "private",
+          contentType: file.type,
+        });
+      } catch {
+        await put(`uploads/${filename}`, buffer, {
+          access: "public",
+          contentType: file.type,
+        });
+      }
 
       return NextResponse.json({
         success: true,
-        url: blob.url,
+        url: `/api/uploads/${filename}`,
         filename,
         size: buffer.length,
         mimeType: file.type,
