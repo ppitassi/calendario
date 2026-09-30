@@ -117,7 +117,7 @@ export async function POST(request: Request) {
               id,
               dateStr,
               "Publicação",
-              "Post",
+              "Feed",
               "Ideia",
               "Instagram",
               "",

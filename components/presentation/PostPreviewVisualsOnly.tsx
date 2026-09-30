@@ -25,11 +25,11 @@ interface PostPreviewVisualsOnlyProps {
 export function PostPreviewVisualsOnly({
   imageUrl,
   videoUrl,
-  type = "Post",
+  type = "Feed",
   carouselCount = 1,
   onClick,
 }: PostPreviewVisualsOnlyProps) {
-  const normType = (type || "Post").toLowerCase();
+  const normType = (type || "Feed").toLowerCase();
   const isVideo =
     normType.includes("reel") ||
     normType.includes("video") ||

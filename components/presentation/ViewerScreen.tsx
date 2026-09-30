@@ -149,10 +149,10 @@ export function ViewerScreen({
                 const postTypeConfig = POST_TYPES.find(
                   (pt) =>
                     pt.id === post.type.toLowerCase() ||
-                    (pt.id === "post" && post.type === "Post") ||
+                    ((pt.id === "feed" || pt.id === "post") && (post.type === "Feed" || post.type === "Post")) ||
                     (pt.id === "carousel" && post.type === "Carrossel") ||
                     (pt.id === "reel" && post.type === "Reel") ||
-                    (pt.id === "story" && post.type === "Story")
+                    (pt.id === "story" && (post.type === "Story" || (post.type as string) === "Stories"))
                 );
 
                 return (

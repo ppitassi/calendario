@@ -89,10 +89,10 @@ export function PresentationCalendar({
               ? POST_TYPES.find(
                   (pt) =>
                     pt.id === primaryPost.type.toLowerCase() ||
-                    (pt.id === "post" && primaryPost.type === "Post") ||
+                    ((pt.id === "feed" || pt.id === "post") && (primaryPost.type === "Feed" || primaryPost.type === "Post")) ||
                     (pt.id === "carousel" && primaryPost.type === "Carrossel") ||
                     (pt.id === "reel" && primaryPost.type === "Reel") ||
-                    (pt.id === "story" && primaryPost.type === "Story")
+                    (pt.id === "story" && (primaryPost.type === "Story" || (primaryPost.type as string) === "Stories"))
                 )
               : null;
             const Icon = postTypeConfig?.icon;
@@ -151,7 +151,7 @@ export function PresentationCalendar({
                               </div>
                             )}
                             <div className={styles.typeBadge}>
-                              {post.type}
+                              {post.type === "Post" ? "Feed" : post.type}
                               {post.isCollab ? " · Collab" : post.profile ? ` · ${post.profile}` : ""}
                             </div>
                           </div>

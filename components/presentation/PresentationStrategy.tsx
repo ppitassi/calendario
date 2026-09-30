@@ -33,12 +33,22 @@ export function PresentationStrategy({
       };
     }
 
-    const counts = { Post: 0, Story: 0, Reel: 0, Carrossel: 0 };
+    const counts = { Feed: 0, Story: 0, Reel: 0, Carrossel: 0 };
     const funnelCounts = { Topo: 0, Meio: 0, Fundo: 0 };
 
     for (const item of items) {
-      if (counts[item.type] !== undefined) counts[item.type]++;
-      else counts.Post++;
+      const rawType = (item.type || "").toLowerCase();
+      if (rawType === "feed" || rawType === "post") {
+        counts.Feed++;
+      } else if (rawType === "story" || rawType === "stories") {
+        counts.Story++;
+      } else if (rawType === "reel" || rawType === "reels") {
+        counts.Reel++;
+      } else if (rawType.includes("carrossel") || rawType.includes("carousel")) {
+        counts.Carrossel++;
+      } else {
+        counts.Feed++;
+      }
 
       const stage = item.funnelStage || "Topo";
       if (funnelCounts[stage] !== undefined) funnelCounts[stage]++;
@@ -51,7 +61,7 @@ export function PresentationStrategy({
     return {
       total,
       formats: [
-        { label: "Feed", value: pct(counts.Post), tone: styles.feed },
+        { label: "Feed", value: pct(counts.Feed), tone: styles.feed },
         { label: "Stories", value: pct(counts.Story), tone: styles.story },
         { label: "Reels", value: pct(counts.Reel), tone: styles.reel },
         { label: "Carrosséis", value: pct(counts.Carrossel), tone: styles.carousel },
