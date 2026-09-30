@@ -31,8 +31,15 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password, name, role }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Falha ao registrar");
+        let data: any = null;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error(
+            `Erro de comunicação com o servidor (${res.status} ${res.statusText || "Falha interna"}). Verifique se o backend está ativo.`
+          );
+        }
+        if (!res.ok) throw new Error(data?.error || "Falha ao registrar");
 
         setSuccessMessage(
           "Solicitação enviada com sucesso! O administrador recebeu uma notificação e precisa aprovar sua conta antes do primeiro acesso."
@@ -45,8 +52,15 @@ export function AuthScreen({ onLoginSuccess }: { onLoginSuccess: (user: SafeUser
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Falha ao autenticar");
+        let data: any = null;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error(
+            `Erro de comunicação com o servidor (${res.status} ${res.statusText || "Falha interna"}). Verifique os logs do servidor.`
+          );
+        }
+        if (!res.ok) throw new Error(data?.error || "Falha ao autenticar");
 
         onLoginSuccess(data.user);
       }
