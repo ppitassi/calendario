@@ -85,6 +85,24 @@ export async function POST(request: Request) {
     }
 
     const filename = `${Date.now()}-${crypto.randomBytes(12).toString("hex")}${extension}`;
+
+    // Se estiver conectado ao Vercel Blob, envia direto para o storage na nuvem
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { put } = await import("@vercel/blob");
+      const blob = await put(`uploads/${filename}`, buffer, {
+        access: "public",
+        contentType: file.type,
+      });
+
+      return NextResponse.json({
+        success: true,
+        url: blob.url,
+        filename,
+        size: buffer.length,
+        mimeType: file.type,
+      });
+    }
+
     const uploadDirectory = studioUploadsDirectory();
     await fs.mkdir(uploadDirectory, { recursive: true });
     await fs.writeFile(path.join(uploadDirectory, filename), buffer, {
