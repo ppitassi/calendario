@@ -32,10 +32,6 @@ export function PostPreview({
 
   return (
     <div className={styles.root}>
-      <div className={styles.heading}>
-        <h2>Modo de Visualização</h2>
-      </div>
-
       {/* UI: cartão de apresentação dividido entre informação editorial e arte. */}
       <div className={styles.card}>
         <div className={styles.glow} />
