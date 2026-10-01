@@ -510,6 +510,135 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
+/* Seção compacta de botões de mídia no Editor */
+.mediaButtonsSection {
+  margin: 8px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mediaButtonsHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mediaButtonsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mediaCompactItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mediaCompactBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--ink);
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mediaCompactBtn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.mediaCompactBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mediaCompactBtn.hasMedia {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.mediaCompactBtn.hasMedia:hover:not(:disabled) {
+  background: #dcfce7;
+  border-color: #4ade80;
+}
+
+.mediaBtnIcon {
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.mediaBtnLabel {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mediaBtnFormat {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.mediaMiniBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.mediaMiniBadge.pending {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.mediaMiniBadge.success {
+  color: #15803d;
+  background: #dcfce7;
+  font-weight: 700;
+}
+
+.mediaCompactRemoveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #fee2e2;
+  background: #fff5f5;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.mediaCompactRemoveBtn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: scale(1.05);
+}
+
 .editorMediaSectionHeader {
   display: flex;
   align-items: center;
