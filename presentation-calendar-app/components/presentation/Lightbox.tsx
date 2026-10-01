@@ -1,12 +1,13 @@
 /** Modal que amplia mídias e oferece navegação circular por mouse ou teclado. */
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { IconButton } from "../ui/IconButton/IconButton";
 import styles from "./Lightbox.module.css";
 
-/** Mantém o índice local enquanto o chamador controla abertura e fechamento. */
+/** Mantém o índice local enquanto o chamador controla abertura e fechamento, montando o overlay no document.body via Portal. */
 export function Lightbox({
   images,
   initialIndex = 0,
@@ -19,6 +20,11 @@ export function Lightbox({
   onClose: () => void;
 }) {
   const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Ao abrir ou trocar o índice inicial, reposiciona a galeria na mídia solicitada.
   React.useEffect(() => {
@@ -44,10 +50,10 @@ export function Lightbox({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, images.length, onClose]);
 
-  // Não mantém backdrop invisível nem controles focáveis quando está fechado.
-  if (!isOpen) return null;
+  // Não mantém backdrop invisível nem controles focáveis quando está fechado ou antes da montagem no cliente.
+  if (!isOpen || !mounted || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {/* UI: clicar no backdrop fecha; clicar em controles ou imagem interrompe a propagação. */}
       {isOpen && (
@@ -103,15 +109,17 @@ export function Lightbox({
           <motion.img
             key={currentIndex}
             src={images[currentIndex]}
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className={styles.image}
             onClick={(e) => e.stopPropagation()}
             alt={`Mídia ${currentIndex + 1}`}
           />
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
+

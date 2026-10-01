@@ -330,7 +330,7 @@ export function Editor({
                 <div className="mediaRowControl">
                   <div className="mediaRowInfo">
                     <span className="editorSectionTitle">
-                      <Layers size={14} /> Arte do Feed (1:1 / 4:5)
+                      <Layers size={14} /> Arte do Feed (1:1 / 4:5 / 1080×1440)
                     </span>
                     <span className="mediaStatusTag">
                       {activeFeedImage ? (
