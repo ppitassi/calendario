@@ -297,7 +297,7 @@ export function Studio({
         const newItem: ContentItem = {
           id: crypto.randomUUID(),
           date: key,
-          title: "Publicação",
+          title: defaultProfile || "Publicação",
           type: defaultTypeForDay,
           status: "Ideia",
           channel: "Instagram",
@@ -415,18 +415,46 @@ export function Studio({
 
     if (isFirstProfile) {
       // Atribui todas as publicações existentes a este primeiro perfil
-      const updated = items.map((entry) => ({
-        ...entry,
-        profile: clean,
-      }));
+      const updated = items.map((entry) => {
+        const isDefault = !entry.title || entry.title === "Nova publicação" || entry.title === "Publicação";
+        return {
+          ...entry,
+          profile: clean,
+          title: isDefault
+            ? entry.isCollab
+              ? entry.collabProfile
+                ? `${clean} + ${entry.collabProfile}`
+                : `${clean} (Collab)`
+              : clean
+            : entry.title,
+        };
+      });
       setItems(updated);
       saveChanges(updated);
     } else {
       // Segundo ou posterior: as artes existentes NÃO são reatribuídas; atualiza apenas o item ativo se houver
       if (selectedId) {
-        const updated = items.map((entry) =>
-          entry.id === selectedId ? { ...entry, profile: clean } : entry
-        );
+        const updated = items.map((entry) => {
+          if (entry.id === selectedId) {
+            const isDefault =
+              !entry.title ||
+              entry.title === "Nova publicação" ||
+              entry.title === "Publicação" ||
+              (entry.profile && entry.title === entry.profile);
+            return {
+              ...entry,
+              profile: clean,
+              title: isDefault
+                ? entry.isCollab
+                  ? entry.collabProfile
+                    ? `${clean} + ${entry.collabProfile}`
+                    : `${clean} (Collab)`
+                  : clean
+                : entry.title,
+            };
+          }
+          return entry;
+        });
         setItems(updated);
         saveChanges(updated);
       }
@@ -449,7 +477,7 @@ export function Studio({
     const newItem: ContentItem = {
       id: crypto.randomUUID(),
       date,
-      title: "Nova publicação",
+      title: defaultProfile || "Nova publicação",
       type: defaultType,
       status: "Ideia",
       channel: "Instagram",
