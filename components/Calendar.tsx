@@ -3,7 +3,7 @@
 
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, Users, CalendarDays, Trash2, Sliders } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Users, CalendarDays, Trash2, Sliders, GripVertical, Move } from "lucide-react";
 import { dateKey, monthLabel, shiftMonth } from "../lib/date";
 import type { ContentItem, ContentType } from "../lib/types";
 
@@ -33,6 +33,8 @@ export function Calendar({
   onMonthChange,
   onSelect,
   onCreate,
+  onMovePost,
+  onMoveDayPosts,
   onUpdatePostingDays,
   onUpdateWeekdayFormat,
   onClearMonth,
@@ -45,6 +47,8 @@ export function Calendar({
   onMonthChange: (date: Date) => void;
   onSelect: (item: ContentItem) => void;
   onCreate: (date: string) => void;
+  onMovePost?: (postId: string, targetDate: string) => void;
+  onMoveDayPosts?: (sourceDate: string, targetDate: string) => void;
   onUpdatePostingDays?: (days: number[]) => void;
   onUpdateWeekdayFormat?: (day: number, format: ContentType) => void;
   onClearMonth?: () => void;
@@ -55,6 +59,90 @@ export function Calendar({
   // A seleção do post determina inicialmente qual dia deve ficar destacado.
   const selectedItem = items.find((i) => i.id === selectedId);
   const [selectedDate, setSelectedDate] = useState<string | null>(() => selectedItem ? selectedItem.date : null);
+
+  // Estados para Drag and Drop de publicações entre dias do calendário
+  const [dragSource, setDragSource] = useState<{
+    type: "day" | "post";
+    sourceDate: string;
+    postId?: string;
+    postIds?: string[];
+    label?: string;
+  } | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+
+  const handleDayDragStart = (e: React.DragEvent, key: string, dayPosts: ContentItem[]) => {
+    if (dayPosts.length === 0) return;
+    const postIds = dayPosts.map((p) => p.id);
+    const payload = {
+      type: "day" as const,
+      sourceDate: key,
+      postIds,
+      label: dayPosts.length === 1 ? (dayPosts[0].title || "Publicação") : `${dayPosts.length} publicações`,
+    };
+    setDragSource(payload);
+    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handlePostTabDragStart = (e: React.DragEvent, post: ContentItem, label: string) => {
+    e.stopPropagation();
+    const payload = {
+      type: "post" as const,
+      sourceDate: post.date,
+      postId: post.id,
+      label,
+    };
+    setDragSource(payload);
+    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleCellDragOver = (e: React.DragEvent, targetKey: string) => {
+    if (!dragSource || dragSource.sourceDate === targetKey) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverDate !== targetKey) {
+      setDragOverDate(targetKey);
+    }
+  };
+
+  const handleCellDragLeave = (e: React.DragEvent, targetKey: string) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      if (dragOverDate === targetKey) {
+        setDragOverDate(null);
+      }
+    }
+  };
+
+  const handleCellDrop = (e: React.DragEvent, targetKey: string) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    const currentDrag = dragSource;
+    setDragSource(null);
+
+    let data = currentDrag;
+    if (!data) {
+      try {
+        const raw = e.dataTransfer.getData("application/json");
+        if (raw) data = JSON.parse(raw);
+      } catch {}
+    }
+
+    if (!data || data.sourceDate === targetKey) return;
+
+    if (data.type === "post" && data.postId) {
+      onMovePost?.(data.postId, targetKey);
+      setSelectedDate(targetKey);
+    } else if (data.type === "day") {
+      onMoveDayPosts?.(data.sourceDate, targetKey);
+      setSelectedDate(targetKey);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDragOverDate(null);
+    setDragSource(null);
+  };
 
   // Mantém o dia destacado sincronizado quando o editor seleciona outro post.
   useEffect(() => {
@@ -157,15 +245,26 @@ export function Calendar({
             const emptySelected = isDaySelected && count === 0;
             const hasImage = dayPosts.some((item) => Boolean(item.imageUrl));
 
+            const isDragSource = dragSource?.sourceDate === key;
+            const isDropTarget = dragOverDate === key;
+
             return (
               <button
                 key={key}
                 type="button"
+                draggable={count > 0}
+                onDragStart={(e) => handleDayDragStart(e, key, dayPosts)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleCellDragOver(e, key)}
+                onDragLeave={(e) => handleCellDragLeave(e, key)}
+                onDrop={(e) => handleCellDrop(e, key)}
                 className={`
-                  ${count > 0 ? "populated" : ""}
+                  ${count > 0 ? "populated draggableDay" : ""}
                   ${active ? "selected" : ""}
                   ${emptySelected ? "daySelectedEmpty" : ""}
                   ${hasImage ? "hasImage" : ""}
+                  ${isDragSource ? "isDragSource" : ""}
+                  ${isDropTarget ? "dropTargetHover" : ""}
                 `.trim()}
                 onClick={() => {
                   setSelectedDate(key);
@@ -175,7 +274,13 @@ export function Calendar({
                     }
                   }
                 }}
-                title={count > 0 ? `${count} publicação(ões) em ${key}` : `Dia ${index + 1}`}
+                title={
+                  count > 0
+                    ? `${count} publicação(ões) em ${key} • Arraste para mover para outro dia`
+                    : dragSource
+                    ? `Soltar publicação aqui no dia ${index + 1}`
+                    : `Dia ${index + 1}`
+                }
               >
                 <span>{index + 1}</span>
                 {count === 1 && <i className={hasImage ? "imgIndicator" : ""} />}
@@ -184,10 +289,22 @@ export function Calendar({
                     {count}
                   </span>
                 )}
+                {isDropTarget && (
+                  <span className="dropTargetIndicator" title="Soltar nesta data">
+                    +
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
+
+        {dragSource && (
+          <div className="calendarDragNotice">
+            <Move size={11} />
+            <span>Solte em outro dia para reagendar</span>
+          </div>
+        )}
       </section>
 
       {/* UI: dia selecionado, suas publicações e atalho para criar outra na mesma data. */}
@@ -232,11 +349,15 @@ export function Calendar({
                   <button
                     key={post.id}
                     type="button"
-                    className={`dayPostTab ${post.id === selectedId ? "active" : ""}`}
+                    draggable={true}
+                    onDragStart={(e) => handlePostTabDragStart(e, post, label)}
+                    onDragEnd={handleDragEnd}
+                    className={`dayPostTab ${post.id === selectedId ? "active" : ""} ${dragSource?.postId === post.id ? "isDragSource" : ""}`}
                     onClick={() => onSelect(post)}
-                    title={`Post #${idx + 1}: ${label}`}
+                    title={`Post #${idx + 1}: ${label} • Arraste para qualquer dia do calendário`}
                   >
                     <div className="dayPostTabMain">
+                      <GripVertical size={11} className="dayPostDragHandle" />
                       <span className="dayPostNum">#{idx + 1}</span>
                       <strong className="dayPostTitleText">{label}</strong>
                     </div>

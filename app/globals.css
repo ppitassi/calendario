@@ -1027,6 +1027,110 @@
   background: color-mix(in srgb, var(--accent), transparent 95%);
 }
 
+/* Drag and Drop de publicações entre dias do calendário */
+.compactCalendar > button.draggableDay {
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.compactCalendar > button.draggableDay:active {
+  cursor: grabbing;
+}
+
+.compactCalendar > button.isDragSource,
+.dayPostTab.isDragSource {
+  opacity: 0.35 !important;
+  transform: scale(0.92) !important;
+  filter: grayscale(40%);
+}
+
+.compactCalendar > button.dropTargetHover {
+  transform: scale(1.18) !important;
+  z-index: 20 !important;
+  background: color-mix(in srgb, var(--accent), transparent 75%) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 8px 20px color-mix(in srgb, var(--accent), transparent 60%) !important;
+  border-radius: 8px !important;
+  color: var(--accent) !important;
+  animation: dropPulse 1s infinite alternate;
+}
+
+@keyframes dropPulse {
+  0% { transform: scale(1.15); box-shadow: 0 0 0 2px var(--accent), 0 6px 16px color-mix(in srgb, var(--accent), transparent 60%); }
+  100% { transform: scale(1.22); box-shadow: 0 0 0 3px var(--accent), 0 10px 24px color-mix(in srgb, var(--accent), transparent 45%); }
+}
+
+.dropTargetIndicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.dayPostTab[draggable="true"] {
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.dayPostTab[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.dayPostDragHandle {
+  opacity: 0.3;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-right: -1px;
+  cursor: grab;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.dayPostTab:hover .dayPostDragHandle {
+  opacity: 0.8;
+  color: var(--ink);
+}
+
+.calendarDragNotice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent), transparent 90%);
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  animation: fadeIn 0.2s ease;
+}
+
+[data-theme="dark"] .compactCalendar > button.dropTargetHover {
+  background: color-mix(in srgb, var(--accent), transparent 60%) !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .calendarDragNotice {
+  background: color-mix(in srgb, var(--accent), transparent 85%);
+  border-color: var(--accent);
+  color: #fca5a5;
+}
+
 /* Notificações / Sininho de Alertas e Erros */
 .notificationWrapper {
   position: relative;
