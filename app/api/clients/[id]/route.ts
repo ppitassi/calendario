@@ -38,7 +38,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, segment, accent, logo_url, has_multiple_profiles } = body;
+    const { name, segment, accent, logo_url, has_multiple_profiles, profiles } = body;
 
     const db = getDb();
     const existing = (await db.prepare("SELECT * FROM clients WHERE id = ?").get(id)) as any;
@@ -48,6 +48,10 @@ export async function PUT(
     }
 
     const now = new Date().toISOString();
+    let finalProfiles = existing.profiles;
+    if (profiles !== undefined) {
+      finalProfiles = Array.isArray(profiles) ? JSON.stringify(profiles) : String(profiles);
+    }
 
     await db.prepare(`
       UPDATE clients
@@ -57,6 +61,7 @@ export async function PUT(
         accent = ?,
         logo_url = ?,
         has_multiple_profiles = ?,
+        profiles = ?,
         updated_at = ?
       WHERE id = ?
     `).run(
@@ -65,6 +70,7 @@ export async function PUT(
       accent !== undefined ? accent : existing.accent,
       logo_url !== undefined ? logo_url : existing.logo_url,
       has_multiple_profiles !== undefined ? (has_multiple_profiles ? 1 : 0) : existing.has_multiple_profiles,
+      finalProfiles,
       now,
       id
     );

@@ -105,7 +105,15 @@ export async function POST(request: Request) {
         const y = parseInt(yearStr, 10);
         const m = parseInt(monthStr, 10) - 1;
         const daysInMonth = new Date(y, m + 1, 0).getDate();
-        const defaultProfile = `@${client.name.toLowerCase().replace(/\s+/g, "")}`;
+        let clientProfiles: string[] = [];
+        try {
+          clientProfiles = client.profiles ? JSON.parse(client.profiles) : [];
+        } catch {
+          if (client.profiles && typeof client.profiles === "string") {
+            clientProfiles = client.profiles.split(",").map((s: string) => s.trim()).filter(Boolean);
+          }
+        }
+        const defaultProfile = clientProfiles.length === 1 ? clientProfiles[0] : "";
 
         const insertItem = db.prepare(`
           INSERT INTO calendar_items (
@@ -128,7 +136,7 @@ export async function POST(request: Request) {
               crypto.randomUUID(),
               id,
               dateStr,
-              "Publicação",
+              defaultProfile || "Publicação",
               formatForDay,
               "Ideia",
               "Instagram",

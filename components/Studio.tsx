@@ -113,6 +113,25 @@ export function Studio({
         if (cData.calendar.weekday_formats && typeof cData.calendar.weekday_formats === "object") {
           setWeekdayFormats(cData.calendar.weekday_formats);
         }
+
+        // Hidrata perfis do cliente para persistência entre meses
+        const serverProfiles = Array.isArray(cData.calendar.available_profiles)
+          ? cData.calendar.available_profiles
+          : [];
+        let localProfiles: string[] = [];
+        if (cData.calendar.client_id) {
+          try {
+            const raw = localStorage.getItem(`cp:profiles:${cData.calendar.client_id}`);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) localProfiles = parsed;
+            }
+          } catch {}
+        }
+        const mergedProfiles = Array.from(new Set([...serverProfiles, ...localProfiles])).filter(Boolean);
+        if (mergedProfiles.length > 0) {
+          setCustomProfiles(mergedProfiles);
+        }
       }
       if (Array.isArray(cData.items)) {
         setItems(cData.items);
@@ -155,13 +174,15 @@ export function Studio({
     cal: any;
     postingDays: number[];
     weekdayFormats: any;
+    profiles?: string[];
   } | null>(null);
 
   const performSave = async (
     targetItems: ContentItem[],
     targetCal: any,
     targetPostingDays: number[],
-    targetWeekdayFormats: any
+    targetWeekdayFormats: any,
+    targetProfiles: string[] = customProfiles
   ) => {
     if (!calendar) return;
 
@@ -175,6 +196,15 @@ export function Studio({
       seen.add(id);
       return { ...it, id };
     });
+
+    const profilesToSave = Array.from(
+      new Set([
+        ...(targetProfiles || []),
+        ...customProfiles,
+        ...(cleanItems.map((it) => it.profile?.trim()).filter(Boolean) as string[]),
+        ...(cleanItems.map((it) => it.collabProfile?.trim()).filter(Boolean) as string[]),
+      ])
+    ).filter(Boolean);
 
     try {
       const res = await fetch(`/api/calendars/${calendar.id}`, {
@@ -194,6 +224,7 @@ export function Studio({
           postingDays: targetPostingDays,
           weekdayFormats: targetWeekdayFormats,
           items: cleanItems,
+          profiles: profilesToSave,
         }),
       });
 
@@ -214,7 +245,8 @@ export function Studio({
     updatedItems = items,
     updatedCal = calendar,
     updatedPostingDays = postingDays,
-    updatedWeekdayFormats = weekdayFormats
+    updatedWeekdayFormats = weekdayFormats,
+    updatedProfiles = customProfiles
   ) => {
     if (!calendar) return;
 
@@ -225,20 +257,21 @@ export function Studio({
         cal: updatedCal,
         postingDays: updatedPostingDays,
         weekdayFormats: updatedWeekdayFormats,
+        profiles: updatedProfiles,
       };
       return;
     }
 
     isSavingRef.current = true;
     try {
-      await performSave(updatedItems, updatedCal, updatedPostingDays, updatedWeekdayFormats);
+      await performSave(updatedItems, updatedCal, updatedPostingDays, updatedWeekdayFormats, updatedProfiles);
     } finally {
       isSavingRef.current = false;
       // Se houver salvamento acumulado durante o processo, dispara o mais novo
       if (pendingSaveRef.current) {
         const next = pendingSaveRef.current;
         pendingSaveRef.current = null;
-        saveChanges(next.items, next.cal, next.postingDays, next.weekdayFormats);
+        saveChanges(next.items, next.cal, next.postingDays, next.weekdayFormats, next.profiles);
       }
     }
   };
@@ -246,7 +279,7 @@ export function Studio({
   /** Salva o mês atual, garante o destino, carrega seus dados e seleciona o primeiro item. */
   const handleMonthChange = async (targetMonth: Date) => {
     if (!calendar) return;
-    await saveChanges(items, calendar, postingDays);
+    await saveChanges(items, calendar, postingDays, weekdayFormats, customProfiles);
 
     const mKey = monthKey(targetMonth);
     try {
@@ -277,6 +310,20 @@ export function Studio({
             ? calData.calendar.posting_days
             : postingDays;
           setPostingDays(pDays);
+
+          // Mantém perfis já existentes no cliente e mescla os do novo calendário
+          const incomingProfiles = Array.isArray(calData.calendar.available_profiles)
+            ? calData.calendar.available_profiles
+            : [];
+          setCustomProfiles((prev) => {
+            const merged = Array.from(new Set([...prev, ...incomingProfiles])).filter(Boolean);
+            if (calData.calendar.client_id) {
+              try {
+                localStorage.setItem(`cp:profiles:${calData.calendar.client_id}`, JSON.stringify(merged));
+              } catch {}
+            }
+            return merged;
+          });
         }
         if (Array.isArray(calData.items)) {
           setItems(calData.items);
@@ -468,7 +515,14 @@ export function Studio({
     // Se não havia nenhum perfil disponível, é o primeiro perfil
     const isFirstProfile = availableProfiles.length === 0;
 
-    setCustomProfiles((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
+    const nextProfiles = customProfiles.includes(clean) ? customProfiles : [...customProfiles, clean];
+    setCustomProfiles(nextProfiles);
+
+    if (calendar?.client_id) {
+      try {
+        localStorage.setItem(`cp:profiles:${calendar.client_id}`, JSON.stringify(nextProfiles));
+      } catch {}
+    }
 
     if (isFirstProfile) {
       // Atribui todas as publicações existentes a este primeiro perfil
@@ -487,7 +541,7 @@ export function Studio({
         };
       });
       setItems(updated);
-      saveChanges(updated);
+      saveChanges(updated, calendar, postingDays, weekdayFormats, nextProfiles);
     } else {
       // Segundo ou posterior: as artes existentes NÃO são reatribuídas; atualiza apenas o item ativo se houver
       if (selectedId) {
@@ -513,7 +567,9 @@ export function Studio({
           return entry;
         });
         setItems(updated);
-        saveChanges(updated);
+        saveChanges(updated, calendar, postingDays, weekdayFormats, nextProfiles);
+      } else {
+        saveChanges(items, calendar, postingDays, weekdayFormats, nextProfiles);
       }
     }
   };

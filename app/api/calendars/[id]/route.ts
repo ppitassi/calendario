@@ -28,6 +28,7 @@ export async function GET(
         c.name as client_name,
         c.logo_url as client_logo_url,
         c.has_multiple_profiles as client_has_multiple_profiles,
+        c.profiles as client_profiles,
         c.posting_days as client_posting_days,
         c.weekday_formats as client_weekday_formats,
         creator.name as creator_name,
@@ -71,6 +72,48 @@ export async function GET(
       } catch {}
     }
     calendar.weekday_formats = parsedWeekdayFormats;
+
+    // Constrói lista persistente de perfis cadastrados para este cliente
+    const profileSet = new Set<string>();
+    if (calendar.client_profiles) {
+      try {
+        const parsed = JSON.parse(calendar.client_profiles);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((p: string) => { if (p && p.trim()) profileSet.add(p.trim()); });
+        }
+      } catch {
+        calendar.client_profiles.split(",").forEach((p: string) => {
+          if (p && p.trim()) profileSet.add(p.trim());
+        });
+      }
+    }
+
+    // Busca também perfis utilizados em quaisquer calendários deste cliente
+    if (calendar.client_id) {
+      try {
+        const usedProfiles = await db.prepare(`
+          SELECT DISTINCT ci.profile
+          FROM calendar_items ci
+          JOIN calendars c ON c.id = ci.calendar_id
+          WHERE c.client_id = ? AND ci.profile IS NOT NULL AND ci.profile != ''
+        `).all(calendar.client_id);
+        for (const row of usedProfiles) {
+          if (row.profile && row.profile.trim()) profileSet.add(row.profile.trim());
+        }
+
+        const usedCollabs = await db.prepare(`
+          SELECT DISTINCT ci.collab_profile
+          FROM calendar_items ci
+          JOIN calendars c ON c.id = ci.calendar_id
+          WHERE c.client_id = ? AND ci.collab_profile IS NOT NULL AND ci.collab_profile != ''
+        `).all(calendar.client_id);
+        for (const row of usedCollabs) {
+          if (row.collab_profile && row.collab_profile.trim()) profileSet.add(row.collab_profile.trim());
+        }
+      } catch {}
+    }
+
+    calendar.available_profiles = Array.from(profileSet);
 
     const items = await db.prepare(`
       SELECT
@@ -141,6 +184,7 @@ export async function PUT(
       postingDays,
       weekdayFormats,
       items,
+      profiles,
     } = body;
 
     const db = getDb();
@@ -191,6 +235,19 @@ export async function PUT(
       now,
       id
     );
+
+    if (profiles !== undefined && existing.client_id) {
+      const profilesStr = Array.isArray(profiles) ? JSON.stringify(profiles) : String(profiles);
+      try {
+        await db.prepare("UPDATE clients SET profiles = ?, updated_at = ? WHERE id = ?").run(
+          profilesStr,
+          now,
+          existing.client_id
+        );
+      } catch (err) {
+        console.error("Erro ao atualizar profiles do cliente:", err);
+      }
+    }
 
     if (postingDays !== undefined && Array.isArray(postingDays)) {
       const pDaysStr = JSON.stringify(postingDays);
