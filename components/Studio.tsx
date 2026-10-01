@@ -1111,6 +1111,7 @@ export function Studio({
               {selected ? (
                 <Editor
                   item={selected}
+                  allItems={monthItems}
                   onChange={updateItem}
                   onDelete={removeItem}
                   availableProfiles={availableProfiles}
