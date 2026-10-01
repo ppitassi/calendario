@@ -23,6 +23,8 @@ export function PresentationStrategy({
           { label: "Feed e Story", value: 0, tone: styles.feedStory },
           { label: "Feed", value: 0, tone: styles.feed },
           { label: "Stories", value: 0, tone: styles.story },
+          { label: "Carrossel", value: 0, tone: styles.middle },
+          { label: "Reels", value: 0, tone: styles.bottom },
         ],
         funnel: [
           { label: "Topo", value: 0, tone: styles.top },
@@ -32,7 +34,7 @@ export function PresentationStrategy({
       };
     }
 
-    const counts = { "Feed e Story": 0, Feed: 0, Story: 0 };
+    const counts = { "Feed e Story": 0, Feed: 0, Story: 0, Carrossel: 0, Reels: 0 };
     const funnelCounts = { Topo: 0, Meio: 0, Fundo: 0 };
 
     for (const item of items) {
@@ -41,8 +43,11 @@ export function PresentationStrategy({
         counts.Feed++;
       } else if (rawType === "story" || rawType === "stories") {
         counts.Story++;
+      } else if (rawType === "carrossel" || rawType === "carousel") {
+        counts.Carrossel++;
+      } else if (rawType === "reels" || rawType === "reel") {
+        counts.Reels++;
       } else {
-        // "feed e story", "post", "carrossel", "reel" e qualquer outro → Feed e Story
         counts["Feed e Story"]++;
       }
 
@@ -60,6 +65,8 @@ export function PresentationStrategy({
         { label: "Feed e Story", value: pct(counts["Feed e Story"]), tone: styles.feedStory },
         { label: "Feed", value: pct(counts.Feed), tone: styles.feed },
         { label: "Stories", value: pct(counts.Story), tone: styles.story },
+        { label: "Carrossel", value: pct(counts.Carrossel), tone: styles.middle },
+        { label: "Reels", value: pct(counts.Reels), tone: styles.bottom },
       ],
       funnel: [
         { label: "Topo", value: pct(funnelCounts.Topo), tone: styles.top },

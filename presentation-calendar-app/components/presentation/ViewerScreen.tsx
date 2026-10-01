@@ -153,7 +153,9 @@ export function ViewerScreen({
                     return pt.id === t ||
                       (pt.id === "feed" && (t === "feed" || t === "post")) ||
                       (pt.id === "story" && (t === "story" || t === "stories")) ||
-                      (pt.id === "feed e story" && !["feed", "story", "stories", "post"].includes(t));
+                      (pt.id === "carrossel" && (t === "carrossel" || t === "carousel")) ||
+                      (pt.id === "reels" && (t === "reels" || t === "reel" || t === "vídeo" || t === "video")) ||
+                      (pt.id === "feed e story" && !["feed", "story", "stories", "post", "carrossel", "carousel", "reels", "reel", "video", "vídeo"].includes(t));
                   }
                 );
 

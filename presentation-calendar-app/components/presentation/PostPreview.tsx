@@ -110,7 +110,6 @@ export function PostPreview({
               <InstagramMockup
                 post={post}
                 brand={post.profile || "Instagram"}
-                allowModeSwitch={true}
                 onImageClick={(url) => {
                   if (url) setLightboxOpen(true);
                 }}

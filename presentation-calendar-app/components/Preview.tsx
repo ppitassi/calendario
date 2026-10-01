@@ -42,7 +42,6 @@ export function Preview({
         <InstagramMockup
           post={item}
           brand={brand}
-          allowModeSwitch={true}
         />
       </div>
 

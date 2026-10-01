@@ -11,46 +11,55 @@
   width: 100%;
 }
 
-/* Barra de abas para alternar entre os modos */
-.modeTabs {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.35rem;
-  background: rgba(241, 245, 249, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-}
-
-.modeBtn {
+/* Barra discreta de navegação entre Feed e Story (para posts do tipo Feed e Story) */
+.dualToggleBar {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.65rem;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 700;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
+  backdrop-filter: blur(8px);
+}
+
+.dualArrowBtn {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.modeBtn:hover {
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.6);
+.dualArrowBtn:hover {
+  background: var(--color-action-primary, #e3002f);
+  transform: scale(1.1);
 }
 
-.modeBtnActive {
-  background: #ffffff !important;
-  color: var(--color-action-primary, #e3002f) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+.dualIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.modeBtn svg {
-  flex-shrink: 0;
+.dualDivider {
+  opacity: 0.4;
+}
+
+.dualActiveLabel {
+  color: #ffffff !important;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-action-primary, #e3002f);
 }
 
 /* Moldura que encapsula o mockup */
