@@ -42,6 +42,7 @@ export function Studio({
   const [items, setItems] = useState<ContentItem[]>([]);
   const [postingDays, setPostingDays] = useState<number[]>([]);
   const [weekdayFormats, setWeekdayFormats] = useState<Record<number, ContentType>>({});
+  const [customProfiles, setCustomProfiles] = useState<string[]>([]);
   const [month, setMonth] = useState(() => new Date());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [presenting, setPresenting] = useState(initialPresenting);
@@ -237,9 +238,8 @@ export function Studio({
       }
     }
 
-    const defaultProfile = calendar.brand
-      ? `@${calendar.brand.toLowerCase().replace(/\s+/g, "")}`
-      : "";
+    // Inicia sem arroba padrão; só aplica perfil se houver exatamente um perfil cadastrado
+    const defaultProfile = availableProfiles.length === 1 ? availableProfiles[0] : "";
 
     const currentMonthPrefix = monthKey(month);
     const existingThisMonth = items.filter((it) => it.date.startsWith(currentMonthPrefix));
@@ -359,18 +359,18 @@ export function Studio({
     await saveChanges(updatedItems, updatedCal, postingDays, updatedFormats);
   };
 
-  /** Reúne marca, perfis principais e colaboradores usados no calendário, sem duplicação. */
+  /** Reúne perfis cadastrados pelo usuário ou presentes nas publicações, sem marca automática. */
   const availableProfiles = useMemo(() => {
     const set = new Set<string>();
-    if (calendar?.brand) {
-      set.add(`@${calendar.brand.toLowerCase().replace(/\s+/g, "")}`);
-    }
+    customProfiles.forEach((p) => {
+      if (p && p.trim()) set.add(p.trim());
+    });
     items.forEach((it) => {
       if (it.profile && it.profile.trim()) set.add(it.profile.trim());
       if (it.collabProfile && it.collabProfile.trim()) set.add(it.collabProfile.trim());
     });
     return Array.from(set);
-  }, [calendar?.brand, items]);
+  }, [customProfiles, items]);
 
   /** Substitui um item pela mesma identidade e persiste imediatamente a coleção resultante. */
   const updateItem = (item: ContentItem) => {
@@ -380,11 +380,46 @@ export function Studio({
   };
 
   /**
-   * Cria um rascunho na data indicada, aplica o perfil padrão da marca, seleciona
-   * o novo item e persiste a lista atualizada.
+   * Criação e distribuição de perfis:
+   * 1. Inicia sem nenhum arroba por padrão.
+   * 2. Ao criar o primeiro perfil pelo botão +, TODAS as artes do calendário são atribuídas a ele.
+   * 3. Ao criar um segundo (ou posterior), as artes existentes NÃO são reatribuídas.
+   */
+  const handleCreateProfile = (newProfile: string) => {
+    const clean = newProfile.trim().startsWith("@") ? newProfile.trim() : `@${newProfile.trim()}`;
+    if (!clean || clean === "@") return;
+
+    // Se não havia nenhum perfil disponível, é o primeiro perfil
+    const isFirstProfile = availableProfiles.length === 0;
+
+    setCustomProfiles((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
+
+    if (isFirstProfile) {
+      // Atribui todas as publicações existentes a este primeiro perfil
+      const updated = items.map((entry) => ({
+        ...entry,
+        profile: clean,
+      }));
+      setItems(updated);
+      saveChanges(updated);
+    } else {
+      // Segundo ou posterior: as artes existentes NÃO são reatribuídas; atualiza apenas o item ativo se houver
+      if (selectedId) {
+        const updated = items.map((entry) =>
+          entry.id === selectedId ? { ...entry, profile: clean } : entry
+        );
+        setItems(updated);
+        saveChanges(updated);
+      }
+    }
+  };
+
+  /**
+   * Cria um rascunho na data indicada, aplica o perfil se houver exatamente 1 perfil cadastrado,
+   * seleciona o novo item e persiste a lista atualizada.
    */
   const createOn = (date = dateKey(new Date(month.getFullYear(), month.getMonth(), 1))) => {
-    const defaultProfile = calendar?.brand ? `@${calendar.brand.toLowerCase().replace(/\s+/g, "")}` : "";
+    const defaultProfile = availableProfiles.length === 1 ? availableProfiles[0] : "";
     let defaultType: ContentType = "Feed e Story";
     try {
       const parts = date.split("-");
@@ -611,6 +646,7 @@ export function Studio({
                 onChange={updateItem}
                 onDelete={removeItem}
                 availableProfiles={availableProfiles}
+                onCreateProfile={handleCreateProfile}
                 brand={calendar?.brand || ""}
               />
             ) : (
