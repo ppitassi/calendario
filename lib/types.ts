@@ -65,6 +65,7 @@ export type ContentItem = {
   caption: string;
   visual: string;
   imageUrl: string;
+  storyUrl?: string;
   cta?: string;
   hashtags?: string;
   funnelStage?: "Topo" | "Meio" | "Fundo";

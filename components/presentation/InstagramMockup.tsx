@@ -60,14 +60,28 @@ export function InstagramMockup({
     setSlideIndex(0);
   }, [post.id, post.type]);
 
-  const mainImage = post.imageUrl || (post as any).image_url || (post as any).imageurl || "";
+  // Determina qual layout renderizar
+  const currentRenderMode = isFeedAndStory
+    ? dualViewMode
+    : isStoryOnly
+    ? "story"
+    : isReels
+    ? "reels"
+    : isCarousel
+    ? "carousel"
+    : "feed";
+
+  const feedImage = post.imageUrl || (post as any).image_url || (post as any).imageurl || "";
+  const storyImage = post.storyUrl || (post as any).story_url || (post as any).storyurl || feedImage;
+  const mainImage = currentRenderMode === "story" ? storyImage : feedImage;
+
   const allImages: string[] = (post as any).images?.length
     ? ((post as any).images as string[])
-    : mainImage
-    ? [mainImage]
+    : feedImage
+    ? [feedImage]
     : [];
 
-  const currentImage = allImages[slideIndex] || mainImage;
+  const currentImage = allImages[slideIndex] || feedImage;
   const profileName = post.profile || brand || "Instagram";
   const avatarText = profileName.replace(/^@/, "").slice(0, 2).toUpperCase();
 
@@ -84,17 +98,6 @@ export function InstagramMockup({
       setSlideIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
     }
   };
-
-  // Determina qual layout renderizar
-  const currentRenderMode = isFeedAndStory
-    ? dualViewMode
-    : isStoryOnly
-    ? "story"
-    : isReels
-    ? "reels"
-    : isCarousel
-    ? "carousel"
-    : "feed";
 
   return (
     <div className={cn(styles.wrapper, className)}>
