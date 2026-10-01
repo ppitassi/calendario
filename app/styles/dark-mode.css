@@ -481,3 +481,120 @@
 [data-theme="dark"] .studioLoading {
   background: var(--canvas);
 }
+
+/* Visão Geral (Kanban e Lista) em Modo Noturno */
+[data-theme="dark"] .overviewContainer {
+  background: var(--canvas);
+}
+
+[data-theme="dark"] .overviewToolbar {
+  background: var(--surface);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .overviewStatPill.total {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .overviewSearchBox input {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .overviewSearchBox input:focus {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .overviewFilterSelect {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .viewSwitchBtn.active {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .overviewCreateBtn {
+  background: var(--accent);
+  color: #fff;
+}
+
+[data-theme="dark"] .kanbanColumn {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .kanbanColumn.dragOver {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+}
+
+[data-theme="dark"] .kanbanColumnHeader {
+  background: var(--surface-soft);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .kanbanCard {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .kanbanCard:hover {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .kanbanCardNoThumb {
+  background: var(--surface);
+  border-bottom-color: var(--border);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .kanbanDateBadge {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .kanbanControlsGrid {
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .kanbanSelect {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .listViewRow {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .listViewRow:hover {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .listInlineSelect {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .listRowBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .viewModeBtn.active {
+  background: var(--surface);
+  color: var(--ink);
+}
+
