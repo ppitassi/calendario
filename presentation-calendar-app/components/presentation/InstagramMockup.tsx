@@ -236,9 +236,11 @@ export function InstagramMockup({
                 <strong>{profileName}</strong>
                 <button type="button" className={styles.reelsFollowBtn}>Seguir</button>
               </div>
-              <p className={styles.reelsCaption}>
-                <strong>{post.head || post.title}</strong> — {post.caption || "Legenda do reels..."}
-              </p>
+              {post.caption && (
+                <p className={styles.reelsCaption}>
+                  <strong>{profileName}</strong> — {post.caption}
+                </p>
+              )}
               <div className={styles.reelsAudioRow}>
                 <Music2 size={12} />
                 <span>{brand} • Áudio original</span>
@@ -334,10 +336,12 @@ export function InstagramMockup({
             </div>
 
             <div className={styles.feedCopy}>
-              <p>
-                <strong>{profileName}</strong> {post.head || post.title}
-              </p>
-              {post.caption && <p className={styles.feedCaptionText}>{post.caption}</p>}
+              {post.caption && (
+                <p className={styles.feedCaptionText}>
+                  <strong>{profileName}</strong>
+                  {post.caption}
+                </p>
+              )}
               {post.cta && <em className={styles.feedCta}>{post.cta}</em>}
               {post.hashtags && <code className={styles.feedHashtags}>{post.hashtags}</code>}
             </div>
@@ -401,10 +405,12 @@ export function InstagramMockup({
             </div>
 
             <div className={styles.feedCopy}>
-              <p>
-                <strong>{profileName}</strong> {post.head || post.title}
-              </p>
-              {post.caption && <p className={styles.feedCaptionText}>{post.caption}</p>}
+              {post.caption && (
+                <p className={styles.feedCaptionText}>
+                  <strong>{profileName}</strong>
+                  {post.caption}
+                </p>
+              )}
               {post.cta && <em className={styles.feedCta}>{post.cta}</em>}
               {post.hashtags && <code className={styles.feedHashtags}>{post.hashtags}</code>}
             </div>
