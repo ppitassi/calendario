@@ -97,6 +97,10 @@ function normalizeRow(row: any): any {
     normalized.client_logo_url = clientLogo;
   }
 
+  const orderIdx = normalized.orderIndex ?? normalized.order_index ?? 0;
+  normalized.orderIndex = Number(orderIdx) || 0;
+  normalized.order_index = normalized.orderIndex;
+
   return normalized;
 }
 
@@ -245,6 +249,7 @@ async function initPgSchema(pool: Pool | PoolClient) {
     { table: "calendar_items", col: "is_collab", def: "INTEGER DEFAULT 0" },
     { table: "calendar_items", col: "collab_profile", def: "TEXT DEFAULT ''" },
     { table: "calendar_items", col: "story_url", def: "TEXT DEFAULT ''" },
+    { table: "calendar_items", col: "order_index", def: "INTEGER DEFAULT 0" },
     { table: "clients", col: "profiles", def: "TEXT DEFAULT ''" },
     { table: "clients", col: "posting_days", def: "TEXT DEFAULT '[]'" },
     { table: "clients", col: "weekday_formats", def: "TEXT DEFAULT '{}'" },
@@ -580,6 +585,7 @@ function initSqliteSchema(db: any) {
   try { db.exec("ALTER TABLE calendar_items ADD COLUMN is_collab INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE calendar_items ADD COLUMN collab_profile TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE calendar_items ADD COLUMN story_url TEXT DEFAULT '';"); } catch {}
+  try { db.exec("ALTER TABLE calendar_items ADD COLUMN order_index INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN profiles TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN posting_days TEXT DEFAULT '[]';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN weekday_formats TEXT DEFAULT '{}';"); } catch {}

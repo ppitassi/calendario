@@ -142,10 +142,12 @@ export async function GET(
         is_collab as "isCollab",
         is_collab,
         collab_profile as "collabProfile",
-        collab_profile
+        collab_profile,
+        order_index as "orderIndex",
+        order_index
       FROM calendar_items
       WHERE calendar_id = ?
-      ORDER BY date ASC, created_at ASC
+      ORDER BY date ASC, order_index ASC, created_at ASC
     `).all(id);
 
     return NextResponse.json({ calendar, items });
@@ -308,9 +310,9 @@ export async function PUT(
           INSERT INTO calendar_items (
             id, calendar_id, date, title, type, status, channel, objective, head, subhead,
             caption, visual, image_url, story_url, cta, hashtags, funnel_stage, internal_notes,
-            profile, is_collab, collab_profile, created_at, updated_at
+            profile, is_collab, collab_profile, order_index, created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT (id) DO UPDATE SET
             calendar_id = EXCLUDED.calendar_id,
             date = EXCLUDED.date,
@@ -332,10 +334,13 @@ export async function PUT(
             profile = EXCLUDED.profile,
             is_collab = EXCLUDED.is_collab,
             collab_profile = EXCLUDED.collab_profile,
+            order_index = EXCLUDED.order_index,
             updated_at = EXCLUDED.updated_at
         `);
 
-        for (const item of sanitizedItems) {
+        for (let i = 0; i < sanitizedItems.length; i++) {
+          const item = sanitizedItems[i];
+          const orderIdx = item.orderIndex !== undefined ? Number(item.orderIndex) : i;
           await upsertItem.run(
             item.id,
             id,
@@ -358,6 +363,7 @@ export async function PUT(
             item.profile || "",
             item.isCollab || item.is_collab || item.iscollab ? 1 : 0,
             item.collabProfile || item.collab_profile || item.collabprofile || "",
+            orderIdx,
             now,
             now
           );
