@@ -5,7 +5,7 @@
  */
 
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   CalendarDays,
   ChevronLeft,
@@ -13,6 +13,9 @@ import {
   MonitorPlay,
   Plus,
   ArrowLeft,
+  Bell,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { Editor } from "./Editor";
@@ -42,8 +45,30 @@ export function Studio({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [presenting, setPresenting] = useState(initialPresenting);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<string>("Sincronizado");
+  const [notifications, setNotifications] = useState<Array<{ id: string; message: string; timestamp: Date }>>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const addNotification = (message: string) => {
+    setNotifications((prev) => [
+      { id: crypto.randomUUID(), message, timestamp: new Date() },
+      ...prev,
+    ]);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   /** Carrega o calendário, suas publicações e a primeira seleção válida. */
   const loadCalendar = useCallback(async () => {
@@ -106,8 +131,6 @@ export function Studio({
     updatedPostingDays = postingDays
   ) => {
     if (!calendar) return;
-    setSaving(true);
-    setSaveStatus("Salvando...");
     try {
       const res = await fetch(`/api/calendars/${calendar.id}`, {
         method: "PUT",
@@ -128,16 +151,12 @@ export function Studio({
         }),
       });
 
-      if (res.ok) {
-        setSaveStatus("Salvo no SQLite");
-        setTimeout(() => setSaveStatus("Sincronizado"), 2000);
-      } else {
-        setSaveStatus("Erro ao salvar");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addNotification(data.error || "Erro ao salvar alterações no banco de dados.");
       }
     } catch (err) {
-      setSaveStatus("Erro de conexão");
-    } finally {
-      setSaving(false);
+      addNotification("Erro de conexão ao tentar sincronizar as alterações.");
     }
   };
 
@@ -414,7 +433,7 @@ export function Studio({
           </div>
         </div>
 
-        {/* UI: navegação mensal e confirmação visível do último salvamento. */}
+        {/* UI: navegação mensal */}
         <div className="headerContext">
           <div className="postNavigation">
             <button
@@ -431,14 +450,69 @@ export function Studio({
               <ChevronRight size={16} />
             </button>
           </div>
-
-          <span className={`saveStatus ${saving ? "saving" : ""}`}>
-            {saveStatus}
-          </span>
         </div>
 
-        {/* UI: abre a apresentação usando o fluxo externo ou o modo interno de reserva. */}
+        {/* UI: ferramentas do cabeçalho com notificações e modo apresentação */}
         <div className="headerTools">
+          <div className="notificationWrapper" ref={notificationRef}>
+            <button
+              type="button"
+              className={`notificationBellBtn ${notifications.length > 0 ? "hasAlerts" : ""}`}
+              onClick={() => setShowNotifications(!showNotifications)}
+              title={notifications.length > 0 ? `${notifications.length} notificações de alerta` : "Notificações"}
+            >
+              <Bell size={16} />
+              {notifications.length > 0 && (
+                <span className="notificationBadge">{notifications.length}</span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="notificationDropdown">
+                <div className="notificationDropdownHeader">
+                  <strong>Notificações</strong>
+                  {notifications.length > 0 && (
+                    <button
+                      type="button"
+                      className="notificationClearBtn"
+                      onClick={() => setNotifications([])}
+                    >
+                      Limpar todas
+                    </button>
+                  )}
+                </div>
+
+                <div className="notificationDropdownList">
+                  {notifications.length === 0 ? (
+                    <div className="notificationEmpty">
+                      <p>Nenhuma notificação ou erro no momento.</p>
+                    </div>
+                  ) : (
+                    notifications.map((item) => (
+                      <div key={item.id} className="notificationItem">
+                        <AlertCircle size={15} className="notificationErrorIcon" />
+                        <div className="notificationItemText">
+                          <span>{item.message}</span>
+                          <small>
+                            {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          className="notificationDismissBtn"
+                          onClick={() => removeNotification(item.id)}
+                          title="Descartar"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             className="presentButton"
             onClick={() => {
