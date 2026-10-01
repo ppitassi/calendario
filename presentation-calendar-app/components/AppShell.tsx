@@ -317,8 +317,8 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           isPinned ? styles.mainAreaPinned : styles.mainAreaCollapsed
         )}
       >
-        {/* Header superior global: Usuário logado, Notificações, Opções e Modo Noturno */}
-        {activeScreen !== "presentation" && (
+        {/* Header superior global: exibido apenas nas telas sem cabeçalho próprio integrado (ex: catálogo de clientes) */}
+        {activeScreen !== "presentation" && activeScreen !== "planner" && (
           <Header
             currentUser={currentUser}
             onLogout={onLogout}
@@ -351,7 +351,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           />
         )}
 
-        {/* UI: área de trabalho editorial; só monta quando já existe calendário. */}
+        {/* UI: área de trabalho editorial com cabeçalho único e completo integrado */}
         {!ensuringCalendar && activeScreen === "planner" && activeCalendarId && (
           <Studio
             calendarId={activeCalendarId}
@@ -366,6 +366,10 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
               loadClients();
               setActiveScreen("home");
             }}
+            currentUser={currentUser}
+            onLogout={onLogout}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
           />
         )}
 
