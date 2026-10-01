@@ -315,12 +315,12 @@ export function Editor({
             )}
           </div>
 
-          {/* UI: Bloco de arte visual da publicação acessível diretamente no Conteúdo */}
+          {/* UI: Linha discreta de arte anexada no Conteúdo (a prévia real já fica visível no painel do Instagram à direita) */}
           {activeImage ? (
             <div className="editorMediaSection">
               <div className="editorMediaSectionHeader">
                 <span className="editorSectionTitle">
-                  <FileImage size={15} /> Arte da Publicação Anexada
+                  <FileImage size={15} /> Arte Anexada
                 </span>
                 <div className="editorMediaActions">
                   <button
@@ -342,19 +342,6 @@ export function Editor({
                     Remover
                   </button>
                 </div>
-              </div>
-              <div className="editorMediaThumbnailBox">
-                <img
-                  src={activeImage}
-                  alt={item.title}
-                  className="editorMediaThumbnail"
-                />
-                {uploading && (
-                  <div className="uploadingOverlay">
-                    <div className="smallSpinner" />
-                    <span>Salvando imagem no banco...</span>
-                  </div>
-                )}
               </div>
             </div>
           ) : (
