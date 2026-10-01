@@ -218,12 +218,15 @@ export function Studio({
 
   // O Studio pode manter itens de outras competências; só o mês visível alimenta a tela.
   const currentMonthKey = monthKey(month);
-  /** Filtra e ordena cronologicamente os itens da competência atualmente aberta. */
   const monthItems = useMemo(
     () =>
       items
         .filter((item) => item.date.startsWith(currentMonthKey))
-        .sort((a, b) => a.date.localeCompare(b.date)),
+        .sort((a, b) => {
+          const dateDiff = a.date.localeCompare(b.date);
+          if (dateDiff !== 0) return dateDiff;
+          return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+        }),
     [items, currentMonthKey]
   );
 
@@ -747,7 +750,11 @@ export function Studio({
   };
 
   /** Reordena publicações (dentro do mesmo dia ou entre dias) via Drag and Drop */
-  const handleReorderPosts = (sourceId: string, targetId: string) => {
+  const handleReorderPosts = (
+    sourceId: string,
+    targetId: string,
+    position: "before" | "after" = "before"
+  ) => {
     if (sourceId === targetId) return;
     const sourceIdx = items.findIndex((it) => it.id === sourceId);
     const targetIdx = items.findIndex((it) => it.id === targetId);
@@ -756,24 +763,37 @@ export function Studio({
     const sourceItem = items[sourceIdx];
     const targetItem = items[targetIdx];
 
+    const sameDate = sourceItem.date === targetItem.date;
+    const updatedSource = !sameDate ? { ...sourceItem, date: targetItem.date } : sourceItem;
+
     const remaining = items.filter((it) => it.id !== sourceId);
-    const newTargetIdx = remaining.findIndex((it) => it.id === targetId);
-    if (newTargetIdx === -1) return;
+    const targetIdxInRemaining = remaining.findIndex((it) => it.id === targetId);
+    if (targetIdxInRemaining === -1) return;
 
-    const updatedSource = sourceItem.date !== targetItem.date 
-      ? { ...sourceItem, date: targetItem.date }
-      : sourceItem;
-
-    const insertIdx = sourceIdx > targetIdx ? newTargetIdx : newTargetIdx + 1;
-    const newItems = [
+    const insertIdx = position === "before" ? targetIdxInRemaining : targetIdxInRemaining + 1;
+    const reordered = [
       ...remaining.slice(0, insertIdx),
       updatedSource,
       ...remaining.slice(insertIdx),
     ];
 
-    setItems(newItems);
+    // Atribui orderIndex explicitamente para todos os itens daquela data
+    const datePosts = reordered.filter((it) => it.date === targetItem.date);
+    const orderMap = new Map<string, number>();
+    datePosts.forEach((it, idx) => {
+      orderMap.set(it.id, idx);
+    });
+
+    const finalItems = reordered.map((it) => {
+      if (it.date === targetItem.date && orderMap.has(it.id)) {
+        return { ...it, orderIndex: orderMap.get(it.id) };
+      }
+      return it;
+    });
+
+    setItems(finalItems);
     setSelectedId(sourceId);
-    saveChanges(newItems);
+    saveChanges(finalItems);
     addNotification("Ordem das publicações atualizada!");
   };
 
