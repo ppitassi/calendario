@@ -1,10 +1,12 @@
 "use client";
 /**
- * Simulador visual do Instagram com suporte aos 4 modos:
- * 1. Feed (rolagem real do feed com cabeçalho, botões de ação e legenda)
- * 2. Story (formato 9:16 com barra de progresso, topo e interação)
- * 3. Reels (formato 9:16 com barra vertical lateral de engajamento)
- * 4. Carrossel (multi-slides com setas, indicadores de ponto e contador)
+ * Componente de Prévia Inteligente do Instagram:
+ * Renderiza rigorosamente conforme o tipo da publicação:
+ * - "Feed": Prévia do post no Feed do Instagram
+ * - "Story": Prévia vertical (9:16) do Story
+ * - "Reels": Prévia de vídeo/arte vertical (9:16) do Reels
+ * - "Carrossel": Prévia com navegação de lâminas/slides
+ * - "Feed e Story": Prévia dupla com setinha/toggle para alternar entre Feed e Story
  */
 
 import { useState, useEffect } from "react";
@@ -23,19 +25,14 @@ import {
   Layers,
   Smartphone,
   Video,
-  Grid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ContentItem } from "@/lib/types";
 import styles from "./InstagramMockup.module.css";
 
-export type PreviewMode = "feed" | "story" | "reels" | "carousel";
-
 interface InstagramMockupProps {
   post: ContentItem;
   brand?: string;
-  defaultMode?: PreviewMode;
-  allowModeSwitch?: boolean;
   className?: string;
   onImageClick?: (url: string) => void;
 }
@@ -43,31 +40,26 @@ interface InstagramMockupProps {
 export function InstagramMockup({
   post,
   brand = "Marca",
-  defaultMode,
-  allowModeSwitch = true,
   className,
   onImageClick,
 }: InstagramMockupProps) {
-  // Determina o modo padrão a partir do tipo do post se não especificado
-  const initialMode = (): PreviewMode => {
-    if (defaultMode) return defaultMode;
-    const type = (post.type || "").toLowerCase();
-    if (type.includes("story") || type.includes("stories")) return "story";
-    return "feed";
-  };
+  const normType = (post.type || "Feed e Story").toLowerCase();
+  const isFeedAndStory = normType === "feed e story" || (!["feed", "story", "stories", "carrossel", "carousel", "reels", "reel"].includes(normType));
+  const isStoryOnly = normType === "story" || normType === "stories";
+  const isReels = normType === "reels" || normType === "reel" || normType === "video" || normType === "vídeo";
+  const isCarousel = normType === "carrossel" || normType === "carousel";
 
-  const [activeMode, setActiveMode] = useState<PreviewMode>(initialMode());
+  // Se for "Feed e Story", permite passar pro lado (feed <-> story)
+  const [dualViewMode, setDualViewMode] = useState<"feed" | "story">("feed");
   const [slideIndex, setSlideIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
 
-  // Atualiza modo quando o post muda
   useEffect(() => {
-    setActiveMode(initialMode());
+    setDualViewMode("feed");
     setImgError(false);
     setSlideIndex(0);
   }, [post.id, post.type]);
 
-  // Recupera imagens (seja única ou array de slides)
   const mainImage = post.imageUrl || (post as any).image_url || (post as any).imageurl || "";
   const allImages: string[] = (post as any).images?.length
     ? ((post as any).images as string[])
@@ -93,73 +85,56 @@ export function InstagramMockup({
     }
   };
 
+  // Determina qual layout renderizar
+  const currentRenderMode = isFeedAndStory
+    ? dualViewMode
+    : isStoryOnly
+    ? "story"
+    : isReels
+    ? "reels"
+    : isCarousel
+    ? "carousel"
+    : "feed";
+
   return (
     <div className={cn(styles.wrapper, className)}>
-      {/* Barra de alternância livre dos 4 modos */}
-      {allowModeSwitch && (
-        <div className={styles.modeTabs} role="tablist" aria-label="Modo de visualização Instagram">
+      {/* SE FOR "FEED E STORY": barra de navegação com setinhas para passar pro lado */}
+      {isFeedAndStory && (
+        <div className={styles.dualToggleBar}>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeMode === "feed"}
-            className={cn(styles.modeBtn, activeMode === "feed" && styles.modeBtnActive)}
-            onClick={() => setActiveMode("feed")}
-            title="Visualização no Feed do Instagram"
+            className={styles.dualArrowBtn}
+            onClick={() => setDualViewMode((prev) => (prev === "feed" ? "story" : "feed"))}
+            title="Alternar entre Feed e Story"
           >
-            <Grid size={13} />
-            <span>Feed</span>
+            <ChevronLeft size={14} />
           </button>
+          <div className={styles.dualIndicator}>
+            <span className={dualViewMode === "feed" ? styles.dualActiveLabel : ""}>Feed</span>
+            <span className={styles.dualDivider}>•</span>
+            <span className={dualViewMode === "story" ? styles.dualActiveLabel : ""}>Story</span>
+          </div>
           <button
             type="button"
-            role="tab"
-            aria-selected={activeMode === "story"}
-            className={cn(styles.modeBtn, activeMode === "story" && styles.modeBtnActive)}
-            onClick={() => setActiveMode("story")}
-            title="Visualização em Story (9:16)"
+            className={styles.dualArrowBtn}
+            onClick={() => setDualViewMode((prev) => (prev === "feed" ? "story" : "feed"))}
+            title="Alternar entre Feed e Story"
           >
-            <Smartphone size={13} />
-            <span>Story</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeMode === "reels"}
-            className={cn(styles.modeBtn, activeMode === "reels" && styles.modeBtnActive)}
-            onClick={() => setActiveMode("reels")}
-            title="Visualização em Reels"
-          >
-            <Video size={13} />
-            <span>Reels</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeMode === "carousel"}
-            className={cn(styles.modeBtn, activeMode === "carousel" && styles.modeBtnActive)}
-            onClick={() => setActiveMode("carousel")}
-            title="Visualização em Carrossel"
-          >
-            <Layers size={13} />
-            <span>Carrossel</span>
+            <ChevronRight size={14} />
           </button>
         </div>
       )}
 
-      {/* RENDERIZADOR DO MOCKUP CONFORME O MODO ATIVO */}
       <div className={styles.phoneFrame}>
         {/* ===================== 1. MODO STORY ===================== */}
-        {activeMode === "story" && (
+        {currentRenderMode === "story" && (
           <div className={styles.storyContainer}>
             {/* Barra de progresso no topo */}
             <div className={styles.storyProgressBars}>
               <div className={cn(styles.storyProgressBar, styles.storyProgressBarActive)} />
-              {allImages.length > 1 &&
-                allImages.slice(1).map((_: string, i: number) => (
-                  <div key={i} className={styles.storyProgressBar} />
-                ))}
             </div>
 
-            {/* Topo: avatar, nome e tempo */}
+            {/* Topo do Story: avatar, perfil e tempo */}
             <div className={styles.storyHeader}>
               <div className={styles.storyProfile}>
                 <div className={styles.storyAvatar}>{avatarText}</div>
@@ -169,14 +144,14 @@ export function InstagramMockup({
               <MoreHorizontal size={18} className={styles.storyDots} />
             </div>
 
-            {/* Mídia Story 9:16 */}
+            {/* Mídia do Story 9:16 */}
             <div
               className={styles.storyMedia}
-              onClick={() => onImageClick?.(currentImage)}
+              onClick={() => onImageClick?.(mainImage)}
             >
-              {currentImage && !imgError ? (
+              {mainImage && !imgError ? (
                 <img
-                  src={currentImage}
+                  src={mainImage}
                   alt={post.title}
                   className={styles.storyImage}
                   onError={() => setImgError(true)}
@@ -205,21 +180,19 @@ export function InstagramMockup({
         )}
 
         {/* ===================== 2. MODO REELS ===================== */}
-        {activeMode === "reels" && (
+        {currentRenderMode === "reels" && (
           <div className={styles.reelsContainer}>
-            {/* Topo discreto */}
             <div className={styles.reelsHeader}>
               <span className={styles.reelsTitle}>Reels</span>
             </div>
 
-            {/* Mídia Reels 9:16 */}
             <div
               className={styles.reelsMedia}
-              onClick={() => onImageClick?.(currentImage)}
+              onClick={() => onImageClick?.(mainImage)}
             >
-              {currentImage && !imgError ? (
+              {mainImage && !imgError ? (
                 <img
-                  src={currentImage}
+                  src={mainImage}
                   alt={post.title}
                   className={styles.reelsImage}
                   onError={() => setImgError(true)}
@@ -233,7 +206,6 @@ export function InstagramMockup({
               )}
             </div>
 
-            {/* Barra lateral de ações à direita (curtir, comentar, enviar, áudio) */}
             <div className={styles.reelsSidebar}>
               <div className={styles.reelsActionBtn}>
                 <Heart size={22} />
@@ -255,7 +227,6 @@ export function InstagramMockup({
               </div>
             </div>
 
-            {/* Rodapé Reels com perfil, áudio e copy truncada */}
             <div className={styles.reelsFooter}>
               <div className={styles.reelsProfileRow}>
                 <div className={styles.reelsAvatar}>{avatarText}</div>
@@ -274,19 +245,17 @@ export function InstagramMockup({
         )}
 
         {/* ===================== 3. MODO CARROSSEL ===================== */}
-        {activeMode === "carousel" && (
+        {currentRenderMode === "carousel" && (
           <article className={styles.feedCard}>
-            {/* Header com avatar e perfil */}
             <header className={styles.feedHeader}>
               <div className={styles.feedAvatar}>{avatarText}</div>
               <div className={styles.feedHeaderText}>
                 <strong>{profileName}</strong>
-                <small>{post.isCollab ? "Colaboração" : "Publicação"} · Instagram</small>
+                <small>{post.isCollab ? "Colaboração" : "Carrossel"} · Instagram</small>
               </div>
               <MoreHorizontal size={16} />
             </header>
 
-            {/* Mídia do carrossel com controles de navegação e contador de páginas */}
             <div
               className={styles.carouselMedia}
               onClick={() => onImageClick?.(currentImage)}
@@ -312,7 +281,6 @@ export function InstagramMockup({
                 </div>
               )}
 
-              {/* Setas de navegação de slide se houver mais de uma imagem */}
               {allImages.length > 1 && (
                 <>
                   <button
@@ -335,7 +303,6 @@ export function InstagramMockup({
               )}
             </div>
 
-            {/* Barra de ações e paginação por bolinhas */}
             <div className={styles.carouselActionRow}>
               <div className={styles.feedActions}>
                 <Heart size={18} />
@@ -363,7 +330,6 @@ export function InstagramMockup({
               </div>
             </div>
 
-            {/* Legenda e texto do post */}
             <div className={styles.feedCopy}>
               <p>
                 <strong>{profileName}</strong> {post.head || post.title}
@@ -375,10 +341,9 @@ export function InstagramMockup({
           </article>
         )}
 
-        {/* ===================== 4. MODO FEED (PADRÃO) ===================== */}
-        {activeMode === "feed" && (
+        {/* ===================== 4. MODO FEED ===================== */}
+        {currentRenderMode === "feed" && (
           <article className={styles.feedCard}>
-            {/* Header da publicação no feed */}
             <header className={styles.feedHeader}>
               {post.isCollab && post.collabProfile ? (
                 <div className={styles.feedCollabAvatars}>
@@ -401,14 +366,13 @@ export function InstagramMockup({
               <MoreHorizontal size={16} />
             </header>
 
-            {/* Arte do post no feed 1:1 */}
             <div
               className={styles.feedMedia}
-              onClick={() => onImageClick?.(currentImage)}
+              onClick={() => onImageClick?.(mainImage)}
             >
-              {currentImage && !imgError ? (
+              {mainImage && !imgError ? (
                 <img
-                  src={currentImage}
+                  src={mainImage}
                   alt={post.title}
                   className={styles.feedRealImg}
                   onError={() => setImgError(true)}
@@ -417,12 +381,11 @@ export function InstagramMockup({
                 <div className={styles.emptyFeedMedia}>
                   <ImageIcon size={32} />
                   <span>{imgError ? "Falha ao exibir imagem" : "Nenhuma mídia enviada"}</span>
-                  <small>{imgError ? "Verifique a URL da arte" : "Anexe arte no editor"}</small>
+                  <small>{imgError ? "Verifique o link da imagem" : "Anexe a arte no editor"}</small>
                 </div>
               )}
             </div>
 
-            {/* Botões de interação do feed */}
             <div className={styles.feedActionRow}>
               <div className={styles.feedActions}>
                 <Heart size={18} />
@@ -434,7 +397,6 @@ export function InstagramMockup({
               </div>
             </div>
 
-            {/* Legenda com perfil, título, copy e tags */}
             <div className={styles.feedCopy}>
               <p>
                 <strong>{profileName}</strong> {post.head || post.title}
