@@ -17,21 +17,6 @@ export function Preview({
 }) {
   return (
     <div className="previewRoot">
-      {/* UI: status editável e etapa do funil da publicação selecionada. */}
-      <label className="previewStatus">
-        <span>Status da Publicação</span>
-        <select
-          value={item.status}
-          onChange={(event) =>
-            onChange({ ...item, status: event.target.value as ContentStatus })
-          }
-        >
-          {["Ideia", "Produção", "Revisão", "Aprovado"].map((value) => (
-            <option key={value}>{value}</option>
-          ))}
-        </select>
-      </label>
-
       <div className="funnelBadge">
         <span>Etapa do Funil</span>
         <strong>{item.funnelStage || "Topo"}</strong>
