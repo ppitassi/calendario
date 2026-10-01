@@ -3,7 +3,7 @@
 
 
 import { useRef, useState, useMemo } from "react";
-import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon } from "lucide-react";
+import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon, Smartphone, Layers } from "lucide-react";
 import type { ContentItem, ContentStatus, ContentType } from "../lib/types";
 
 /** Edita uma cópia controlada do item e devolve toda alteração ao estado do Studio. */
@@ -21,13 +21,15 @@ export function Editor({
   brand?: string;
 }) {
   const [tab, setTab] = useState<"content" | "media" | "notes">("content");
-  const [uploading, setUploading] = useState(false);
+  const [uploadingTarget, setUploadingTarget] = useState<"feed" | "story" | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [optimisticPreview, setOptimisticPreview] = useState<string | null>(null);
+  const [optimisticFeed, setOptimisticFeed] = useState<string | null>(null);
+  const [optimisticStory, setOptimisticStory] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [customUrl, setCustomUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const storyFileInputRef = useRef<HTMLInputElement>(null);
   const itemRef = useRef(item);
   itemRef.current = item;
 
@@ -45,11 +47,12 @@ export function Editor({
   }, [availableProfiles, brand, item.profile, item.collabProfile]);
 
   /** Envia a imagem como multipart, grava a URL retornada no item e expõe falhas no painel. */
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, target: "feed" | "story" = "feed") => {
     if (!file) return;
     const localUrl = URL.createObjectURL(file);
-    setOptimisticPreview(localUrl);
-    setUploading(true);
+    if (target === "feed") setOptimisticFeed(localUrl);
+    else setOptimisticStory(localUrl);
+    setUploadingTarget(target);
     setUploadError(null);
 
     const formData = new FormData();
@@ -64,13 +67,19 @@ export function Editor({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao realizar upload");
 
-      field("imageUrl", data.url);
-      setOptimisticPreview(null);
+      if (target === "feed") {
+        field("imageUrl", data.url);
+        setOptimisticFeed(null);
+      } else {
+        field("storyUrl", data.url);
+        setOptimisticStory(null);
+      }
     } catch (err: any) {
       setUploadError(err.message || "Erro no upload");
-      setOptimisticPreview(null);
+      if (target === "feed") setOptimisticFeed(null);
+      else setOptimisticStory(null);
     } finally {
-      setUploading(false);
+      setUploadingTarget(null);
     }
   };
 
@@ -83,7 +92,7 @@ export function Editor({
         const file = clipItems[i].getAsFile();
         if (file) {
           e.preventDefault();
-          handleFileUpload(file);
+          handleFileUpload(file, "feed");
           break;
         }
       }
@@ -91,10 +100,10 @@ export function Editor({
   };
 
   /** Impede a abertura do arquivo pelo navegador e envia o primeiro item arrastado. */
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent, target: "feed" | "story" = "feed") => {
     e.preventDefault();
     if (e.dataTransfer.files?.[0]) {
-      handleFileUpload(e.dataTransfer.files[0]);
+      handleFileUpload(e.dataTransfer.files[0], target);
     }
   };
 
@@ -106,11 +115,22 @@ export function Editor({
     }
   };
 
-  const activeImage =
-    optimisticPreview ||
+  const activeFeedImage =
+    optimisticFeed ||
     item.imageUrl ||
     (item as any).image_url ||
-    (item as any).imageurl;
+    (item as any).imageurl ||
+    "";
+
+  const activeStoryImage =
+    optimisticStory ||
+    item.storyUrl ||
+    (item as any).story_url ||
+    (item as any).storyurl ||
+    "";
+
+  const isFeedAndStory = item.type === "Feed e Story";
+  const isStoryOnly = item.type === "Story";
 
   return (
     <div className="editorRoot" onPaste={handlePaste}>
@@ -151,10 +171,10 @@ export function Editor({
             className="quickUploadBtn"
             onClick={() => fileInputRef.current?.click()}
             title="Upload rápido de imagem para este card"
-            disabled={uploading}
+            disabled={uploadingTarget !== null}
           >
             <Upload size={13} />
-            <span>{uploading ? "Enviando..." : "Upload Imagem"}</span>
+            <span>{uploadingTarget !== null ? "Enviando..." : "Upload Imagem"}</span>
           </button>
 
           <button
@@ -290,57 +310,178 @@ export function Editor({
             </label>
           </div>
 
-          {/* UI: Linha discreta de arte anexada no Conteúdo (a prévia real já fica visível no painel do Instagram à direita) */}
-          {activeImage ? (
-            <div className="editorMediaSection">
-              <div className="editorMediaSectionHeader">
-                <span className="editorSectionTitle">
-                  <FileImage size={15} /> Arte Anexada
-                </span>
+          {/* Upload e status das artes: totalmente sem imagem duplicada (já exibida no mockup do Instagram à direita) */}
+          <div className="editorMediaSection">
+            {/* Input escondido para Story */}
+            <input
+              ref={storyFileInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "story");
+              }}
+            />
+
+            {/* SE FOR FEED E STORY: 2 controles separados (Arte Feed + Arte Story) */}
+            {isFeedAndStory ? (
+              <div className="dualMediaControls">
+                {/* 1. Arte do Feed */}
+                <div className="mediaRowControl">
+                  <div className="mediaRowInfo">
+                    <span className="editorSectionTitle">
+                      <Layers size={14} /> Arte do Feed (1:1 / 4:5)
+                    </span>
+                    <span className="mediaStatusTag">
+                      {activeFeedImage ? (
+                        <span className="tagSuccess"><CheckCircle size={12} /> Anexada</span>
+                      ) : (
+                        <span className="tagEmpty">Pendente</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="editorMediaActions">
+                    <button
+                      type="button"
+                      className="secondarySmallBtn"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingTarget === "feed"}
+                    >
+                      <Upload size={12} /> {uploadingTarget === "feed" ? "Enviando..." : activeFeedImage ? "Trocar Feed" : "Anexar Feed"}
+                    </button>
+                    {activeFeedImage && (
+                      <button
+                        type="button"
+                        className="dangerSmallBtn"
+                        onClick={() => {
+                          setOptimisticFeed(null);
+                          field("imageUrl", "");
+                        }}
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Arte do Story */}
+                <div className="mediaRowControl">
+                  <div className="mediaRowInfo">
+                    <span className="editorSectionTitle">
+                      <Smartphone size={14} /> Arte do Story (9:16)
+                    </span>
+                    <span className="mediaStatusTag">
+                      {activeStoryImage ? (
+                        <span className="tagSuccess"><CheckCircle size={12} /> Anexada</span>
+                      ) : (
+                        <span className="tagEmpty">Pendente</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="editorMediaActions">
+                    <button
+                      type="button"
+                      className="secondarySmallBtn"
+                      onClick={() => storyFileInputRef.current?.click()}
+                      disabled={uploadingTarget === "story"}
+                    >
+                      <Upload size={12} /> {uploadingTarget === "story" ? "Enviando..." : activeStoryImage ? "Trocar Story" : "Anexar Story"}
+                    </button>
+                    {activeStoryImage && (
+                      <button
+                        type="button"
+                        className="dangerSmallBtn"
+                        onClick={() => {
+                          setOptimisticStory(null);
+                          field("storyUrl", "");
+                        }}
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : isStoryOnly ? (
+              /* Apenas Story */
+              <div className="mediaRowControl">
+                <div className="mediaRowInfo">
+                  <span className="editorSectionTitle">
+                    <Smartphone size={14} /> Arte do Story (9:16)
+                  </span>
+                  <span className="mediaStatusTag">
+                    {activeStoryImage || activeFeedImage ? (
+                      <span className="tagSuccess"><CheckCircle size={12} /> Anexada</span>
+                    ) : (
+                      <span className="tagEmpty">Pendente</span>
+                    )}
+                  </span>
+                </div>
+                <div className="editorMediaActions">
+                  <button
+                    type="button"
+                    className="secondarySmallBtn"
+                    onClick={() => storyFileInputRef.current?.click()}
+                    disabled={uploadingTarget === "story"}
+                  >
+                    <Upload size={12} /> {uploadingTarget === "story" ? "Enviando..." : (activeStoryImage || activeFeedImage) ? "Trocar Story" : "Anexar Story"}
+                  </button>
+                  {(activeStoryImage || activeFeedImage) && (
+                    <button
+                      type="button"
+                      className="dangerSmallBtn"
+                      onClick={() => {
+                        setOptimisticStory(null);
+                        setOptimisticFeed(null);
+                        field("storyUrl", "");
+                        field("imageUrl", "");
+                      }}
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Feed, Carrossel ou Reels */
+              <div className="mediaRowControl">
+                <div className="mediaRowInfo">
+                  <span className="editorSectionTitle">
+                    <FileImage size={14} /> Arte da Publicação
+                  </span>
+                  <span className="mediaStatusTag">
+                    {activeFeedImage ? (
+                      <span className="tagSuccess"><CheckCircle size={12} /> Anexada</span>
+                    ) : (
+                      <span className="tagEmpty">Pendente</span>
+                    )}
+                  </span>
+                </div>
                 <div className="editorMediaActions">
                   <button
                     type="button"
                     className="secondarySmallBtn"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
+                    disabled={uploadingTarget === "feed"}
                   >
-                    <Upload size={12} /> {uploading ? "Enviando..." : "Trocar Arte"}
+                    <Upload size={12} /> {uploadingTarget === "feed" ? "Enviando..." : activeFeedImage ? "Trocar Arte" : "Anexar Arte"}
                   </button>
-                  <button
-                    type="button"
-                    className="dangerSmallBtn"
-                    onClick={() => {
-                      setOptimisticPreview(null);
-                      field("imageUrl", "");
-                    }}
-                  >
-                    Remover
-                  </button>
+                  {activeFeedImage && (
+                    <button
+                      type="button"
+                      className="dangerSmallBtn"
+                      onClick={() => {
+                        setOptimisticFeed(null);
+                        field("imageUrl", "");
+                      }}
+                    >
+                      Remover
+                    </button>
+                  )}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div
-              className={`editorMediaDropPrompt ${isDragging ? "dragging" : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => {
-                setIsDragging(false);
-                handleDrop(e);
-              }}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload size={22} className="uploadIcon" />
-              <div>
-                <strong>Anexar arte desta publicação (Feed / Story)</strong>
-                <small>Clique para escolher, arraste o arquivo aqui ou cole com <b>Ctrl+V</b></small>
-              </div>
-              {uploading && <div className="smallSpinner" />}
-            </div>
-          )}
+            )}
+          </div>
 
           {uploadError && (
             <div className="uploadAlert error" style={{ marginBottom: 12 }}>
@@ -462,22 +603,22 @@ export function Editor({
 
           {/* UI: área clicável e arrastável que envia uma imagem ao servidor. */}
           <div
-            className={`uploadDropzone ${uploading ? "uploading" : ""}`}
+            className={`uploadDropzone ${uploadingTarget ? "uploading" : ""}`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={32} className="uploadIcon" />
             <div className="dropzoneCopy">
-              <strong>{uploading ? "Enviando arquivo ao servidor..." : "Clique ou arraste uma imagem aqui"}</strong>
+              <strong>{uploadingTarget ? "Enviando arquivo ao servidor..." : "Clique ou arraste uma imagem aqui"}</strong>
               <span>Formatos suportados: PNG, JPG, JPEG, WEBP e GIF</span>
             </div>
             <button
               type="button"
               className="primaryButton compactBtn"
-              disabled={uploading}
+              disabled={uploadingTarget !== null}
             >
-              {uploading ? "Gravando..." : "Selecionar do Computador"}
+              {uploadingTarget ? "Gravando..." : "Selecionar do Computador"}
             </button>
           </div>
 
@@ -488,50 +629,90 @@ export function Editor({
           )}
 
           {/* UI: mídia persistida, com remoção, prévia integral e URL utilizada pelas apresentações. */}
-          {activeImage ? (
+          {activeFeedImage ? (
             <div className="uploadedMediaCard">
-              {/* UI: confirmação do upload e ação que desvincula a mídia do item. */}
               <div className="mediaCardTop">
                 <span className="mediaStatusLabel">
-                  <CheckCircle size={14} color="#10b981" /> Arte Visual Vinculada
+                  <CheckCircle size={14} color="#10b981" /> Arte do Feed Vinculada
                 </span>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button
                     type="button"
                     className="secondarySmallBtn"
-                    onClick={() => window.open(activeImage, "_blank")}
+                    onClick={() => window.open(activeFeedImage, "_blank")}
                   >
                     Abrir Original
                   </button>
                   <button
                     className="removeMediaBtn"
                     onClick={() => {
-                      setOptimisticPreview(null);
+                      setOptimisticFeed(null);
                       field("imageUrl", "");
                     }}
                   >
-                    Remover Mídia
+                    Remover Feed
                   </button>
                 </div>
               </div>
 
-              {/* UI: mostra exatamente o endereço salvo no campo `imageUrl`. */}
               <div className="mediaRealPreviewWrapper">
                 <img
-                  src={activeImage}
+                  src={activeFeedImage}
                   alt={item.title}
                   className="mediaRealImg"
                 />
               </div>
 
               <div className="mediaUrlRow">
-                <small>Endereço salvo:</small>
-                <code>{item.imageUrl || "Enviando para o banco de dados..."}</code>
+                <small>Endereço salvo (Feed):</small>
+                <code>{item.imageUrl || "Enviando..."}</code>
               </div>
             </div>
           ) : (
             <div className="noMediaNotice">
-              <p>Nenhuma imagem associada a este card ainda. Faça o upload acima ou cole com <b>Ctrl+V</b>.</p>
+              <p>Nenhuma arte de Feed associada a este card ainda. Faça o upload acima ou cole com <b>Ctrl+V</b>.</p>
+            </div>
+          )}
+
+          {activeStoryImage && (
+            <div className="uploadedMediaCard" style={{ marginTop: 12 }}>
+              <div className="mediaCardTop">
+                <span className="mediaStatusLabel">
+                  <CheckCircle size={14} color="#10b981" /> Arte do Story Vinculada
+                </span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    type="button"
+                    className="secondarySmallBtn"
+                    onClick={() => window.open(activeStoryImage, "_blank")}
+                  >
+                    Abrir Original
+                  </button>
+                  <button
+                    className="removeMediaBtn"
+                    onClick={() => {
+                      setOptimisticStory(null);
+                      field("storyUrl", "");
+                    }}
+                  >
+                    Remover Story
+                  </button>
+                </div>
+              </div>
+
+              <div className="mediaRealPreviewWrapper" style={{ maxHeight: 280 }}>
+                <img
+                  src={activeStoryImage}
+                  alt={`${item.title} - Story`}
+                  className="mediaRealImg"
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+
+              <div className="mediaUrlRow">
+                <small>Endereço salvo (Story):</small>
+                <code>{item.storyUrl || "Enviando..."}</code>
+              </div>
             </div>
           )}
 

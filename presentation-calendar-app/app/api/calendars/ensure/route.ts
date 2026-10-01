@@ -110,10 +110,10 @@ export async function POST(request: Request) {
         const insertItem = db.prepare(`
           INSERT INTO calendar_items (
             id, calendar_id, date, title, type, status, channel, objective, head, subhead,
-            caption, visual, image_url, cta, hashtags, funnel_stage, internal_notes,
+            caption, visual, image_url, story_url, cta, hashtags, funnel_stage, internal_notes,
             profile, is_collab, collab_profile, created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         for (let day = 1; day <= daysInMonth; day++) {
@@ -131,6 +131,7 @@ export async function POST(request: Request) {
               formatForDay,
               "Ideia",
               "Instagram",
+              "",
               "",
               "",
               "",

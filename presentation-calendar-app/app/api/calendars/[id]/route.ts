@@ -87,6 +87,8 @@ export async function GET(
         visual,
         image_url as "imageUrl",
         image_url,
+        story_url as "storyUrl",
+        story_url,
         cta,
         hashtags,
         funnel_stage as "funnelStage",
@@ -227,10 +229,10 @@ export async function PUT(
         const insertItem = tx.prepare(`
           INSERT INTO calendar_items (
             id, calendar_id, date, title, type, status, channel, objective, head, subhead,
-            caption, visual, image_url, cta, hashtags, funnel_stage, internal_notes,
+            caption, visual, image_url, story_url, cta, hashtags, funnel_stage, internal_notes,
             profile, is_collab, collab_profile, created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         for (const item of items) {
@@ -249,6 +251,7 @@ export async function PUT(
             item.caption || "",
             item.visual || "",
             item.imageUrl || item.image_url || item.imageurl || "",
+            item.storyUrl || item.story_url || item.storyurl || "",
             item.cta || "",
             item.hashtags || "",
             item.funnelStage || item.funnel_stage || item.funnelstage || "Topo",
