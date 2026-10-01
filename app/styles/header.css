@@ -124,6 +124,7 @@
 .headerTools .presentButton {
   width: auto;
   display: flex;
+  align-items: center;
   gap: 7px;
   padding: 0 13px;
   background: var(--ink);
@@ -131,6 +132,23 @@
   border-color: var(--ink);
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.headerTools .shareClientBtn {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .backHomeBtn {
@@ -487,18 +505,23 @@
 
 /* Botão e Modal de Compartilhamento com o Cliente */
 .shareClientBtn {
-  display: inline-flex;
-  align-items: center;
+  width: auto !important;
+  min-width: fit-content;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 6px;
   height: 34px;
-  padding: 0 12px;
+  padding: 0 12px !important;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--ink);
   border-radius: 10px;
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap !important;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 

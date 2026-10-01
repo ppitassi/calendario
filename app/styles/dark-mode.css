@@ -64,6 +64,19 @@
   border-color: var(--border);
 }
 
+[data-theme="dark"] .headerTools .shareClientBtn,
+[data-theme="dark"] .shareClientBtn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .headerTools .shareClientBtn:hover,
+[data-theme="dark"] .shareClientBtn:hover {
+  background: var(--surface-soft);
+  color: #fff;
+}
+
 [data-theme="dark"] .backHomeBtn {
   background: var(--surface);
   border-color: var(--border);
