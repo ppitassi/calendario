@@ -11,55 +11,53 @@
   width: 100%;
 }
 
-/* Barra discreta de navegação entre Feed e Story (para posts do tipo Feed e Story) */
+/* Barra de navegação com setas entre Feed e Story */
 .dualToggleBar {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 0.65rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--color-bg-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
   border-radius: 999px;
-  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .dualArrowBtn {
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--color-text-primary, #0f172a) 8%, transparent);
+  color: var(--color-text-primary, #0f172a);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .dualArrowBtn:hover {
   background: var(--color-action-primary, #e3002f);
+  color: #ffffff;
   transform: scale(1.1);
 }
 
 .dualIndicator {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted, #94a3b8);
 }
 
 .dualDivider {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 .dualActiveLabel {
-  color: #ffffff !important;
+  color: var(--color-action-primary, #e3002f) !important;
   font-weight: 900;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--color-action-primary, #e3002f);
 }
 
 /* Moldura que encapsula o mockup */
