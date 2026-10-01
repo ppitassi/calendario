@@ -21,11 +21,14 @@ import {
   Moon,
   LogOut,
   Shield,
+  Kanban,
+  List,
 } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { Editor } from "./Editor";
 import { Preview } from "./Preview";
 import { Presentation } from "./Presentation";
+import { OverviewView } from "./OverviewView";
 import { dateKey, monthKey, monthLabel, shiftMonth, parseMonthKey } from "../lib/date";
 import type { CalendarRecord, ContentItem, ContentType, SafeUser } from "../lib/types";
 
@@ -58,6 +61,7 @@ export function Studio({
   const [customProfiles, setCustomProfiles] = useState<string[]>([]);
   const [month, setMonth] = useState(() => new Date());
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"calendar" | "kanban" | "list">("calendar");
   const [presenting, setPresenting] = useState(initialPresenting);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Array<{ id: string; message: string; timestamp: Date }>>([]);
@@ -748,7 +752,7 @@ export function Studio({
           </div>
         </div>
 
-        {/* UI: navegação mensal */}
+        {/* UI: navegação mensal e seletor de visualização (Calendário / Kanban / Lista) */}
         <div className="headerContext">
           <div className="postNavigation">
             <button
@@ -763,6 +767,36 @@ export function Studio({
               title="Próximo mês"
             >
               <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="viewModeSelector">
+            <button
+              type="button"
+              className={`viewModeBtn ${viewMode === "calendar" ? "active" : ""}`}
+              onClick={() => setViewMode("calendar")}
+              title="Grade de Calendário Mensal"
+            >
+              <CalendarDays size={13} />
+              <span>Calendário</span>
+            </button>
+            <button
+              type="button"
+              className={`viewModeBtn ${viewMode === "kanban" ? "active" : ""}`}
+              onClick={() => setViewMode("kanban")}
+              title="Visão Geral em Kanban por Status"
+            >
+              <Kanban size={13} />
+              <span>Kanban</span>
+            </button>
+            <button
+              type="button"
+              className={`viewModeBtn ${viewMode === "list" ? "active" : ""}`}
+              onClick={() => setViewMode("list")}
+              title="Visão Geral em Lista / Tabela"
+            >
+              <List size={13} />
+              <span>Lista</span>
             </button>
           </div>
         </div>
@@ -933,63 +967,82 @@ export function Studio({
         </div>
       </header>
 
-      {/* UI: grade de trabalho compartilhada pelas três representações do mesmo post. */}
+      {/* UI: grade de trabalho compartilhada ou visão geral (Kanban / Lista) */}
       <div className="appBody">
-        <div className="plannerShell">
-          {/* UI esquerda: calendário, seleção diária e cadência semanal. */}
-          <Calendar
-            month={month}
+        {viewMode === "calendar" ? (
+          <div className="plannerShell">
+            {/* UI esquerda: calendário, seleção diária e cadência semanal. */}
+            <Calendar
+              month={month}
+              items={monthItems}
+              selectedId={selectedId}
+              postingDays={postingDays}
+              weekdayFormats={weekdayFormats}
+              onMonthChange={handleMonthChange}
+              onSelect={(item) => setSelectedId(item.id)}
+              onCreate={createOn}
+              onMovePost={handleMovePost}
+              onMoveDayPosts={handleMoveDayPosts}
+              onReorderPosts={handleReorderPosts}
+              onUpdatePostingDays={handleUpdatePostingDays}
+              onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
+              onClearMonth={handleClearMonth}
+            />
+
+            {/* UI central: formulário do post selecionado e upload persistente de mídia. */}
+            <section className="editorPane">
+              {selected ? (
+                <Editor
+                  item={selected}
+                  onChange={updateItem}
+                  onDelete={removeItem}
+                  availableProfiles={availableProfiles}
+                  onCreateProfile={handleCreateProfile}
+                  brand={calendar?.brand || ""}
+                />
+              ) : (
+                <div className="emptyEditor">
+                  <CalendarDays size={48} />
+                  <h2>Selecione uma publicação</h2>
+                  <p>Escolha um card no calendário ou crie um novo para iniciar.</p>
+                  <button className="primaryButton" onClick={() => createOn()}>
+                    <Plus size={16} /> Criar publicação
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {/* UI direita: simulação do feed atualizada pelo mesmo objeto editado ao centro. */}
+            <aside className="previewPane">
+              {selected ? (
+                <Preview
+                  item={selected}
+                  brand={calendar.brand}
+                  onChange={updateItem}
+                />
+              ) : (
+                <div className="emptyPreview">Prévia da publicação selecionada</div>
+              )}
+            </aside>
+          </div>
+        ) : (
+          <OverviewView
             items={monthItems}
             selectedId={selectedId}
-            postingDays={postingDays}
-            weekdayFormats={weekdayFormats}
-            onMonthChange={handleMonthChange}
             onSelect={(item) => setSelectedId(item.id)}
-            onCreate={createOn}
-            onMovePost={handleMovePost}
-            onMoveDayPosts={handleMoveDayPosts}
-            onReorderPosts={handleReorderPosts}
-            onUpdatePostingDays={handleUpdatePostingDays}
-            onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
-            onClearMonth={handleClearMonth}
+            onUpdateItem={updateItem}
+            onDeleteItem={removeItem}
+            onCreateItem={() => createOn()}
+            mode={viewMode}
+            onModeChange={(m) => setViewMode(m)}
+            onOpenInEditor={(item) => {
+              setSelectedId(item.id);
+              setViewMode("calendar");
+            }}
+            monthName={monthLabel(month)}
+            availableProfiles={availableProfiles}
           />
-
-          {/* UI central: formulário do post selecionado e upload persistente de mídia. */}
-          <section className="editorPane">
-            {selected ? (
-              <Editor
-                item={selected}
-                onChange={updateItem}
-                onDelete={removeItem}
-                availableProfiles={availableProfiles}
-                onCreateProfile={handleCreateProfile}
-                brand={calendar?.brand || ""}
-              />
-            ) : (
-              <div className="emptyEditor">
-                <CalendarDays size={48} />
-                <h2>Selecione uma publicação</h2>
-                <p>Escolha um card no calendário ou crie um novo para iniciar.</p>
-                <button className="primaryButton" onClick={() => createOn()}>
-                  <Plus size={16} /> Criar publicação
-                </button>
-              </div>
-            )}
-          </section>
-
-          {/* UI direita: simulação do feed atualizada pelo mesmo objeto editado ao centro. */}
-          <aside className="previewPane">
-            {selected ? (
-              <Preview
-                item={selected}
-                brand={calendar.brand}
-                onChange={updateItem}
-              />
-            ) : (
-              <div className="emptyPreview">Prévia da publicação selecionada</div>
-            )}
-          </aside>
-        </div>
+        )}
       </div>
     </main>
   );
