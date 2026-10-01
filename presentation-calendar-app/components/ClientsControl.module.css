@@ -604,3 +604,88 @@
   text-transform: uppercase;
   box-shadow: 0 4px 12px rgba(227, 0, 47, 0.25);
 }
+
+/* ===================== DARK MODE ===================== */
+:global([data-theme="dark"]) .kpiCard {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+:global([data-theme="dark"]) .clientRow {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+:global([data-theme="dark"]) .clientRow:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+:global([data-theme="dark"]) .searchBox {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+}
+:global([data-theme="dark"]) .monthSwitcher {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+:global([data-theme="dark"]) .actionBtnPlan {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+:global([data-theme="dark"]) .actionBtnPlan:hover {
+  background: var(--color-bg-subtle);
+}
+:global([data-theme="dark"]) .actionBtnEdit {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+:global([data-theme="dark"]) .actionBtnEdit:hover {
+  background: var(--color-bg-subtle);
+}
+:global([data-theme="dark"]) .emptyState {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-strong);
+}
+:global([data-theme="dark"]) .modal {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+}
+:global([data-theme="dark"]) .modalHeader {
+  border-bottom-color: var(--color-border-subtle);
+}
+:global([data-theme="dark"]) .modalFooter {
+  background: var(--color-bg-subtle);
+  border-top-color: var(--color-border-subtle);
+}
+:global([data-theme="dark"]) .modalCancelBtn {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+:global([data-theme="dark"]) .formField input {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
+}
+
+/* ===================== MOBILE ===================== */
+@media (max-width: 768px) {
+  .root { padding: 1rem 1rem; }
+  .header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .headerControls { width: 100%; }
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
+  .clientRow { flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; }
+  .clientIdentity { min-width: 0; }
+  .statusColumn { min-width: 0; flex-direction: row; gap: 0.5rem; flex-wrap: wrap; }
+  .rowActions { width: 100%; flex-wrap: wrap; }
+  .modal { max-width: 100%; border-radius: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .kpiGrid { grid-template-columns: 1fr; }
+  .rowActions { gap: 0.35rem; }
+  .actionBtnPlan, .actionBtnPresent, .actionBtnEdit { font-size: 0.65rem; padding: 0.4rem 0.65rem; }
+}

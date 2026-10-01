@@ -61,3 +61,16 @@
     transform: rotate(360deg);
   }
 }
+
+/* ===================== DARK MODE ===================== */
+:global([data-theme="dark"]) .shell {
+  background: var(--canvas);
+}
+
+/* ===================== MOBILE ===================== */
+@media (max-width: 768px) {
+  .mainAreaPinned,
+  .mainAreaCollapsed {
+    margin-left: 0 !important;
+  }
+}
