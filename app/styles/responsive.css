@@ -1,0 +1,392 @@
+/**
+ * Responsividade Mobile e Telas Menores
+ * Gaveta mobile, layouts empilhados, ajustes de tipografia e densidade de toque.
+ */
+
+/* Hamburger para sidebar mobile — overlay + backdrop */
+.mobileBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 109;
+}
+
+.mobileBackdrop.visible {
+  display: block;
+}
+
+.mobileTopBar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.mobileTopBar .mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobileTopBar .mobileBrandLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--accent), #b40b3a);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 11px;
+}
+
+.mobileTopBar .mobileBrandTitle {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.hamburgerBtn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .mobileTopBar {
+    display: flex;
+  }
+  .mobileBackdrop.visible {
+    display: block;
+  }
+
+  /* Studio — empilhar colunas verticalmente */
+  .plannerShell {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+
+  .calendarPane {
+    width: 100% !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--border);
+    max-height: none;
+    overflow: visible !important;
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+
+  .editorPane {
+    min-width: 0 !important;
+    padding: 12px 14px !important;
+  }
+
+  .previewPane {
+    width: 100% !important;
+    border-left: 0 !important;
+    border-top: 1px solid var(--border);
+    padding: 12px 14px !important;
+  }
+
+  /* Tipografia compacta e confortável para Mobile */
+  .documentTitle {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.35 !important;
+    padding: 4px 2px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .metaGrid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 8px 0 !important;
+  }
+
+  .metaGrid span,
+  .copyGrid span,
+  .notesPanel > span,
+  .sectionTag,
+  .sectionLabel,
+  .previewStatus > span {
+    font-size: 8px !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 3px !important;
+  }
+
+  .metaGrid strong {
+    font-size: 9px !important;
+    padding: 6px 4px !important;
+  }
+
+  .metaGrid input,
+  .metaGrid select {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    border-radius: 8px !important;
+    height: 32px !important;
+  }
+
+  .copyGrid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding-top: 10px !important;
+  }
+
+  .copyGrid input,
+  .copyGrid select {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    border-radius: 8px !important;
+    height: 32px !important;
+  }
+
+  .copyGrid textarea {
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+    padding: 7px 8px !important;
+    min-height: 55px !important;
+  }
+
+  .copyGrid .grow textarea {
+    font-size: 11.5px !important;
+    line-height: 1.5 !important;
+    min-height: 110px !important;
+  }
+
+  .editorTabs {
+    gap: 3px !important;
+    padding-bottom: 6px !important;
+  }
+
+  .editorTabs > button {
+    font-size: 9px !important;
+    padding: 5px 8px !important;
+    border-radius: 6px !important;
+  }
+
+  .editorTabs .deleteAction {
+    font-size: 9px !important;
+    padding: 4px 7px !important;
+  }
+
+  /* Distribuição de perfis e collab compactos */
+  .profileCollabBox {
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .profileCollabHeader {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .profileCollabHeader strong {
+    font-size: 10.5px !important;
+  }
+
+  .profileCollabHeaderActions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .collabSwitchBadge {
+    font-size: 8.5px !important;
+    padding: 3px 8px !important;
+  }
+
+  .addProfileSmallBtn {
+    font-size: 8.5px !important;
+    padding: 3px 8px !important;
+  }
+
+  .profileFieldsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .profileCurrentInputGroup input {
+    font-size: 10.5px !important;
+    padding: 6px 8px !important;
+    height: 32px !important;
+  }
+
+  .profilePills button {
+    font-size: 8.5px !important;
+    padding: 3px 7px !important;
+  }
+
+  /* Calendário Compacto e Seleção do Dia */
+  .monthSurface {
+    padding: 10px !important;
+  }
+
+  .monthHeader strong {
+    font-size: 9.5px !important;
+  }
+
+  .compactCalendar {
+    gap: 4px !important;
+  }
+
+  .compactCalendar > span,
+  .compactCalendar > button {
+    height: 25px !important;
+    font-size: 9px !important;
+  }
+
+  .weekday {
+    font-size: 7.5px !important;
+  }
+
+  .calMultiCount {
+    font-size: 7px !important;
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .selectedDayBox {
+    padding: 10px !important;
+  }
+
+  .selectedDayHeader strong {
+    font-size: 10px !important;
+  }
+
+  .selectedDayBadge {
+    font-size: 8px !important;
+    padding: 1px 6px !important;
+  }
+
+  .dayPostsTabs {
+    gap: 4px !important;
+  }
+
+  .dayPostTab {
+    padding: 5px 8px !important;
+    min-height: 26px !important;
+  }
+
+  .dayPostNum {
+    font-size: 8.5px !important;
+  }
+
+  .dayPostTitleText {
+    font-size: 9px !important;
+  }
+
+  .dayPostCollabBadge {
+    font-size: 7.5px !important;
+    padding: 1px 4px !important;
+  }
+
+  .calendarDragNotice {
+    font-size: 8px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Simulação de Feed e Prévia */
+  .feedCard > header {
+    padding: 8px !important;
+  }
+
+  .feedCard > header strong {
+    font-size: 9.5px !important;
+  }
+
+  .feedCard > header small {
+    font-size: 7.5px !important;
+  }
+
+  .feedCopy {
+    padding: 7px 10px 10px !important;
+    gap: 3px !important;
+  }
+
+  .feedCopy strong {
+    font-size: 9.5px !important;
+  }
+
+  .feedCopy small {
+    font-size: 8px !important;
+  }
+
+  .feedCopy p {
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+  }
+
+  .feedCopy em {
+    font-size: 8px !important;
+  }
+
+  .funnelBadge {
+    font-size: 8px !important;
+    padding: 6px 9px !important;
+  }
+
+  /* App Header — mais compacto */
+  .appHeader {
+    height: auto !important;
+    padding: 8px 12px !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .headerContext {
+    flex-wrap: wrap;
+    justify-content: flex-start !important;
+  }
+
+  .brandArea {
+    display: none !important;
+  }
+
+  .headerTools {
+    flex-wrap: wrap;
+  }
+
+  /* Auth responsivo */
+  .authCard {
+    padding: 20px !important;
+    border-radius: 14px !important;
+  }
+
+  .rolePicker {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .metaGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .postNavigation span {
+    min-width: 60px !important;
+    font-size: 8.5px !important;
+  }
+
+  .documentTitle {
+    font-size: 15px !important;
+  }
+
+  .editorTabs > button {
+    padding: 4px 6px !important;
+    font-size: 8.5px !important;
+  }
+}
