@@ -139,7 +139,6 @@ export function Sidebar({
         {isPinned && (
           <div className={styles.brandText}>
             <span className={styles.brandTitle}>Calendário</span>
-            <span className={styles.brandSubtitle}>Design Ops Studio</span>
           </div>
         )}
       </div>
