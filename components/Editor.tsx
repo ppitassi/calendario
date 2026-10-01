@@ -175,26 +175,22 @@ export function Editor({
           Notas Internas
         </button>
 
-        {/* UI: upload rápido funciona em qualquer aba e a lixeira remove o post inteiro. */}
+        {/* UI: Seletor de status da produção no topo da barra e botão de exclusão. */}
         <div className="editorTabActions">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              if (e.target.files?.[0]) handleFileUpload(e.target.files[0]);
-            }}
-          />
-          <button
-            className="quickUploadBtn"
-            onClick={() => fileInputRef.current?.click()}
-            title="Upload rápido de imagem para este card"
-            disabled={uploadingTarget !== null}
-          >
-            <Upload size={13} />
-            <span>{uploadingTarget !== null ? "Enviando..." : "Upload Imagem"}</span>
-          </button>
+          <div className="headerStatusSelector" title="Status da Produção">
+            <span className="headerStatusDot" data-status={item.status} />
+            <select
+              value={item.status}
+              onChange={(e) => field("status", e.target.value as ContentStatus)}
+              className="headerStatusSelect"
+            >
+              {["Ideia", "Produção", "Revisão", "Aprovado"].map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <button
             className="deleteAction"
@@ -244,17 +240,6 @@ export function Editor({
                 value={item.channel}
                 onChange={(e) => field("channel", e.target.value)}
               />
-            </label>
-            <label>
-              <span>Status da Produção</span>
-              <select
-                value={item.status}
-                onChange={(e) => field("status", e.target.value as ContentStatus)}
-              >
-                {["Ideia", "Produção", "Revisão", "Aprovado"].map((value) => (
-                  <option key={value}>{value}</option>
-                ))}
-              </select>
             </label>
           </div>
 

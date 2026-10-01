@@ -179,8 +179,59 @@
 
 /* Upload persistente, área de arraste e painel da mídia já enviada. */
 .quickUploadBtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;color:#374151;margin-left:auto}
-.quickUploadBtn:hover{background:#f3f4f6}
 .editorTabActions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.headerStatusSelector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 8px;
+  transition: all 0.15s ease;
+}
+.headerStatusSelector:hover {
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.2));
+}
+.headerStatusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.headerStatusDot[data-status="Ideia"] {
+  background: #94a3b8;
+}
+.headerStatusDot[data-status="Produção"] {
+  background: #3b82f6;
+}
+.headerStatusDot[data-status="Revisão"] {
+  background: #f59e0b;
+}
+.headerStatusDot[data-status="Aprovado"] {
+  background: #10b981;
+}
+.headerStatusSelect {
+  border: none !important;
+  background: transparent !important;
+  color: var(--ink, #1e293b);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  padding: 3px 2px;
+}
+[data-theme="dark"] .headerStatusSelector {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  border-color: var(--border);
+}
+[data-theme="dark"] .headerStatusSelect {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .headerStatusSelect option {
+  background: #1e2430;
+  color: #f1f5f9;
+}
 .mediaActiveDot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-left:4px}
 .uploadDropzone{width:100%;max-width:540px;border:2px dashed #cbd5e1;border-radius:14px;padding:36px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#f8fafc;cursor:pointer;transition:all .2s}
 .uploadDropzone:hover,.uploadDropzone.uploading{border-color:var(--accent);background:rgba(255,23,79,0.03)}
