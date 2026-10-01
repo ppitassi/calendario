@@ -219,6 +219,135 @@ export function Editor({
             </label>
           </div>
 
+          {/* UI: copy, objetivo, briefing, funil, CTA e hashtags que compõem o post (conteúdo principal). */}
+          <div className="copyGrid">
+            <label>
+              <span>Head (Título principal na arte)</span>
+              <input
+                value={item.head || ""}
+                onChange={(e) => field("head", e.target.value)}
+                placeholder="Texto de destaque na arte visual..."
+              />
+            </label>
+            <label>
+              <span>Subhead (Linha de apoio na arte)</span>
+              <input
+                value={item.subhead || ""}
+                onChange={(e) => field("subhead", e.target.value)}
+                placeholder="Texto secundário da arte..."
+              />
+            </label>
+            <label className="wide grow">
+              <span>Legenda Completa (Copy)</span>
+              <textarea
+                value={item.caption}
+                onChange={(e) => field("caption", e.target.value)}
+                placeholder="Texto completo da legenda da publicação..."
+              />
+            </label>
+            <label>
+              <span>Objetivo da Publicação</span>
+              <input
+                value={item.objective}
+                onChange={(e) => field("objective", e.target.value)}
+                placeholder="Ex: Gerar engajamento, captar leads, branding..."
+              />
+            </label>
+            <label>
+              <span>Briefing Visual (Instrução para o Designer)</span>
+              <textarea
+                value={item.visual}
+                onChange={(e) => field("visual", e.target.value)}
+                placeholder="Orientação de design, referências, iluminação e elementos..."
+              />
+            </label>
+            <label>
+              <span>Etapa do Funil</span>
+              <select
+                value={item.funnelStage || "Topo"}
+                onChange={(e) => field("funnelStage", e.target.value)}
+              >
+                {["Topo", "Meio", "Fundo"].map((value) => (
+                  <option key={value}>{value}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Chamada para Ação (CTA)</span>
+              <input
+                value={item.cta || ""}
+                onChange={(e) => field("cta", e.target.value)}
+                placeholder="Ex: Salve este post / Link na bio"
+              />
+            </label>
+            <label className="wide">
+              <span>Hashtags</span>
+              <input
+                value={item.hashtags || ""}
+                onChange={(e) => field("hashtags", e.target.value)}
+                placeholder="#design #conteudo #marketing"
+              />
+            </label>
+          </div>
+
+          {/* UI: Linha discreta de arte anexada no Conteúdo (a prévia real já fica visível no painel do Instagram à direita) */}
+          {activeImage ? (
+            <div className="editorMediaSection">
+              <div className="editorMediaSectionHeader">
+                <span className="editorSectionTitle">
+                  <FileImage size={15} /> Arte Anexada
+                </span>
+                <div className="editorMediaActions">
+                  <button
+                    type="button"
+                    className="secondarySmallBtn"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    <Upload size={12} /> {uploading ? "Enviando..." : "Trocar Arte"}
+                  </button>
+                  <button
+                    type="button"
+                    className="dangerSmallBtn"
+                    onClick={() => {
+                      setOptimisticPreview(null);
+                      field("imageUrl", "");
+                    }}
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`editorMediaDropPrompt ${isDragging ? "dragging" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                setIsDragging(false);
+                handleDrop(e);
+              }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={22} className="uploadIcon" />
+              <div>
+                <strong>Anexar arte desta publicação (Feed / Story)</strong>
+                <small>Clique para escolher, arraste o arquivo aqui ou cole com <b>Ctrl+V</b></small>
+              </div>
+              {uploading && <div className="smallSpinner" />}
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="uploadAlert error" style={{ marginBottom: 12 }}>
+              <span>{uploadError}</span>
+            </div>
+          )}
+
           {/* UI: define o perfil principal e, opcionalmente, o parceiro da publicação collab. */}
           <div className="profileCollabBox">
             {/* UI: o interruptor também apaga o segundo perfil ao desativar a collab. */}
@@ -313,135 +442,6 @@ export function Editor({
                 </span>
               </div>
             )}
-          </div>
-
-          {/* UI: Linha discreta de arte anexada no Conteúdo (a prévia real já fica visível no painel do Instagram à direita) */}
-          {activeImage ? (
-            <div className="editorMediaSection">
-              <div className="editorMediaSectionHeader">
-                <span className="editorSectionTitle">
-                  <FileImage size={15} /> Arte Anexada
-                </span>
-                <div className="editorMediaActions">
-                  <button
-                    type="button"
-                    className="secondarySmallBtn"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    <Upload size={12} /> {uploading ? "Enviando..." : "Trocar Arte"}
-                  </button>
-                  <button
-                    type="button"
-                    className="dangerSmallBtn"
-                    onClick={() => {
-                      setOptimisticPreview(null);
-                      field("imageUrl", "");
-                    }}
-                  >
-                    Remover
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div
-              className={`editorMediaDropPrompt ${isDragging ? "dragging" : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => {
-                setIsDragging(false);
-                handleDrop(e);
-              }}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload size={22} className="uploadIcon" />
-              <div>
-                <strong>Anexar arte desta publicação (Feed / Story)</strong>
-                <small>Clique para escolher, arraste o arquivo aqui ou cole com <b>Ctrl+V</b></small>
-              </div>
-              {uploading && <div className="smallSpinner" />}
-            </div>
-          )}
-
-          {uploadError && (
-            <div className="uploadAlert error" style={{ marginBottom: 12 }}>
-              <span>{uploadError}</span>
-            </div>
-          )}
-
-          {/* UI: copy, objetivo, briefing, funil, CTA e hashtags que compõem o post. */}
-          <div className="copyGrid">
-            <label>
-              <span>Head (Título principal na arte)</span>
-              <input
-                value={item.head || ""}
-                onChange={(e) => field("head", e.target.value)}
-                placeholder="Texto de destaque na arte visual..."
-              />
-            </label>
-            <label>
-              <span>Subhead (Linha de apoio na arte)</span>
-              <input
-                value={item.subhead || ""}
-                onChange={(e) => field("subhead", e.target.value)}
-                placeholder="Texto secundário da arte..."
-              />
-            </label>
-            <label className="wide grow">
-              <span>Legenda Completa (Copy)</span>
-              <textarea
-                value={item.caption}
-                onChange={(e) => field("caption", e.target.value)}
-                placeholder="Texto completo da legenda da publicação..."
-              />
-            </label>
-            <label>
-              <span>Objetivo da Publicação</span>
-              <input
-                value={item.objective}
-                onChange={(e) => field("objective", e.target.value)}
-                placeholder="Ex: Gerar engajamento, captar leads, branding..."
-              />
-            </label>
-            <label>
-              <span>Briefing Visual (Instrução para o Designer)</span>
-              <textarea
-                value={item.visual}
-                onChange={(e) => field("visual", e.target.value)}
-                placeholder="Orientação de design, referências, iluminação e elementos..."
-              />
-            </label>
-            <label>
-              <span>Etapa do Funil</span>
-              <select
-                value={item.funnelStage || "Topo"}
-                onChange={(e) => field("funnelStage", e.target.value)}
-              >
-                {["Topo", "Meio", "Fundo"].map((value) => (
-                  <option key={value}>{value}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Chamada para Ação (CTA)</span>
-              <input
-                value={item.cta || ""}
-                onChange={(e) => field("cta", e.target.value)}
-                placeholder="Ex: Salve este post / Link na bio"
-              />
-            </label>
-            <label className="wide">
-              <span>Hashtags</span>
-              <input
-                value={item.hashtags || ""}
-                onChange={(e) => field("hashtags", e.target.value)}
-                placeholder="#design #conteudo #marketing"
-              />
-            </label>
           </div>
         </div>
       )}
