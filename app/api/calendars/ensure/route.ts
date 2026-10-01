@@ -114,6 +114,7 @@ export async function POST(request: Request) {
             profile, is_collab, collab_profile, created_at, updated_at
           )
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT (id) DO NOTHING
         `);
 
         for (let day = 1; day <= daysInMonth; day++) {
