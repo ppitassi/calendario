@@ -1,0 +1,129 @@
+/**
+ * Tokens de Design do Sistema
+ * Cores, tipografia, espaçamento, elevação, glassmorphism e temas base.
+ */
+
+:root {
+  --tenant-primary: #e3002f;
+  /* Pilhas locais evitam dependência externa e redistribuição de fonte sem licença. */
+  --font-body: "Aptos", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Aptos Display", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-weight-body: 400;
+  --font-weight-title: 900;
+  --tracking-bold: .0075em;
+  --tracking-heavy: .015em;
+  --tracking-heavy-uppercase: .12em;
+  --font-mono: "SFMono-Regular", consolas, "Liberation Mono", monospace;
+  --font-sans: var(--font-body);
+  --font-size-3xs: .5rem;
+  --font-size-2xs: .625rem;
+  --font-size-xs: .75rem;
+  --font-size-sm: .875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --color-bg-canvas: hsl(225deg 33% 97%);
+  --color-bg-surface: hsl(0deg 0% 100%);
+  --color-bg-subtle: hsl(224deg 32% 95%);
+  --color-bg-muted: hsl(224deg 24% 92%);
+  --color-text-primary: hsl(0deg 0% 9%);
+  --color-text-secondary: hsl(0deg 0% 36%);
+  --color-text-tertiary: hsl(0deg 0% 46%);
+  --color-text-muted: hsl(0deg 0% 52%);
+  --color-text-on-action: hsl(0deg 0% 100%);
+  --color-border-subtle: hsl(222deg 22% 87%);
+  --color-border-strong: hsl(222deg 18% 76%);
+  --color-action-primary: var(--tenant-primary);
+  --color-action-on-primary: #fff;
+  --color-static-white: #fff;
+  --color-static-black: #000;
+  --color-status-success: #16a34a;
+  --color-status-warning: #d97706;
+  --color-status-danger: #e11d48;
+  --color-status-info: #2563eb;
+  --color-status-instagram: #ec4899;
+  --color-bg-inverse: hsl(240deg 6% 10%);
+  --color-preview-light: hsl(210deg 40% 96%);
+  --color-preview-light-text: hsl(215deg 25% 27%);
+  --color-preview-dark: hsl(240deg 6% 10%);
+  --color-preview-dark-text: hsl(240deg 5% 84%);
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+  --radius-control: .75rem;
+  --radius-detail: 2px;
+  --radius-card: 1rem;
+  --radius-overlay: 1.5rem;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+  --radius-checkbox: .35rem;
+  --radius-tile: .375rem;
+  --radius-thumbnail: .25rem;
+  --control-height-sm: 2.25rem;
+  --control-height-md: 2.75rem;
+  --control-height-lg: 3.25rem;
+  --glass-surface: rgb(255 255 255 / 74%);
+  --glass-surface-subtle: rgb(255 255 255 / 56%);
+  --glass-surface-strong: rgb(255 255 255 / 88%);
+  --glass-border: rgb(37 48 76 / 12%);
+  --glass-border-highlight: rgb(37 48 76 / 20%);
+  --glass-blur: 19px;
+  --blur-ambient-sm: 3.125rem;
+  --blur-ambient-md: 6.25rem;
+  --blur-ambient-lg: 7.5rem;
+  --blur-ambient-xl: 8.125rem;
+  --glass-saturation: 122%;
+  --shadow-surface: 0 8px 24px -16px rgb(30 41 70 / 34%), inset 0 1px 0 rgb(255 255 255 / 72%);
+  --shadow-overlay: 0 24px 64px -24px rgb(20 29 52 / 48%);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-action-primary) 15%, transparent);
+  --shadow-action: 0 10px 24px -16px color-mix(in srgb, var(--color-action-primary) 70%, transparent);
+  --duration-instant: 100ms;
+  --duration-fast: 140ms;
+  --duration-standard: 190ms;
+  --duration-page: 220ms;
+  --ease-expressive: cubic-bezier(.22, 1, .36, 1);
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --z-background: -1; --z-content: 0; --z-content-raised: 1; --z-sticky: 80; --z-header: 100;
+  --z-badge: 2; --z-popover: 600; --z-modal-overlay: 900;
+  --accent: #ff174f;
+  --canvas: #f5f6fa;
+  --surface: #fff;
+  --surface-soft: #f8f9fc;
+  --ink: #171924;
+  --muted: #73798a;
+  --border: #e3e5ed;
+  --shadow: 0 12px 32px rgba(23, 25, 36, .08);
+  --radius: 14px;
+}
+
+/* Base Dark Mode Tokens */
+[data-theme="dark"] {
+  --color-bg-canvas: hsl(228deg 14% 10%);
+  --color-bg-surface: hsl(228deg 14% 14%);
+  --color-bg-subtle: hsl(228deg 12% 18%);
+  --color-bg-muted: hsl(228deg 10% 22%);
+  --color-text-primary: hsl(220deg 14% 92%);
+  --color-text-secondary: hsl(220deg 10% 72%);
+  --color-text-tertiary: hsl(220deg 8% 58%);
+  --color-text-muted: hsl(220deg 8% 50%);
+  --color-text-on-action: #fff;
+  --color-border-subtle: hsl(228deg 12% 22%);
+  --color-border-strong: hsl(228deg 10% 32%);
+  --color-bg-inverse: hsl(220deg 14% 92%);
+  --color-preview-light: hsl(228deg 14% 16%);
+  --color-preview-light-text: hsl(220deg 14% 82%);
+  --glass-surface: rgb(20 22 34 / 74%);
+  --glass-surface-subtle: rgb(20 22 34 / 56%);
+  --glass-surface-strong: rgb(20 22 34 / 88%);
+  --glass-border: rgb(255 255 255 / 8%);
+  --glass-border-highlight: rgb(255 255 255 / 14%);
+  --shadow-surface: 0 8px 24px -16px rgb(0 0 0 / 50%), inset 0 1px 0 rgb(255 255 255 / 5%);
+  --shadow-overlay: 0 24px 64px -24px rgb(0 0 0 / 60%);
+  --canvas: hsl(228deg 14% 10%);
+  --surface: hsl(228deg 14% 14%);
+  --surface-soft: hsl(228deg 12% 16%);
+  --ink: hsl(220deg 14% 92%);
+  --muted: hsl(220deg 8% 50%);
+  --border: hsl(228deg 12% 22%);
+  --shadow: 0 12px 32px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}

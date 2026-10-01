@@ -1,0 +1,142 @@
+/**
+ * Estilos Base e Estrutura de Layout
+ * Reset do documento, shell da aplicação, colunas do Studio e loaders.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-display), system-ui, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Shell global da aplicação */
+.appShell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% -30%, color-mix(in srgb, var(--surface), transparent 30%) 0, transparent 50%), var(--canvas);
+}
+
+.appBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.plannerShell {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Colunas do Studio */
+.calendarPane {
+  width: clamp(236px, 17vw, 268px);
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border-right: 1px solid var(--border);
+  overflow: auto;
+}
+
+.editorPane {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 28px 20px 24px;
+  background: var(--canvas);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.previewPane {
+  width: clamp(280px, 21vw, 320px);
+  flex: 0 0 auto;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  border-left: 1px solid var(--border);
+  overflow: auto;
+}
+
+/* Botões Genéricos */
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 900;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent), transparent 68%);
+}
+
+.primaryButton.full {
+  width: 100%;
+}
+
+/* Estados de Carregamento */
+.fullScreenLoader,
+.studioLoading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f5f6fa;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.loaderSpinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
