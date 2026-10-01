@@ -1642,6 +1642,8 @@
     border-bottom: 1px solid var(--border);
     max-height: none;
     overflow: visible !important;
+    padding: 10px 12px !important;
+    gap: 10px !important;
   }
   .editorPane {
     min-width: 0 !important;
@@ -1651,14 +1653,209 @@
     width: 100% !important;
     border-left: 0 !important;
     border-top: 1px solid var(--border);
+    padding: 12px 14px !important;
   }
 
-  /* Formulário: colunas responsivas */
+  /* Tipografia compacta e confortável para Mobile */
+  .documentTitle {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.35 !important;
+    padding: 4px 2px !important;
+    margin-bottom: 8px !important;
+  }
+
   .metaGrid {
     grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 8px 0 !important;
   }
+  .metaGrid span,
+  .copyGrid span,
+  .notesPanel > span,
+  .sectionTag,
+  .sectionLabel,
+  .previewStatus > span {
+    font-size: 8px !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 3px !important;
+  }
+  .metaGrid strong {
+    font-size: 9px !important;
+    padding: 6px 4px !important;
+  }
+  .metaGrid input,
+  .metaGrid select {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    border-radius: 8px !important;
+    height: 32px !important;
+  }
+
   .copyGrid {
     grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding-top: 10px !important;
+  }
+  .copyGrid input,
+  .copyGrid select {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    border-radius: 8px !important;
+    height: 32px !important;
+  }
+  .copyGrid textarea {
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+    padding: 7px 8px !important;
+    min-height: 55px !important;
+  }
+  .copyGrid .grow textarea {
+    font-size: 11.5px !important;
+    line-height: 1.5 !important;
+    min-height: 110px !important;
+  }
+
+  .editorTabs {
+    gap: 3px !important;
+    padding-bottom: 6px !important;
+  }
+  .editorTabs > button {
+    font-size: 9px !important;
+    padding: 5px 8px !important;
+    border-radius: 6px !important;
+  }
+  .editorTabs .deleteAction {
+    font-size: 9px !important;
+    padding: 4px 7px !important;
+  }
+
+  /* Distribuição de perfis e collab compactos */
+  .profileCollabBox {
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+    border-radius: 10px !important;
+  }
+  .profileCollabHeader {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .profileCollabHeader strong {
+    font-size: 10.5px !important;
+  }
+  .profileCollabHeaderActions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+  .collabSwitchBadge {
+    font-size: 8.5px !important;
+    padding: 3px 8px !important;
+  }
+  .addProfileSmallBtn {
+    font-size: 8.5px !important;
+    padding: 3px 8px !important;
+  }
+  .profileFieldsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .profileCurrentInputGroup input {
+    font-size: 10.5px !important;
+    padding: 6px 8px !important;
+    height: 32px !important;
+  }
+  .profilePills button {
+    font-size: 8.5px !important;
+    padding: 3px 7px !important;
+  }
+
+  /* Calendário Compacto e Seleção do Dia */
+  .monthSurface {
+    padding: 10px !important;
+  }
+  .monthHeader strong {
+    font-size: 9.5px !important;
+  }
+  .compactCalendar {
+    gap: 4px !important;
+  }
+  .compactCalendar > span,
+  .compactCalendar > button {
+    height: 25px !important;
+    font-size: 9px !important;
+  }
+  .weekday {
+    font-size: 7.5px !important;
+  }
+  .calMultiCount {
+    font-size: 7px !important;
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .selectedDayBox {
+    padding: 10px !important;
+  }
+  .selectedDayHeader strong {
+    font-size: 10px !important;
+  }
+  .selectedDayBadge {
+    font-size: 8px !important;
+    padding: 1px 6px !important;
+  }
+  .dayPostsTabs {
+    gap: 4px !important;
+  }
+  .dayPostTab {
+    padding: 5px 8px !important;
+    min-height: 26px !important;
+  }
+  .dayPostNum {
+    font-size: 8.5px !important;
+  }
+  .dayPostTitleText {
+    font-size: 9px !important;
+  }
+  .dayPostCollabBadge {
+    font-size: 7.5px !important;
+    padding: 1px 4px !important;
+  }
+  .calendarDragNotice {
+    font-size: 8px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Simulação de Feed e Prévia */
+  .feedCard > header {
+    padding: 8px !important;
+  }
+  .feedCard > header strong {
+    font-size: 9.5px !important;
+  }
+  .feedCard > header small {
+    font-size: 7.5px !important;
+  }
+  .feedCopy {
+    padding: 7px 10px 10px !important;
+    gap: 3px !important;
+  }
+  .feedCopy strong {
+    font-size: 9.5px !important;
+  }
+  .feedCopy small {
+    font-size: 8px !important;
+  }
+  .feedCopy p {
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+  }
+  .feedCopy em {
+    font-size: 8px !important;
+  }
+  .funnelBadge {
+    font-size: 8px !important;
+    padding: 6px 9px !important;
   }
 
   /* App Header — mais compacto */
@@ -1679,6 +1876,8 @@
 
 @media (max-width: 480px) {
   .metaGrid { grid-template-columns: 1fr !important; }
-  .postNavigation span { min-width: 70px !important; font-size: 9px !important; }
+  .postNavigation span { min-width: 60px !important; font-size: 8.5px !important; }
+  .documentTitle { font-size: 15px !important; }
+  .editorTabs > button { padding: 4px 6px !important; font-size: 8.5px !important; }
 }
 

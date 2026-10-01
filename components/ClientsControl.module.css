@@ -673,19 +673,30 @@
 
 /* ===================== MOBILE ===================== */
 @media (max-width: 768px) {
-  .root { padding: 1rem 1rem; }
-  .header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .root { padding: 0.85rem 0.85rem; }
+  .header { flex-direction: column; align-items: flex-start; gap: 0.65rem; }
   .headerControls { width: 100%; }
-  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
-  .clientRow { flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; }
+  .title { font-size: 1.15rem; }
+  .subtitle { font-size: 0.75rem; }
+  .monthLabel { font-size: 0.75rem; }
+  .newClientBtn { font-size: 0.75rem; padding: 0.5rem 0.85rem; }
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .kpiLabel { font-size: 0.6875rem; }
+  .kpiValue { font-size: 1.15rem; }
+  .clientRow { flex-direction: column; align-items: flex-start; gap: 0.65rem; padding: 0.75rem 0.85rem; }
   .clientIdentity { min-width: 0; }
-  .statusColumn { min-width: 0; flex-direction: row; gap: 0.5rem; flex-wrap: wrap; }
-  .rowActions { width: 100%; flex-wrap: wrap; }
-  .modal { max-width: 100%; border-radius: 1rem; }
+  .clientName { font-size: 0.8125rem; }
+  .clientSegment { font-size: 0.6875rem; }
+  .statusColumn { min-width: 0; flex-direction: row; gap: 0.4rem; flex-wrap: wrap; }
+  .monthTag { font-size: 0.6875rem; }
+  .countBadge { font-size: 0.6875rem; }
+  .rowActions { width: 100%; flex-wrap: wrap; gap: 0.35rem; }
+  .actionBtnPlan, .actionBtnPresent, .actionBtnEdit { font-size: 0.6875rem; padding: 0.35rem 0.6rem; }
+  .modal { max-width: 100%; border-radius: 0.85rem; }
 }
 
 @media (max-width: 480px) {
   .kpiGrid { grid-template-columns: 1fr; }
-  .rowActions { gap: 0.35rem; }
-  .actionBtnPlan, .actionBtnPresent, .actionBtnEdit { font-size: 0.65rem; padding: 0.4rem 0.65rem; }
+  .rowActions { gap: 0.3rem; }
+  .actionBtnPlan, .actionBtnPresent, .actionBtnEdit { font-size: 0.65rem; padding: 0.35rem 0.55rem; }
 }
