@@ -71,6 +71,7 @@ export type ContentItem = {
   funnelStage?: "Topo" | "Meio" | "Fundo";
   internalNotes?: string;
   orderIndex?: number;
+  clientComment?: string;
 };
 
 /** Calendário com os dados opcionais vindos dos joins de cliente, criador e responsável. */
@@ -104,6 +105,14 @@ export type CalendarRecord = {
   items_count?: number;
   created_at: string;
   updated_at: string;
+  shareToken?: string;
+  share_token?: string;
+  clientFeedback?: string;
+  client_feedback?: string;
+  clientFeedbackStatus?: "approved" | "approved_with_notes" | "rejected_with_notes" | "approve" | "approve_with_notes" | "reject_with_notes" | string;
+  client_feedback_status?: string;
+  clientFeedbackAt?: string;
+  client_feedback_at?: string;
 };
 
 /** Notificação persistida para um usuário, inclusive seu estado de leitura. */

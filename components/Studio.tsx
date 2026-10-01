@@ -23,6 +23,11 @@ import {
   Shield,
   Kanban,
   List,
+  Share2,
+  Copy,
+  Check,
+  CheckCircle,
+  ExternalLink,
 } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { Editor } from "./Editor";
@@ -69,6 +74,61 @@ export function Studio({
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+  const [loadingShareToken, setLoadingShareToken] = useState(false);
+
+  const handleOpenShareModal = async () => {
+    if (!calendar?.id) return;
+    setShowShareModal(true);
+    setLoadingShareToken(true);
+    try {
+      const res = await fetch(`/api/calendars/${calendar.id}/share-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.shareToken) {
+        const fullUrl = `${window.location.origin}/portal/${data.shareToken}`;
+        setShareUrl(fullUrl);
+      }
+    } catch (e) {
+      console.error("Erro ao gerar link de compartilhamento:", e);
+    } finally {
+      setLoadingShareToken(false);
+    }
+  };
+
+  const handleCopyShareLink = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedShareLink(true);
+    setTimeout(() => setCopiedShareLink(false), 2000);
+  };
+
+  const handleGenerateNewToken = async () => {
+    if (!calendar?.id) return;
+    if (!confirm("Gerar um novo link invalidará o link compartilhado anteriormente. Deseja continuar?")) return;
+    setLoadingShareToken(true);
+    try {
+      const res = await fetch(`/api/calendars/${calendar.id}/share-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ forceNew: true }),
+      });
+      const data = await res.json();
+      if (data.shareToken) {
+        const fullUrl = `${window.location.origin}/portal/${data.shareToken}`;
+        setShareUrl(fullUrl);
+      }
+    } catch (e) {
+      console.error("Erro ao gerar novo token:", e);
+    } finally {
+      setLoadingShareToken(false);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -804,6 +864,16 @@ export function Studio({
         {/* UI: ferramentas do cabeçalho unificado com apresentação, notificações, tema e perfil de usuário */}
         <div className="headerTools">
           <button
+            type="button"
+            className="shareClientBtn"
+            onClick={handleOpenShareModal}
+            title="Gerar link exclusivo com token para o cliente aprovar"
+          >
+            <Share2 size={13} />
+            <span>Link do Cliente</span>
+          </button>
+
+          <button
             className="presentButton"
             onClick={() => {
               if (onOpenPresentation) {
@@ -1044,6 +1114,123 @@ export function Studio({
           />
         )}
       </div>
+
+      {/* Modal de Compartilhamento do Link do Cliente com Token */}
+      {showShareModal && (
+        <div
+          className="shareModalOverlay"
+          onClick={() => setShowShareModal(false)}
+        >
+          <div
+            className="shareModalCard"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="shareModalHeader">
+              <div className="shareModalTitle">
+                <Share2 size={18} className="shareIcon" />
+                <div>
+                  <strong>Link de Aprovação do Cliente</strong>
+                  <p>
+                    Envie este link seguro com token para o cliente validar feeds e comentar nas artes.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="shareModalClose"
+                onClick={() => setShowShareModal(false)}
+                title="Fechar"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="shareModalBody">
+              <label>Link Exclusivo com Token de Segurança:</label>
+              <div className="shareInputRow">
+                <input
+                  type="text"
+                  readOnly
+                  value={loadingShareToken ? "Gerando token de acesso seguro..." : shareUrl}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <button
+                  type="button"
+                  className="shareCopyBtn"
+                  onClick={handleCopyShareLink}
+                  disabled={loadingShareToken || !shareUrl}
+                >
+                  {copiedShareLink ? (
+                    <>
+                      <Check size={14} />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="shareModalFeatures">
+                <div className="shareFeatureItem">
+                  <CheckCircle size={14} color="#10b981" />
+                  <span>Simulação de feeds por perfil com posts Collab duplicados.</span>
+                </div>
+                <div className="shareFeatureItem">
+                  <CheckCircle size={14} color="#10b981" />
+                  <span>Campos para o cliente comentar em cada post específico.</span>
+                </div>
+                <div className="shareFeatureItem">
+                  <CheckCircle size={14} color="#10b981" />
+                  <span>Botão de aprovação direta ou ressalvas com modal central.</span>
+                </div>
+              </div>
+
+              {calendar?.client_feedback_status && (
+                <div className={`shareClientStatusBox ${calendar.client_feedback_status}`}>
+                  <strong>Última Resposta do Cliente:</strong>
+                  <span>
+                    {calendar.client_feedback_status === "approve"
+                      ? "Aprovado sem ressalvas"
+                      : calendar.client_feedback_status === "approve_with_notes"
+                      ? "Aprovado com ressalvas"
+                      : "Reprovado com ressalvas"}
+                  </span>
+                  {calendar.client_feedback && (
+                    <p style={{ marginTop: 4, fontStyle: "italic" }}>
+                      "{calendar.client_feedback}"
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="shareModalFooter">
+              <button
+                type="button"
+                className="secondarySmallBtn"
+                onClick={handleGenerateNewToken}
+                disabled={loadingShareToken}
+                title="Gera um novo token e invalida o link anterior"
+              >
+                Gerar Novo Link
+              </button>
+              <button
+                type="button"
+                className="primaryButton compactBtn"
+                onClick={() => window.open(shareUrl, "_blank")}
+                disabled={!shareUrl}
+              >
+                <ExternalLink size={14} />
+                <span>Testar como Cliente</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

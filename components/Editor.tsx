@@ -3,7 +3,7 @@
 
 
 import { useRef, useState, useMemo } from "react";
-import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon, Smartphone, Layers, Plus, X } from "lucide-react";
+import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon, Smartphone, Layers, Plus, X, MessageSquare } from "lucide-react";
 import type { ContentItem, ContentStatus, ContentType } from "../lib/types";
 
 /** Edita uma cópia controlada do item e devolve toda alteração ao estado do Studio. */
@@ -265,6 +265,16 @@ export function Editor({
 
       {tab === "content" && (
         <div className="editorScroll">
+          {((item as any).clientComment || (item as any).client_comment) && (
+            <div className="clientCommentBanner">
+              <div className="clientCommentBannerHeader">
+                <MessageSquare size={13} />
+                <strong>Observação do Cliente:</strong>
+              </div>
+              <p className="clientCommentText">"{item.clientComment || (item as any).client_comment}"</p>
+            </div>
+          )}
+
           <textarea
             className="documentTitle"
             value={item.title}
