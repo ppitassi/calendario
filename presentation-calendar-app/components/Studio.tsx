@@ -508,6 +508,40 @@ export function Studio({
     saveChanges(updated);
   };
 
+  /** Move uma publicação específica para uma nova data via Drag and Drop */
+  const handleMovePost = (postId: string, targetDate: string) => {
+    const targetItem = items.find((it) => it.id === postId);
+    if (!targetItem || targetItem.date === targetDate) return;
+
+    const oldDate = targetItem.date;
+    const updated = items.map((it) =>
+      it.id === postId ? { ...it, date: targetDate } : it
+    );
+    setItems(updated);
+    setSelectedId(postId);
+    saveChanges(updated);
+    addNotification(`Publicação movida para ${targetDate}!`);
+  };
+
+  /** Move todas as publicações de uma data para outra via Drag and Drop */
+  const handleMoveDayPosts = (sourceDate: string, targetDate: string) => {
+    if (sourceDate === targetDate) return;
+    const postsInSource = items.filter((it) => it.date === sourceDate);
+    if (postsInSource.length === 0) return;
+
+    const updated = items.map((it) =>
+      it.date === sourceDate ? { ...it, date: targetDate } : it
+    );
+    setItems(updated);
+    setSelectedId(postsInSource[0].id);
+    saveChanges(updated);
+    addNotification(
+      postsInSource.length === 1
+        ? `Publicação movida para ${targetDate}!`
+        : `${postsInSource.length} publicações movidas para ${targetDate}!`
+    );
+  };
+
   /** Remove publicações e cadência somente do mês visível; outros meses permanecem. */
   const handleClearMonth = () => {
     const currentPrefix = monthKey(month);
@@ -768,6 +802,8 @@ export function Studio({
             onMonthChange={handleMonthChange}
             onSelect={(item) => setSelectedId(item.id)}
             onCreate={createOn}
+            onMovePost={handleMovePost}
+            onMoveDayPosts={handleMoveDayPosts}
             onUpdatePostingDays={handleUpdatePostingDays}
             onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
             onClearMonth={handleClearMonth}
