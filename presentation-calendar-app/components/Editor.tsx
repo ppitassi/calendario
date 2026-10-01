@@ -501,108 +501,109 @@ export function Editor({
                 <span className="sectionTag">Distribuição de Perfis</span>
                 <strong>Publicação em Perfil / Collab</strong>
               </div>
-              <label className="collabSwitchLabel">
-                <input
-                  type="checkbox"
-                  checked={Boolean(item.isCollab)}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    onChange({
-                      ...item,
-                      isCollab: checked,
-                      collabProfile: checked ? (item.collabProfile || "") : "",
-                    });
-                  }}
-                />
-                <span className="collabSwitchBadge">
-                  {item.isCollab ? "Collab Ativo" : "Collab Desativado"}
-                </span>
-              </label>
+              <div className="profileCollabHeaderActions">
+                {!showAddProfile && (
+                  <button
+                    type="button"
+                    className="addProfileSmallBtn"
+                    onClick={() => setShowAddProfile(true)}
+                    title="Criar novo perfil (@)"
+                  >
+                    <Plus size={12} />
+                    <span>{profileSuggestions.length === 0 ? "Criar Perfil" : "Novo Perfil"}</span>
+                  </button>
+                )}
+                <label className="collabSwitchLabel">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(item.isCollab)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      onChange({
+                        ...item,
+                        isCollab: checked,
+                        collabProfile: checked ? (item.collabProfile || "") : "",
+                      });
+                    }}
+                  />
+                  <span className="collabSwitchBadge">
+                    {item.isCollab ? "Collab Ativo" : "Collab Desativado"}
+                  </span>
+                </label>
+              </div>
             </div>
 
-            {/* UI: distribuição de perfis: inicia sem arroba; o botão de + cria o perfil */}
+            {/* Criação inline de perfil quando solicitado */}
+            {showAddProfile && (
+              <div className="addProfileInlineBox">
+                <div className="addProfileInputGroup">
+                  <span className="addProfilePrefix">@</span>
+                  <input
+                    type="text"
+                    placeholder={profileSuggestions.length === 0 ? "nome_do_perfil (atribui a todas as artes)" : "segundo_perfil"}
+                    value={newProfileText.replace(/^@/, "")}
+                    onChange={(e) => setNewProfileText(e.target.value.replace(/^@/, ""))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddProfile();
+                      }
+                    }}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="confirmAddProfileBtn"
+                  onClick={handleAddProfile}
+                  title="Confirmar criação do perfil"
+                >
+                  <Plus size={13} />
+                  <span>{profileSuggestions.length === 0 ? "Criar e Atribuir a Todas as Artes" : "Adicionar Perfil"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="cancelAddProfileBtn"
+                  onClick={() => {
+                    setShowAddProfile(false);
+                    setNewProfileText("");
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+
+            {/* UI: distribuição de perfis: colunas perfeitamente alinhadas */}
             <div className="profileFieldsGrid">
               <div className="profileField">
                 <div className="profileHeaderRow">
-                  <label htmlFor="mainProfileInput">
-                    <span>Perfil Principal ({item.isCollab ? "Autor 1" : "Conta"})</span>
-                  </label>
-                  {!showAddProfile && (
+                  <span>Perfil Principal ({item.isCollab ? "Autor 1" : "Conta"})</span>
+                </div>
+
+                <div className="profileCurrentInputGroup">
+                  <input
+                    id="mainProfileInput"
+                    type="text"
+                    value={item.profile || ""}
+                    onChange={(e) => field("profile", e.target.value)}
+                    placeholder={
+                      profileSuggestions.length === 0
+                        ? "Sem perfil vinculado (clique em Criar Perfil acima)"
+                        : "Selecione um perfil abaixo ou digite @perfil"
+                    }
+                  />
+                  {item.profile && (
                     <button
                       type="button"
-                      className="addProfileSmallBtn"
-                      onClick={() => setShowAddProfile(true)}
-                      title="Criar novo perfil (@)"
+                      className="clearProfileBtn"
+                      onClick={() => field("profile", "")}
+                      title="Remover arroba desta publicação"
                     >
-                      <Plus size={12} />
-                      <span>{profileSuggestions.length === 0 ? "Criar Perfil" : "Novo Perfil"}</span>
+                      <X size={14} />
                     </button>
                   )}
                 </div>
-
-                {showAddProfile ? (
-                  <div className="addProfileInlineBox">
-                    <div className="addProfileInputGroup">
-                      <span className="addProfilePrefix">@</span>
-                      <input
-                        type="text"
-                        placeholder={profileSuggestions.length === 0 ? "nome_do_perfil (atribui a todas as artes)" : "segundo_perfil"}
-                        value={newProfileText.replace(/^@/, "")}
-                        onChange={(e) => setNewProfileText(e.target.value.replace(/^@/, ""))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddProfile();
-                          }
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="confirmAddProfileBtn"
-                      onClick={handleAddProfile}
-                      title="Confirmar criação do perfil"
-                    >
-                      <Plus size={13} />
-                      <span>{profileSuggestions.length === 0 ? "Criar e Atribuir a Todas as Artes" : "Adicionar Perfil"}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="cancelAddProfileBtn"
-                      onClick={() => {
-                        setShowAddProfile(false);
-                        setNewProfileText("");
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                ) : (
-                  <div className="profileCurrentInputGroup">
-                    <input
-                      id="mainProfileInput"
-                      type="text"
-                      value={item.profile || ""}
-                      onChange={(e) => field("profile", e.target.value)}
-                      placeholder={
-                        profileSuggestions.length === 0
-                          ? "Sem perfil vinculado (clique em Criar Perfil acima)"
-                          : "Selecione um perfil abaixo ou digite @perfil"
-                      }
-                    />
-                    {item.profile && (
-                      <button
-                        type="button"
-                        className="clearProfileBtn"
-                        onClick={() => field("profile", "")}
-                        title="Remover arroba desta publicação"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                )}
 
                 {profileSuggestions.length > 0 && (
                   <div className="profilePills">
@@ -630,17 +631,37 @@ export function Editor({
 
               {item.isCollab && (
                 <div className="profileField collabField">
-                  <label>
+                  <div className="profileHeaderRow">
                     <span>Perfil Colaborador (Autor 2 / Parceiro)</span>
+                  </div>
+                  <div className="profileCurrentInputGroup">
                     <input
                       type="text"
                       value={item.collabProfile || ""}
                       onChange={(e) => field("collabProfile", e.target.value)}
                       placeholder="Ex: @perfilB ou @parceiro"
                     />
-                  </label>
+                    {item.collabProfile && (
+                      <button
+                        type="button"
+                        className="clearProfileBtn"
+                        onClick={() => field("collabProfile", "")}
+                        title="Remover colaborador desta publicação"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
                   {profileSuggestions.length > 0 && (
                     <div className="profilePills">
+                      <button
+                        type="button"
+                        className={!item.collabProfile ? "active outline" : ""}
+                        onClick={() => field("collabProfile", "")}
+                        title="Sem colaborador"
+                      >
+                        Sem @
+                      </button>
                       {profileSuggestions.map((p) => (
                         <button
                           key={p}
