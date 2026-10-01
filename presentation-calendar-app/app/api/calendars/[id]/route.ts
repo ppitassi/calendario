@@ -29,6 +29,7 @@ export async function GET(
         c.logo_url as client_logo_url,
         c.has_multiple_profiles as client_has_multiple_profiles,
         c.posting_days as client_posting_days,
+        c.weekday_formats as client_weekday_formats,
         creator.name as creator_name,
         creator.role as creator_role,
         assigned.name as assigned_name,
@@ -57,6 +58,19 @@ export async function GET(
       } catch {}
     }
     calendar.posting_days = parsedPostingDays;
+
+    let parsedWeekdayFormats: Record<string, string> = {};
+    try {
+      parsedWeekdayFormats = JSON.parse(calendar.weekday_formats || "{}");
+    } catch {
+      parsedWeekdayFormats = {};
+    }
+    if (Object.keys(parsedWeekdayFormats).length === 0 && calendar.client_weekday_formats) {
+      try {
+        parsedWeekdayFormats = JSON.parse(calendar.client_weekday_formats || "{}");
+      } catch {}
+    }
+    calendar.weekday_formats = parsedWeekdayFormats;
 
     const items = await db.prepare(`
       SELECT
@@ -123,6 +137,7 @@ export async function PUT(
       status,
       assignedToId,
       postingDays,
+      weekdayFormats,
       items,
     } = body;
 
@@ -180,6 +195,14 @@ export async function PUT(
       await db.prepare(`UPDATE calendars SET posting_days = ? WHERE id = ?`).run(pDaysStr, id);
       if (existing.client_id) {
         await db.prepare(`UPDATE clients SET posting_days = ? WHERE id = ?`).run(pDaysStr, existing.client_id);
+      }
+    }
+
+    if (weekdayFormats !== undefined && typeof weekdayFormats === "object") {
+      const wFormatsStr = JSON.stringify(weekdayFormats);
+      await db.prepare(`UPDATE calendars SET weekday_formats = ? WHERE id = ?`).run(wFormatsStr, id);
+      if (existing.client_id) {
+        await db.prepare(`UPDATE clients SET weekday_formats = ? WHERE id = ?`).run(wFormatsStr, existing.client_id);
       }
     }
 

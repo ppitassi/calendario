@@ -3,9 +3,9 @@
 
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, Users, CalendarDays, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Users, CalendarDays, Trash2, Sliders } from "lucide-react";
 import { dateKey, monthLabel, shiftMonth } from "../lib/date";
-import type { ContentItem } from "../lib/types";
+import type { ContentItem, ContentType } from "../lib/types";
 
 /** Cabeçalhos na ordem nativa do calendário JavaScript: domingo a sábado. */
 const weekdays = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -21,26 +21,32 @@ const WEEKDAY_OPTIONS = [
   { day: 0, label: "DOM", full: "Domingo" },
 ];
 
+const AVAILABLE_FORMATS: ContentType[] = ["Feed e Story", "Feed", "Story", "Carrossel", "Reels"];
+
 /** Expõe seleção de dia/post e devolve ao Studio todas as mudanças de competência ou cadência. */
 export function Calendar({
   month,
   items,
   selectedId,
   postingDays = [],
+  weekdayFormats = {},
   onMonthChange,
   onSelect,
   onCreate,
   onUpdatePostingDays,
+  onUpdateWeekdayFormat,
   onClearMonth,
 }: {
   month: Date;
   items: ContentItem[];
   selectedId: string | null;
   postingDays?: number[];
+  weekdayFormats?: Record<number, ContentType>;
   onMonthChange: (date: Date) => void;
   onSelect: (item: ContentItem) => void;
   onCreate: (date: string) => void;
   onUpdatePostingDays?: (days: number[]) => void;
+  onUpdateWeekdayFormat?: (day: number, format: ContentType) => void;
   onClearMonth?: () => void;
 }) {
   const first = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
@@ -260,6 +266,38 @@ export function Calendar({
             );
           })}
         </div>
+
+        {/* UI: Seletor do formato padrão para cada dia ativo */}
+        {postingDays.length > 0 && onUpdateWeekdayFormat && (
+          <div className="weekdayFormatsList">
+            <div className="weekdayFormatsHeader">
+              <Sliders size={11} />
+              <span>Formato padrão por dia:</span>
+            </div>
+            <div className="weekdayFormatsItems">
+              {WEEKDAY_OPTIONS.filter((w) => postingDays.includes(w.day)).map((w) => {
+                const currentFormat = weekdayFormats[w.day] || "Feed e Story";
+                return (
+                  <div key={w.day} className="weekdayFormatRow">
+                    <span className="weekdayFormatDayLabel">{w.label}</span>
+                    <select
+                      className="weekdayFormatSelect"
+                      value={currentFormat}
+                      onChange={(e) => onUpdateWeekdayFormat(w.day, e.target.value as ContentType)}
+                      title={`Formato padrão das postagens de ${w.full}`}
+                    >
+                      {AVAILABLE_FORMATS.map((fmt) => (
+                        <option key={fmt} value={fmt}>
+                          {fmt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="cadenceSummary">
           <span>
