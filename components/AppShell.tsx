@@ -6,6 +6,7 @@
 
 
 import { useState, useEffect, useCallback } from "react";
+import { Menu, Calendar } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { ClientsControl } from "./ClientsControl";
 import { Studio } from "./Studio";
@@ -65,6 +66,32 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
   // A apresentação recebe uma fotografia completa para não depender do estado parcial do catálogo.
   const [presentationCal, setPresentationCal] = useState<CalendarRecord | null>(null);
   const [presentationItems, setPresentationItems] = useState<ContentItem[]>([]);
+
+  // Estado do tema (claro/escuro)
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("cp:theme");
+        if (stored === "dark" || stored === "light") return stored;
+      } catch {}
+    }
+    return "light";
+  });
+
+  // Estado do menu mobile
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Aplica o tema ao elemento raiz <html>
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("cp:theme", theme);
+    } catch {}
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   // Restaura a preferência visual da barra lateral depois que o navegador está disponível.
   useEffect(() => {
@@ -257,6 +284,14 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
 
   return (
     <div className={styles.shell}>
+      {/* Mobile: backdrop translúcido que fecha o menu lateral ao ser clicado. */}
+      {mobileMenuOpen && (
+        <div
+          className="mobileBackdrop visible"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* UI: navegação global, seletor de cliente e controles da conta autenticada. */}
       <Sidebar
         activeScreen={activeScreen}
@@ -268,6 +303,10 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         isPinned={isPinned}
         onTogglePin={handleTogglePin}
         onLogout={onLogout}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
       {/* UI: região principal recua conforme a barra esteja fixada ou recolhida. */}
@@ -277,6 +316,24 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           isPinned ? styles.mainAreaPinned : styles.mainAreaCollapsed
         )}
       >
+        {/* Mobile: barra superior com hamburger, visível apenas em telas pequenas. */}
+        <div className="mobileTopBar">
+          <div className="mobileBrand">
+            <div className="mobileBrandLogo">
+              <Calendar size={16} strokeWidth={2.2} />
+            </div>
+            <span className="mobileBrandTitle">Calendário</span>
+          </div>
+          <button
+            type="button"
+            className="hamburgerBtn"
+            onClick={() => setMobileMenuOpen(true)}
+            title="Abrir menu"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
+
         {/* UI: bloqueia trocas de tela enquanto a API localiza ou cria o calendário. */}
         {ensuringCalendar && (
           <div className={styles.loadingOverlay}>
@@ -351,3 +408,4 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
     </div>
   );
 }
+

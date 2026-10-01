@@ -13,6 +13,8 @@ import {
   ChevronDown,
   LogOut,
   Users,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Client, SafeUser } from "@/lib/types";
@@ -29,6 +31,10 @@ interface SidebarProps {
   isPinned: boolean;
   onTogglePin: () => void;
   onLogout: () => void;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 /** Renderiza a barra expandida ou recolhida sem manter uma segunda seleção de cliente. */
@@ -42,6 +48,10 @@ export function Sidebar({
   isPinned,
   onTogglePin,
   onLogout,
+  theme,
+  onToggleTheme,
+  mobileOpen,
+  onCloseMobile,
 }: SidebarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -125,9 +135,19 @@ export function Sidebar({
     onTogglePin();
   };
 
+  /** Navega e fecha o menu mobile automaticamente. */
+  const handleMobileNavigate = (screen: string) => {
+    onNavigate(screen);
+    onCloseMobile();
+  };
+
   return (
     <aside
-      className={cn(styles.sidebar, isPinned ? styles.open : styles.collapsed)}
+      className={cn(
+        styles.sidebar,
+        isPinned ? styles.open : styles.collapsed,
+        mobileOpen && styles.mobileOpen
+      )}
       aria-label="Navegação Principal"
       onClick={handleSidebarClick}
     >
@@ -205,6 +225,7 @@ export function Sidebar({
                         onClick={() => {
                           onSelectClient(client);
                           setDropdownOpen(false);
+                          onCloseMobile();
                         }}
                       >
                         <div
@@ -236,7 +257,7 @@ export function Sidebar({
             type="button"
             className={styles.clientCard}
             style={{ justifyContent: "center", padding: "0.4rem" }}
-            onClick={() => onNavigate("home")}
+            onClick={() => handleMobileNavigate("home")}
             title={activeClient ? `Cliente: ${activeClient.name}` : "Selecionar Cliente"}
           >
             <div
@@ -277,10 +298,10 @@ export function Sidebar({
               )}
               onClick={() => {
                 if (disabled) {
-                  onNavigate("home");
+                  handleMobileNavigate("home");
                   return;
                 }
-                onNavigate(item.id);
+                handleMobileNavigate(item.id);
               }}
               title={item.label}
             >
@@ -323,6 +344,15 @@ export function Sidebar({
         <div className={styles.bottomActions}>
           <button
             type="button"
+            className={styles.themeBtn}
+            onClick={onToggleTheme}
+            title={theme === "dark" ? "Modo claro" : "Modo noturno"}
+          >
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
+          <button
+            type="button"
             className={styles.collapseBtn}
             onClick={onTogglePin}
             title={isPinned ? "Recolher barra lateral" : "Expandir barra lateral"}
@@ -346,3 +376,4 @@ export function Sidebar({
     </aside>
   );
 }
+
