@@ -101,6 +101,26 @@ function normalizeRow(row: any): any {
   normalized.orderIndex = Number(orderIdx) || 0;
   normalized.order_index = normalized.orderIndex;
 
+  const comment = normalized.clientComment ?? normalized.client_comment ?? normalized.clientcomment ?? "";
+  normalized.clientComment = comment;
+  normalized.client_comment = comment;
+
+  const token = normalized.shareToken ?? normalized.share_token ?? normalized.sharetoken ?? "";
+  normalized.shareToken = token;
+  normalized.share_token = token;
+
+  const feedback = normalized.clientFeedback ?? normalized.client_feedback ?? normalized.clientfeedback ?? "";
+  normalized.clientFeedback = feedback;
+  normalized.client_feedback = feedback;
+
+  const feedbackStatus = normalized.clientFeedbackStatus ?? normalized.client_feedback_status ?? normalized.clientfeedbackstatus ?? "";
+  normalized.clientFeedbackStatus = feedbackStatus;
+  normalized.client_feedback_status = feedbackStatus;
+
+  const feedbackAt = normalized.clientFeedbackAt ?? normalized.client_feedback_at ?? normalized.clientfeedbackat ?? "";
+  normalized.clientFeedbackAt = feedbackAt;
+  normalized.client_feedback_at = feedbackAt;
+
   return normalized;
 }
 
@@ -257,6 +277,11 @@ async function initPgSchema(pool: Pool | PoolClient) {
     { table: "calendars", col: "weekday_formats", def: "TEXT DEFAULT '{}'" },
     { table: "clients", col: "logo_url", def: "TEXT" },
     { table: "clients", col: "has_multiple_profiles", def: "INTEGER DEFAULT 0" },
+    { table: "calendars", col: "share_token", def: "TEXT" },
+    { table: "calendars", col: "client_feedback", def: "TEXT DEFAULT ''" },
+    { table: "calendars", col: "client_feedback_status", def: "TEXT DEFAULT ''" },
+    { table: "calendars", col: "client_feedback_at", def: "TEXT DEFAULT ''" },
+    { table: "calendar_items", col: "client_comment", def: "TEXT DEFAULT ''" },
   ];
 
   for (const { table, col, def } of migrations) {
@@ -593,6 +618,11 @@ function initSqliteSchema(db: any) {
   try { db.exec("ALTER TABLE calendars ADD COLUMN weekday_formats TEXT DEFAULT '{}';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN logo_url TEXT;"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN has_multiple_profiles INTEGER DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE calendars ADD COLUMN share_token TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback TEXT DEFAULT '';"); } catch {}
+  try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback_status TEXT DEFAULT '';"); } catch {}
+  try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback_at TEXT DEFAULT '';"); } catch {}
+  try { db.exec("ALTER TABLE calendar_items ADD COLUMN client_comment TEXT DEFAULT '';"); } catch {}
 
   const existingAdmin = db.prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1").get();
   if (!existingAdmin) {

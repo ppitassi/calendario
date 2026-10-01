@@ -1046,3 +1046,37 @@
   background: #db2777;
   flex-shrink: 0;
 }
+
+/* Banner de Observação do Cliente no Editor */
+.clientCommentBanner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clientCommentBannerHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #b45309;
+}
+
+.clientCommentBannerHeader strong {
+  font-weight: 700;
+}
+
+.clientCommentText {
+  font-size: 12px;
+  color: #78350f;
+  line-height: 1.4;
+  margin: 0;
+  font-style: italic;
+}
+
