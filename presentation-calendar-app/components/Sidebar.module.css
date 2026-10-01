@@ -267,129 +267,45 @@
   display: none;
 }
 
-/* Barra inferior com identidade do usuário e ações da sessão. */
+/* Barra inferior com controle de expansão/recolhimento da barra lateral. */
 .bottomSection {
   margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.userCard {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border, var(--color-border-subtle));
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.5rem;
-}
-
-.userAvatar {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: #1e293b;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.userInfo {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-}
-
-.userName {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.userRole {
-  display: inline-block;
-  font-size: 0.5625rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--tenant-primary);
-  letter-spacing: 0.04em;
-}
-
-/* Botões de recolher a barra e encerrar a sessão. */
-.bottomActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
 }
 
 .collapseBtn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--color-border-subtle);
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border, var(--color-border-subtle));
   border-radius: 0.5rem;
-  background: #fff;
-  color: var(--color-text-muted);
-  transition: all 0.15s;
+  background: var(--surface-soft, #f8fafc);
+  color: var(--muted, var(--color-text-muted));
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
   cursor: pointer;
+  justify-content: flex-start;
+}
+
+.collapsed .collapseBtn {
+  justify-content: center;
+  padding: 0.6rem;
 }
 
 .collapseBtn:hover {
-  background: var(--color-bg-subtle);
-  color: var(--color-text-primary);
+  background: var(--surface-hover, var(--color-bg-subtle));
+  color: var(--ink, var(--color-text-primary));
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.15));
 }
 
-.logoutBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 0.5rem;
-  background: #fff;
-  color: #ef4444;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  transition: all 0.15s;
-  flex: 1;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.logoutBtn:hover {
-  background: #fef2f2;
-  border-color: #fecaca;
-}
-
-/* Botão de tema (claro/escuro) */
-.themeBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 0.5rem;
-  background: transparent;
-  color: var(--color-text-muted);
-  transition: all 0.15s;
-  cursor: pointer;
-}
-.themeBtn:hover {
-  background: var(--color-bg-subtle);
-  color: var(--color-text-primary);
+.collapseLabel {
+  white-space: nowrap;
 }
 
 /* ===================== DARK MODE ===================== */

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Menu, Calendar } from "lucide-react";
 import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
 import { ClientsControl } from "./ClientsControl";
 import { Studio } from "./Studio";
 import { Presentation } from "./Presentation";
@@ -316,23 +317,18 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           isPinned ? styles.mainAreaPinned : styles.mainAreaCollapsed
         )}
       >
-        {/* Mobile: barra superior com hamburger, visível apenas em telas pequenas. */}
-        <div className="mobileTopBar">
-          <div className="mobileBrand">
-            <div className="mobileBrandLogo">
-              <Calendar size={16} strokeWidth={2.2} />
-            </div>
-            <span className="mobileBrandTitle">Calendário</span>
-          </div>
-          <button
-            type="button"
-            className="hamburgerBtn"
-            onClick={() => setMobileMenuOpen(true)}
-            title="Abrir menu"
-          >
-            <Menu size={20} />
-          </button>
-        </div>
+        {/* Header superior global: Usuário logado, Notificações, Opções e Modo Noturno */}
+        {activeScreen !== "presentation" && (
+          <Header
+            currentUser={currentUser}
+            onLogout={onLogout}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            onOpenMobileMenu={() => setMobileMenuOpen(true)}
+            activeScreen={activeScreen}
+            activeClient={activeClient}
+          />
+        )}
 
         {/* UI: bloqueia trocas de tela enquanto a API localiza ou cria o calendário. */}
         {ensuringCalendar && (

@@ -312,66 +312,17 @@ export function Sidebar({
         })}
       </nav>
 
-      {/* UI: identidade da sessão e comandos de largura e saída. */}
+      {/* UI: controle de largura (expandir/recolher) para uma barra lateral limpa e minimalista. */}
       <div className={styles.bottomSection}>
-        {isPinned ? (
-          <div className={styles.userCard}>
-            <div className={styles.userAvatar}>
-              {currentUser.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div className={styles.userInfo}>
-              <span className={styles.userName}>{currentUser.name}</span>
-              <span className={styles.userRole}>
-                {currentUser.role === "admin"
-                  ? "Administrador"
-                  : currentUser.role === "social_media"
-                  ? "Social Media"
-                  : "Designer"}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={styles.userAvatar}
-            style={{ margin: "0 auto" }}
-            title={`${currentUser.name} (${currentUser.role})`}
-          >
-            {currentUser.name.slice(0, 2).toUpperCase()}
-          </div>
-        )}
-
-        {/* UI: recolher permanece acessível; sair aparece somente quando há espaço para o rótulo. */}
-        <div className={styles.bottomActions}>
-          <button
-            type="button"
-            className={styles.themeBtn}
-            onClick={onToggleTheme}
-            title={theme === "dark" ? "Modo claro" : "Modo noturno"}
-          >
-            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-
-          <button
-            type="button"
-            className={styles.collapseBtn}
-            onClick={onTogglePin}
-            title={isPinned ? "Recolher barra lateral" : "Expandir barra lateral"}
-          >
-            {isPinned ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-          </button>
-
-          {isPinned && (
-            <button
-              type="button"
-              className={styles.logoutBtn}
-              onClick={onLogout}
-              title="Sair do sistema"
-            >
-              <LogOut size={13} />
-              <span>Sair</span>
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          className={styles.collapseBtn}
+          onClick={onTogglePin}
+          title={isPinned ? "Recolher barra lateral" : "Expandir barra lateral"}
+        >
+          {isPinned ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          {isPinned && <span className={styles.collapseLabel}>Recolher</span>}
+        </button>
       </div>
     </aside>
   );
