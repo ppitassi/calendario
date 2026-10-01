@@ -628,44 +628,47 @@ export function Editor({
             </div>
           )}
 
-          {/* UI: mídia persistida, com remoção, prévia integral e URL utilizada pelas apresentações. */}
+          {/* UI: mídia persistida exibida em miniaturas elegantes e compactas */}
           {activeFeedImage ? (
-            <div className="uploadedMediaCard">
-              <div className="mediaCardTop">
-                <span className="mediaStatusLabel">
-                  <CheckCircle size={14} color="#10b981" /> Arte do Feed Vinculada
-                </span>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button
-                    type="button"
-                    className="secondarySmallBtn"
-                    onClick={() => window.open(activeFeedImage, "_blank")}
-                  >
-                    Abrir Original
-                  </button>
-                  <button
-                    className="removeMediaBtn"
-                    onClick={() => {
-                      setOptimisticFeed(null);
-                      field("imageUrl", "");
-                    }}
-                  >
-                    Remover Feed
-                  </button>
-                </div>
-              </div>
-
-              <div className="mediaRealPreviewWrapper">
+            <div className="uploadedMediaCard compactMediaCard">
+              <div className="mediaThumbnailBox">
                 <img
                   src={activeFeedImage}
                   alt={item.title}
-                  className="mediaRealImg"
+                  className="mediaThumbnailImg"
                 />
               </div>
 
-              <div className="mediaUrlRow">
-                <small>Endereço salvo (Feed):</small>
-                <code>{item.imageUrl || "Enviando..."}</code>
+              <div className="mediaMetaDetails">
+                <div className="mediaCardTop">
+                  <span className="mediaStatusLabel">
+                    <CheckCircle size={14} color="#10b981" /> Arte do Feed (1:1 / 4:5 / 1080×1440)
+                  </span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      type="button"
+                      className="secondarySmallBtn"
+                      onClick={() => window.open(activeFeedImage, "_blank")}
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      type="button"
+                      className="dangerSmallBtn"
+                      onClick={() => {
+                        setOptimisticFeed(null);
+                        field("imageUrl", "");
+                      }}
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mediaUrlRow">
+                  <small>URL:</small>
+                  <code>{item.imageUrl || "Enviando..."}</code>
+                </div>
               </div>
             </div>
           ) : (
@@ -675,43 +678,45 @@ export function Editor({
           )}
 
           {activeStoryImage && (
-            <div className="uploadedMediaCard" style={{ marginTop: 12 }}>
-              <div className="mediaCardTop">
-                <span className="mediaStatusLabel">
-                  <CheckCircle size={14} color="#10b981" /> Arte do Story Vinculada
-                </span>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button
-                    type="button"
-                    className="secondarySmallBtn"
-                    onClick={() => window.open(activeStoryImage, "_blank")}
-                  >
-                    Abrir Original
-                  </button>
-                  <button
-                    className="removeMediaBtn"
-                    onClick={() => {
-                      setOptimisticStory(null);
-                      field("storyUrl", "");
-                    }}
-                  >
-                    Remover Story
-                  </button>
-                </div>
-              </div>
-
-              <div className="mediaRealPreviewWrapper" style={{ maxHeight: 280 }}>
+            <div className="uploadedMediaCard compactMediaCard" style={{ marginTop: 10 }}>
+              <div className="mediaThumbnailBox storyThumbBox">
                 <img
                   src={activeStoryImage}
                   alt={`${item.title} - Story`}
-                  className="mediaRealImg"
-                  style={{ objectFit: "contain" }}
+                  className="mediaThumbnailImg"
                 />
               </div>
 
-              <div className="mediaUrlRow">
-                <small>Endereço salvo (Story):</small>
-                <code>{item.storyUrl || "Enviando..."}</code>
+              <div className="mediaMetaDetails">
+                <div className="mediaCardTop">
+                  <span className="mediaStatusLabel">
+                    <CheckCircle size={14} color="#10b981" /> Arte do Story (9:16)
+                  </span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      type="button"
+                      className="secondarySmallBtn"
+                      onClick={() => window.open(activeStoryImage, "_blank")}
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      type="button"
+                      className="dangerSmallBtn"
+                      onClick={() => {
+                        setOptimisticStory(null);
+                        field("storyUrl", "");
+                      }}
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mediaUrlRow">
+                  <small>URL:</small>
+                  <code>{item.storyUrl || "Enviando..."}</code>
+                </div>
               </div>
             </div>
           )}

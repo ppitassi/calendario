@@ -72,7 +72,7 @@ export function InstagramMockup({
     : "feed";
 
   const feedImage = post.imageUrl || (post as any).image_url || (post as any).imageurl || "";
-  const storyImage = post.storyUrl || (post as any).story_url || (post as any).storyurl || feedImage;
+  const storyImage = post.storyUrl || (post as any).story_url || (post as any).storyurl || "";
   const mainImage = currentRenderMode === "story" ? storyImage : feedImage;
 
   const allImages: string[] = (post as any).images?.length
