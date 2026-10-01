@@ -655,6 +655,37 @@ export function Studio({
     );
   };
 
+  /** Reordena publicações (dentro do mesmo dia ou entre dias) via Drag and Drop */
+  const handleReorderPosts = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+    const sourceIdx = items.findIndex((it) => it.id === sourceId);
+    const targetIdx = items.findIndex((it) => it.id === targetId);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const sourceItem = items[sourceIdx];
+    const targetItem = items[targetIdx];
+
+    const remaining = items.filter((it) => it.id !== sourceId);
+    const newTargetIdx = remaining.findIndex((it) => it.id === targetId);
+    if (newTargetIdx === -1) return;
+
+    const updatedSource = sourceItem.date !== targetItem.date 
+      ? { ...sourceItem, date: targetItem.date }
+      : sourceItem;
+
+    const insertIdx = sourceIdx > targetIdx ? newTargetIdx : newTargetIdx + 1;
+    const newItems = [
+      ...remaining.slice(0, insertIdx),
+      updatedSource,
+      ...remaining.slice(insertIdx),
+    ];
+
+    setItems(newItems);
+    setSelectedId(sourceId);
+    saveChanges(newItems);
+    addNotification("Ordem das publicações atualizada!");
+  };
+
   /** Remove publicações e cadência somente do mês visível; outros meses permanecem. */
   const handleClearMonth = () => {
     const currentPrefix = monthKey(month);
@@ -917,6 +948,7 @@ export function Studio({
             onCreate={createOn}
             onMovePost={handleMovePost}
             onMoveDayPosts={handleMoveDayPosts}
+            onReorderPosts={handleReorderPosts}
             onUpdatePostingDays={handleUpdatePostingDays}
             onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
             onClearMonth={handleClearMonth}

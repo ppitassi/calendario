@@ -148,6 +148,11 @@
   background: var(--surface);
 }
 
+[data-theme="dark"] .dayPostTab.dropTargetHover {
+  background: color-mix(in srgb, var(--accent), transparent 75%) !important;
+  border-color: var(--accent) !important;
+}
+
 [data-theme="dark"] .dayPostCollabBadge {
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.4);

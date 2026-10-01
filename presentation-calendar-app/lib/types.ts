@@ -70,6 +70,7 @@ export type ContentItem = {
   hashtags?: string;
   funnelStage?: "Topo" | "Meio" | "Fundo";
   internalNotes?: string;
+  orderIndex?: number;
 };
 
 /** Calendário com os dados opcionais vindos dos joins de cliente, criador e responsável. */

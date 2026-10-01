@@ -35,6 +35,7 @@ export function Calendar({
   onCreate,
   onMovePost,
   onMoveDayPosts,
+  onReorderPosts,
   onUpdatePostingDays,
   onUpdateWeekdayFormat,
   onClearMonth,
@@ -49,6 +50,7 @@ export function Calendar({
   onCreate: (date: string) => void;
   onMovePost?: (postId: string, targetDate: string) => void;
   onMoveDayPosts?: (sourceDate: string, targetDate: string) => void;
+  onReorderPosts?: (sourcePostId: string, targetPostId: string) => void;
   onUpdatePostingDays?: (days: number[]) => void;
   onUpdateWeekdayFormat?: (day: number, format: ContentType) => void;
   onClearMonth?: () => void;
@@ -69,6 +71,7 @@ export function Calendar({
     label?: string;
   } | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [dragOverPostId, setDragOverPostId] = useState<string | null>(null);
 
   const handleDayDragStart = (e: React.DragEvent, key: string, dayPosts: ContentItem[]) => {
     if (dayPosts.length === 0) return;
@@ -141,7 +144,47 @@ export function Calendar({
 
   const handleDragEnd = () => {
     setDragOverDate(null);
+    setDragOverPostId(null);
     setDragSource(null);
+  };
+
+  const handlePostTabDragOver = (e: React.DragEvent, targetPostId: string) => {
+    if (!dragSource || dragSource.type !== "post" || dragSource.postId === targetPostId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverPostId !== targetPostId) {
+      setDragOverPostId(targetPostId);
+    }
+  };
+
+  const handlePostTabDragLeave = (e: React.DragEvent, targetPostId: string) => {
+    e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      if (dragOverPostId === targetPostId) {
+        setDragOverPostId(null);
+      }
+    }
+  };
+
+  const handlePostTabDrop = (e: React.DragEvent, targetPost: ContentItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const currentDrag = dragSource;
+    setDragOverPostId(null);
+    setDragSource(null);
+
+    let data = currentDrag;
+    if (!data) {
+      try {
+        const raw = e.dataTransfer.getData("application/json");
+        if (raw) data = JSON.parse(raw);
+      } catch {}
+    }
+
+    if (!data || data.type !== "post" || !data.postId || data.postId === targetPost.id) return;
+
+    onReorderPosts?.(data.postId, targetPost.id);
   };
 
   // Mantém o dia destacado sincronizado quando o editor seleciona outro post.
@@ -352,9 +395,12 @@ export function Calendar({
                     draggable={true}
                     onDragStart={(e) => handlePostTabDragStart(e, post, label)}
                     onDragEnd={handleDragEnd}
-                    className={`dayPostTab ${post.id === selectedId ? "active" : ""} ${dragSource?.postId === post.id ? "isDragSource" : ""}`}
+                    onDragOver={(e) => handlePostTabDragOver(e, post.id)}
+                    onDragLeave={(e) => handlePostTabDragLeave(e, post.id)}
+                    onDrop={(e) => handlePostTabDrop(e, post)}
+                    className={`dayPostTab ${post.id === selectedId ? "active" : ""} ${dragSource?.postId === post.id ? "isDragSource" : ""} ${dragOverPostId === post.id ? "dropTargetHover" : ""}`}
                     onClick={() => onSelect(post)}
-                    title={`Post #${idx + 1}: ${label} • Arraste para qualquer dia do calendário`}
+                    title={`Post #${idx + 1}: ${label} • Arraste para reordenar ou mover para outro dia`}
                   >
                     <div className="dayPostTabMain">
                       <GripVertical size={11} className="dayPostDragHandle" />

@@ -516,6 +516,13 @@
   cursor: grabbing;
 }
 
+.dayPostTab.dropTargetHover {
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent), transparent 88%) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 12px color-mix(in srgb, var(--accent), transparent 60%) !important;
+  transform: translateY(-2px);
+}
+
 .dayPostDragHandle {
   opacity: 0.3;
   color: var(--muted);
