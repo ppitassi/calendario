@@ -246,6 +246,56 @@
   border-color: var(--border);
 }
 
+[data-theme="dark"] .mediaCompactBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .mediaCompactBtn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: #475569;
+}
+
+[data-theme="dark"] .mediaCompactBtn.hasMedia {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+[data-theme="dark"] .mediaCompactBtn.hasMedia:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+[data-theme="dark"] .mediaBtnFormat {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .mediaMiniBadge.pending {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .mediaMiniBadge.success {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+[data-theme="dark"] .mediaCompactRemoveBtn {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+[data-theme="dark"] .mediaCompactRemoveBtn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
 [data-theme="dark"] .uploadDropzone {
   background: var(--surface-soft);
   border-color: var(--border);
