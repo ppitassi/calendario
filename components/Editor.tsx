@@ -3,7 +3,7 @@
 
 
 import { useRef, useState, useMemo } from "react";
-import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon, Smartphone, Layers } from "lucide-react";
+import { Trash2, Upload, CheckCircle, FileImage, Link as LinkIcon, Smartphone, Layers, Plus, X } from "lucide-react";
 import type { ContentItem, ContentStatus, ContentType } from "../lib/types";
 
 /** Edita uma cópia controlada do item e devolve toda alteração ao estado do Studio. */
@@ -12,12 +12,14 @@ export function Editor({
   onChange,
   onDelete,
   availableProfiles = [],
+  onCreateProfile,
   brand = "",
 }: {
   item: ContentItem;
   onChange: (item: ContentItem) => void;
   onDelete: (id: string) => void;
   availableProfiles?: string[];
+  onCreateProfile?: (profile: string) => void;
   brand?: string;
 }) {
   const [tab, setTab] = useState<"content" | "media" | "notes">("content");
@@ -28,6 +30,8 @@ export function Editor({
   const [isDragging, setIsDragging] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [customUrl, setCustomUrl] = useState("");
+  const [showAddProfile, setShowAddProfile] = useState(false);
+  const [newProfileText, setNewProfileText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const storyFileInputRef = useRef<HTMLInputElement>(null);
   const itemRef = useRef(item);
@@ -37,14 +41,29 @@ export function Editor({
   const field = (key: keyof ContentItem, value: any) =>
     onChange({ ...itemRef.current, [key]: value });
 
-  // Reúne perfis conhecidos, marca e valores atuais do post, removendo duplicados.
+  // Reúne perfis cadastrados sem forçar arroba padrão da marca
   const profileSuggestions = useMemo(() => {
-    const set = new Set<string>(availableProfiles);
-    if (brand) set.add(`@${brand.toLowerCase().replace(/\s+/g, "")}`);
-    if (item.profile) set.add(item.profile);
-    if (item.collabProfile) set.add(item.collabProfile);
-    return Array.from(set).filter(Boolean);
-  }, [availableProfiles, brand, item.profile, item.collabProfile]);
+    const set = new Set<string>();
+    availableProfiles.forEach((p) => {
+      if (p && p.trim()) set.add(p.trim());
+    });
+    if (item.profile && item.profile.trim()) set.add(item.profile.trim());
+    if (item.collabProfile && item.collabProfile.trim()) set.add(item.collabProfile.trim());
+    return Array.from(set);
+  }, [availableProfiles, item.profile, item.collabProfile]);
+
+  const handleAddProfile = () => {
+    const raw = newProfileText.trim().replace(/^@+/, "");
+    if (!raw) return;
+    const formatted = `@${raw}`;
+    if (onCreateProfile) {
+      onCreateProfile(formatted);
+    } else {
+      field("profile", formatted);
+    }
+    setNewProfileText("");
+    setShowAddProfile(false);
+  };
 
   /** Envia a imagem como multipart, grava a URL retornada no item e expõe falhas no painel. */
   const handleFileUpload = async (file: File, target: "feed" | "story" = "feed") => {
@@ -516,20 +535,100 @@ export function Editor({
               </label>
             </div>
 
-            {/* UI: campos livres com atalhos para perfis já usados neste calendário. */}
+            {/* UI: distribuição de perfis: inicia sem arroba; o botão de + cria o perfil */}
             <div className="profileFieldsGrid">
               <div className="profileField">
-                <label>
-                  <span>Perfil Principal ({item.isCollab ? "Autor 1" : "Conta"})</span>
-                  <input
-                    type="text"
-                    value={item.profile || ""}
-                    onChange={(e) => field("profile", e.target.value)}
-                    placeholder="Ex: @perfilA ou Nome da Conta"
-                  />
-                </label>
+                <div className="profileHeaderRow">
+                  <label htmlFor="mainProfileInput">
+                    <span>Perfil Principal ({item.isCollab ? "Autor 1" : "Conta"})</span>
+                  </label>
+                  {!showAddProfile && (
+                    <button
+                      type="button"
+                      className="addProfileSmallBtn"
+                      onClick={() => setShowAddProfile(true)}
+                      title="Criar novo perfil (@)"
+                    >
+                      <Plus size={12} />
+                      <span>{profileSuggestions.length === 0 ? "Criar Perfil" : "Novo Perfil"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {showAddProfile ? (
+                  <div className="addProfileInlineBox">
+                    <div className="addProfileInputGroup">
+                      <span className="addProfilePrefix">@</span>
+                      <input
+                        type="text"
+                        placeholder={profileSuggestions.length === 0 ? "nome_do_perfil (atribui a todas as artes)" : "segundo_perfil"}
+                        value={newProfileText.replace(/^@/, "")}
+                        onChange={(e) => setNewProfileText(e.target.value.replace(/^@/, ""))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddProfile();
+                          }
+                        }}
+                        autoFocus
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="confirmAddProfileBtn"
+                      onClick={handleAddProfile}
+                      title="Confirmar criação do perfil"
+                    >
+                      <Plus size={13} />
+                      <span>{profileSuggestions.length === 0 ? "Criar e Atribuir a Todas as Artes" : "Adicionar Perfil"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="cancelAddProfileBtn"
+                      onClick={() => {
+                        setShowAddProfile(false);
+                        setNewProfileText("");
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="profileCurrentInputGroup">
+                    <input
+                      id="mainProfileInput"
+                      type="text"
+                      value={item.profile || ""}
+                      onChange={(e) => field("profile", e.target.value)}
+                      placeholder={
+                        profileSuggestions.length === 0
+                          ? "Sem perfil vinculado (clique em Criar Perfil acima)"
+                          : "Selecione um perfil abaixo ou digite @perfil"
+                      }
+                    />
+                    {item.profile && (
+                      <button
+                        type="button"
+                        className="clearProfileBtn"
+                        onClick={() => field("profile", "")}
+                        title="Remover arroba desta publicação"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {profileSuggestions.length > 0 && (
                   <div className="profilePills">
+                    <button
+                      type="button"
+                      className={!item.profile ? "active outline" : ""}
+                      onClick={() => field("profile", "")}
+                      title="Publicar sem arroba vinculado"
+                    >
+                      Sem @
+                    </button>
                     {profileSuggestions.map((p) => (
                       <button
                         key={p}

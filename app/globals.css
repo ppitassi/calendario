@@ -472,6 +472,124 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+.profileHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.profileHeaderRow label {
+  margin: 0;
+}
+.profileHeaderRow span {
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.addProfileSmallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px dashed var(--border);
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.addProfileSmallBtn:hover {
+  background: var(--surface);
+  border-color: var(--tenant-primary);
+  color: var(--tenant-primary);
+}
+.addProfileInlineBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-soft);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.addProfileInputGroup {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 6px;
+  flex: 1;
+  min-width: 130px;
+}
+.addProfilePrefix {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.addProfileInputGroup input {
+  border: none !important;
+  background: transparent !important;
+  padding: 5px 2px !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 600;
+  width: 100%;
+}
+.confirmAddProfileBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--tenant-primary, #e3002f);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.confirmAddProfileBtn:hover {
+  opacity: 0.9;
+}
+.cancelAddProfileBtn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.profileCurrentInputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.clearProfileBtn {
+  position: absolute;
+  right: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
+}
+.clearProfileBtn:hover {
+  color: #ef4444;
+}
 .profileField input {
   width: 100%;
   border: 1px solid var(--border);
@@ -500,6 +618,19 @@
   padding: 2px 7px;
   font-size: 9px;
   font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.profilePills button.outline {
+  border-style: dashed;
+  color: var(--muted);
+  background: transparent;
+}
+.profilePills button.outline.active {
+  background: var(--surface-soft);
+  color: var(--ink);
+  border-color: var(--ink);
+  border-style: solid;
 }
 .profilePills button.active {
   background: var(--accent);
