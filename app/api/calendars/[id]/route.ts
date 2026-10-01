@@ -223,22 +223,64 @@ export async function PUT(
     }
 
     if (Array.isArray(items)) {
-      await db.transaction(async (tx) => {
-        await tx.prepare("DELETE FROM calendar_items WHERE calendar_id = ?").run(id);
+      // 1. Sanitiza a lista para garantir IDs únicos e não vazios
+      const seenIds = new Set<string>();
+      const sanitizedItems: any[] = [];
+      for (const item of items) {
+        let itemId = item && item.id ? String(item.id).trim() : "";
+        if (!itemId || seenIds.has(itemId)) {
+          itemId = crypto.randomUUID();
+        }
+        seenIds.add(itemId);
+        sanitizedItems.push({ ...item, id: itemId });
+      }
 
-        const insertItem = tx.prepare(`
+      const validIds = sanitizedItems.map((it) => it.id);
+
+      await db.transaction(async (tx) => {
+        // 2. Remove itens deste calendário que não existem mais na lista enviada
+        if (validIds.length > 0) {
+          const placeholders = validIds.map(() => "?").join(", ");
+          await tx.prepare(`DELETE FROM calendar_items WHERE calendar_id = ? AND id NOT IN (${placeholders})`).run(id, ...validIds);
+        } else {
+          await tx.prepare("DELETE FROM calendar_items WHERE calendar_id = ?").run(id);
+        }
+
+        // 3. Upsert idempotente usando ON CONFLICT (id) DO UPDATE
+        const upsertItem = tx.prepare(`
           INSERT INTO calendar_items (
             id, calendar_id, date, title, type, status, channel, objective, head, subhead,
             caption, visual, image_url, story_url, cta, hashtags, funnel_stage, internal_notes,
             profile, is_collab, collab_profile, created_at, updated_at
           )
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT (id) DO UPDATE SET
+            calendar_id = EXCLUDED.calendar_id,
+            date = EXCLUDED.date,
+            title = EXCLUDED.title,
+            type = EXCLUDED.type,
+            status = EXCLUDED.status,
+            channel = EXCLUDED.channel,
+            objective = EXCLUDED.objective,
+            head = EXCLUDED.head,
+            subhead = EXCLUDED.subhead,
+            caption = EXCLUDED.caption,
+            visual = EXCLUDED.visual,
+            image_url = EXCLUDED.image_url,
+            story_url = EXCLUDED.story_url,
+            cta = EXCLUDED.cta,
+            hashtags = EXCLUDED.hashtags,
+            funnel_stage = EXCLUDED.funnel_stage,
+            internal_notes = EXCLUDED.internal_notes,
+            profile = EXCLUDED.profile,
+            is_collab = EXCLUDED.is_collab,
+            collab_profile = EXCLUDED.collab_profile,
+            updated_at = EXCLUDED.updated_at
         `);
 
-        for (const item of items) {
-          const itemId = item.id || crypto.randomUUID();
-          await insertItem.run(
-            itemId,
+        for (const item of sanitizedItems) {
+          await upsertItem.run(
+            item.id,
             id,
             item.date || "",
             item.title || "Nova publicação",
