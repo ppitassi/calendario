@@ -22,7 +22,7 @@ import { Editor } from "./Editor";
 import { Preview } from "./Preview";
 import { Presentation } from "./Presentation";
 import { dateKey, monthKey, monthLabel, shiftMonth, parseMonthKey } from "../lib/date";
-import type { CalendarRecord, ContentItem } from "../lib/types";
+import type { CalendarRecord, ContentItem, ContentType } from "../lib/types";
 
 /** Carrega uma competência, coordena sua edição e entrega os mesmos dados às três colunas. */
 export function Studio({
@@ -41,6 +41,7 @@ export function Studio({
   const [calendar, setCalendar] = useState<CalendarRecord | null>(null);
   const [items, setItems] = useState<ContentItem[]>([]);
   const [postingDays, setPostingDays] = useState<number[]>([]);
+  const [weekdayFormats, setWeekdayFormats] = useState<Record<number, ContentType>>({});
   const [month, setMonth] = useState(() => new Date());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [presenting, setPresenting] = useState(initialPresenting);
@@ -89,6 +90,9 @@ export function Studio({
         if (Array.isArray(cData.calendar.posting_days)) {
           setPostingDays(cData.calendar.posting_days);
         }
+        if (cData.calendar.weekday_formats && typeof cData.calendar.weekday_formats === "object") {
+          setWeekdayFormats(cData.calendar.weekday_formats);
+        }
       }
       if (Array.isArray(cData.items)) {
         setItems(cData.items);
@@ -128,7 +132,8 @@ export function Studio({
   const saveChanges = async (
     updatedItems = items,
     updatedCal = calendar,
-    updatedPostingDays = postingDays
+    updatedPostingDays = postingDays,
+    updatedWeekdayFormats = weekdayFormats
   ) => {
     if (!calendar) return;
     try {
@@ -147,6 +152,7 @@ export function Studio({
           status: updatedCal?.status,
           assignedToId: updatedCal?.assigned_to_id,
           postingDays: updatedPostingDays,
+          weekdayFormats: updatedWeekdayFormats,
           items: updatedItems,
         }),
       });
@@ -267,11 +273,13 @@ export function Studio({
       let current = currentCounts.get(key) || 0;
 
       while (current < target) {
+        const dayOfWeek = d.getDay();
+        const defaultTypeForDay = weekdayFormats[dayOfWeek] || "Feed e Story";
         const newItem: ContentItem = {
           id: crypto.randomUUID(),
           date: key,
           title: "Publicação",
-          type: "Feed",
+          type: defaultTypeForDay,
           status: "Ideia",
           channel: "Instagram",
           profile: defaultProfile,
@@ -306,9 +314,49 @@ export function Studio({
     const updatedCal = {
       ...calendar,
       posting_days: newDays,
+      weekday_formats: weekdayFormats,
     };
     setCalendar(updatedCal);
-    await saveChanges(allItems, updatedCal, newDays);
+    await saveChanges(allItems, updatedCal, newDays, weekdayFormats);
+  };
+
+  /** Atualiza o formato padrão de um dia da semana e aplica aos rascunhos em branco desse dia. */
+  const handleUpdateWeekdayFormat = async (dayNum: number, newFormat: ContentType) => {
+    if (!calendar) return;
+    const updatedFormats: Record<number, ContentType> = {
+      ...weekdayFormats,
+      [dayNum]: newFormat,
+    };
+    setWeekdayFormats(updatedFormats);
+
+    // Atualiza também rascunhos em branco do mês atual que caem nesse dia da semana
+    const currentMonthPrefix = monthKey(month);
+    const updatedItems = items.map((it) => {
+      if (it.date.startsWith(currentMonthPrefix)) {
+        try {
+          const parts = it.date.split("-");
+          const itemDayOfWeek = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getDay();
+          const isBlankDraft =
+            it.status === "Ideia" &&
+            !it.imageUrl &&
+            (it.title === "Publicação" || it.title === "Nova publicação") &&
+            !it.caption &&
+            !it.visual;
+          if (itemDayOfWeek === dayNum && isBlankDraft) {
+            return { ...it, type: newFormat };
+          }
+        } catch {}
+      }
+      return it;
+    });
+
+    setItems(updatedItems);
+    const updatedCal = {
+      ...calendar,
+      weekday_formats: updatedFormats,
+    };
+    setCalendar(updatedCal);
+    await saveChanges(updatedItems, updatedCal, postingDays, updatedFormats);
   };
 
   /** Reúne marca, perfis principais e colaboradores usados no calendário, sem duplicação. */
@@ -337,11 +385,18 @@ export function Studio({
    */
   const createOn = (date = dateKey(new Date(month.getFullYear(), month.getMonth(), 1))) => {
     const defaultProfile = calendar?.brand ? `@${calendar.brand.toLowerCase().replace(/\s+/g, "")}` : "";
+    let defaultType: ContentType = "Feed e Story";
+    try {
+      const parts = date.split("-");
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      defaultType = weekdayFormats[d.getDay()] || "Feed e Story";
+    } catch {}
+
     const newItem: ContentItem = {
       id: crypto.randomUUID(),
       date,
       title: "Nova publicação",
-      type: "Feed",
+      type: defaultType,
       status: "Ideia",
       channel: "Instagram",
       profile: defaultProfile,
@@ -539,10 +594,12 @@ export function Studio({
             items={monthItems}
             selectedId={selectedId}
             postingDays={postingDays}
+            weekdayFormats={weekdayFormats}
             onMonthChange={handleMonthChange}
             onSelect={(item) => setSelectedId(item.id)}
             onCreate={createOn}
             onUpdatePostingDays={handleUpdatePostingDays}
+            onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
             onClearMonth={handleClearMonth}
           />
 

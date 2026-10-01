@@ -65,14 +65,21 @@ export async function POST(request: Request) {
         clientPostingDays = [];
       }
 
+      let clientWeekdayFormats: Record<string, string> = {};
+      try {
+        clientWeekdayFormats = JSON.parse(client.weekday_formats || "{}");
+      } catch {
+        clientWeekdayFormats = {};
+      }
+
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
       const title = `Planejamento ${month}`;
 
       await db.prepare(
         `INSERT INTO calendars (
-          id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, created_by_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, weekday_formats, created_by_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         id,
         clientId,
@@ -86,6 +93,7 @@ export async function POST(request: Request) {
         "",
         "draft",
         JSON.stringify(clientPostingDays),
+        JSON.stringify(clientWeekdayFormats),
         user.id,
         now,
         now
@@ -112,12 +120,15 @@ export async function POST(request: Request) {
           const d = new Date(y, m, day);
           if (clientPostingDays.includes(d.getDay())) {
             const dateStr = `${month}-${String(day).padStart(2, "0")}`;
+            const dayOfWeek = d.getDay();
+            const formatForDay = clientWeekdayFormats[dayOfWeek] || "Feed e Story";
+
             await insertItem.run(
               crypto.randomUUID(),
               id,
               dateStr,
               "Publicação",
-              "Feed",
+              formatForDay,
               "Ideia",
               "Instagram",
               "",

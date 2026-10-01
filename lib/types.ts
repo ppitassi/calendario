@@ -27,6 +27,7 @@ export type Client = {
   accent?: string;
   profiles?: string;
   posting_days?: number[];
+  weekday_formats?: Record<number, ContentType>;
   logo_url?: string;
   has_multiple_profiles?: number | boolean;
   created_by_id: string;
@@ -58,7 +59,7 @@ export type ContentItem = {
   profile?: string;
   isCollab?: boolean;
   collabProfile?: string;
-  objective: string;
+  objective?: string;
   head?: string;
   subhead?: string;
   caption: string;
@@ -86,6 +87,7 @@ export type CalendarRecord = {
   tone?: string;
   pillars?: string;
   posting_days?: number[];
+  weekday_formats?: Record<number, ContentType>;
   status: CalendarStatus;
   created_by_id: string;
   assigned_to_id?: string | null;

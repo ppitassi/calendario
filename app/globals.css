@@ -582,6 +582,72 @@
   font-weight: 900;
 }
 
+.weekdayFormatsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  animation: notifFadeIn .15s ease-out;
+}
+
+.weekdayFormatsHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+
+.weekdayFormatsItems {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.weekdayFormatRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.weekdayFormatDayLabel {
+  font-size: 9px;
+  font-weight: 900;
+  color: #fff;
+  background: var(--accent);
+  padding: 2px 6px;
+  border-radius: 5px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.weekdayFormatSelect {
+  flex: 1;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s ease;
+}
+
+.weekdayFormatSelect:focus,
+.weekdayFormatSelect:hover {
+  border-color: var(--accent);
+}
+
 .cadenceSummary {
   font-size: 9px;
   color: var(--muted);

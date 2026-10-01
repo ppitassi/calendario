@@ -246,7 +246,9 @@ async function initPgSchema(pool: Pool | PoolClient) {
     { table: "calendar_items", col: "collab_profile", def: "TEXT DEFAULT ''" },
     { table: "clients", col: "profiles", def: "TEXT DEFAULT ''" },
     { table: "clients", col: "posting_days", def: "TEXT DEFAULT '[]'" },
+    { table: "clients", col: "weekday_formats", def: "TEXT DEFAULT '{}'" },
     { table: "calendars", col: "posting_days", def: "TEXT DEFAULT '[]'" },
+    { table: "calendars", col: "weekday_formats", def: "TEXT DEFAULT '{}'" },
     { table: "clients", col: "logo_url", def: "TEXT" },
     { table: "clients", col: "has_multiple_profiles", def: "INTEGER DEFAULT 0" },
   ];
@@ -578,7 +580,9 @@ function initSqliteSchema(db: any) {
   try { db.exec("ALTER TABLE calendar_items ADD COLUMN collab_profile TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN profiles TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN posting_days TEXT DEFAULT '[]';"); } catch {}
+  try { db.exec("ALTER TABLE clients ADD COLUMN weekday_formats TEXT DEFAULT '{}';"); } catch {}
   try { db.exec("ALTER TABLE calendars ADD COLUMN posting_days TEXT DEFAULT '[]';"); } catch {}
+  try { db.exec("ALTER TABLE calendars ADD COLUMN weekday_formats TEXT DEFAULT '{}';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN logo_url TEXT;"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN has_multiple_profiles INTEGER DEFAULT 0;"); } catch {}
 
