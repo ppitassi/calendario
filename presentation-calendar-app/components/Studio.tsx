@@ -149,31 +149,51 @@ export function Studio({
    * Persiste metadados, cadência e a coleção completa de itens em uma única
    * atualização; o rótulo de estado informa sucesso ou falha ao operador.
    */
-  const saveChanges = async (
-    updatedItems = items,
-    updatedCal = calendar,
-    updatedPostingDays = postingDays,
-    updatedWeekdayFormats = weekdayFormats
+  const isSavingRef = useRef(false);
+  const pendingSaveRef = useRef<{
+    items: ContentItem[];
+    cal: any;
+    postingDays: number[];
+    weekdayFormats: any;
+  } | null>(null);
+
+  const performSave = async (
+    targetItems: ContentItem[],
+    targetCal: any,
+    targetPostingDays: number[],
+    targetWeekdayFormats: any
   ) => {
     if (!calendar) return;
+
+    // Deduplica IDs no cliente garantindo integridade
+    const seen = new Set<string>();
+    const cleanItems = targetItems.map((it) => {
+      let id = it.id ? String(it.id).trim() : "";
+      if (!id || seen.has(id)) {
+        id = crypto.randomUUID();
+      }
+      seen.add(id);
+      return { ...it, id };
+    });
+
     try {
       const res = await fetch(`/api/calendars/${calendar.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: updatedCal?.title,
+          title: targetCal?.title,
           month: monthKey(month),
-          brand: updatedCal?.brand,
-          project: updatedCal?.project,
-          accent: updatedCal?.accent,
-          strategy: updatedCal?.strategy,
-          audience: updatedCal?.audience,
-          objective: updatedCal?.objective,
-          status: updatedCal?.status,
-          assignedToId: updatedCal?.assigned_to_id,
-          postingDays: updatedPostingDays,
-          weekdayFormats: updatedWeekdayFormats,
-          items: updatedItems,
+          brand: targetCal?.brand,
+          project: targetCal?.project,
+          accent: targetCal?.accent,
+          strategy: targetCal?.strategy,
+          audience: targetCal?.audience,
+          objective: targetCal?.objective,
+          status: targetCal?.status,
+          assignedToId: targetCal?.assigned_to_id,
+          postingDays: targetPostingDays,
+          weekdayFormats: targetWeekdayFormats,
+          items: cleanItems,
         }),
       });
 
@@ -183,6 +203,43 @@ export function Studio({
       }
     } catch (err) {
       addNotification("Erro de conexão ao tentar sincronizar as alterações.");
+    }
+  };
+
+  /**
+   * Persiste metadados, cadência e a coleção completa de itens em uma única
+   * atualização com fila de serialização para evitar colisões concorrentes.
+   */
+  const saveChanges = async (
+    updatedItems = items,
+    updatedCal = calendar,
+    updatedPostingDays = postingDays,
+    updatedWeekdayFormats = weekdayFormats
+  ) => {
+    if (!calendar) return;
+
+    if (isSavingRef.current) {
+      // Já existe um salvamento em andamento; armazena o mais recente para rodar logo após
+      pendingSaveRef.current = {
+        items: updatedItems,
+        cal: updatedCal,
+        postingDays: updatedPostingDays,
+        weekdayFormats: updatedWeekdayFormats,
+      };
+      return;
+    }
+
+    isSavingRef.current = true;
+    try {
+      await performSave(updatedItems, updatedCal, updatedPostingDays, updatedWeekdayFormats);
+    } finally {
+      isSavingRef.current = false;
+      // Se houver salvamento acumulado durante o processo, dispara o mais novo
+      if (pendingSaveRef.current) {
+        const next = pendingSaveRef.current;
+        pendingSaveRef.current = null;
+        saveChanges(next.items, next.cal, next.postingDays, next.weekdayFormats);
+      }
     }
   };
 
