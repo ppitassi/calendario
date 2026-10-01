@@ -1,0 +1,346 @@
+/**
+ * Card Macro Unificado: Capa + Resumo Estratégico + Calendário Mensal em um único bloco.
+ */
+
+.unifiedCard {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.16));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface, rgba(255, 255, 255, 0.88));
+  box-shadow: var(--shadow-overlay, 0 20px 50px -20px rgba(20, 29, 52, 0.25));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+  padding: 2.25rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* 1. Header do Card (Identidade & Título da Proposta) */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.brandLogoBox {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1.1rem;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.brandLogoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.4rem;
+}
+
+.brandInitials {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--tenant-primary, #ef4444);
+  letter-spacing: -0.02em;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.headerBadge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tenant-primary, #ef4444);
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.1;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+}
+
+.heroTitle span {
+  color: var(--tenant-primary, #ef4444);
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.heroSubtitle strong {
+  color: #1e293b;
+}
+
+/* 2. Grid de Conteúdo (Esquerda: Resumo Estratégico | Direita: Calendário Mensal) */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Coluna Esquerda: Resumo do Planejamento */
+.strategyCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.colHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.colHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.colHeader p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.metricsRow {
+  display: grid;
+  grid-template-columns: 110px 1fr 1fr;
+  gap: 1rem;
+}
+
+.volumeBox {
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.metricBoxLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.volumeNum {
+  margin: 0.25rem 0 0;
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--tenant-primary, #ef4444);
+  line-height: 1;
+}
+
+.barsBox {
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.barsTitle {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.15rem;
+}
+
+.barRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.barMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.barTrack {
+  height: 5px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.brandDetailsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.detailItem span {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.detailItem strong {
+  font-size: 0.82rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+/* Coluna Direita: Calendário Mensal */
+.calendarCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.calendarCardInner {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.dayHeader {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  padding-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.dayCell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.dayCell.empty {
+  background: transparent;
+  border: none;
+}
+
+.dayCell.hasPost {
+  background: var(--tenant-primary, #ef4444);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+  font-weight: 800;
+}
+
+.dayCell.hasPost:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.35);
+}
+
+.calCountBadge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.calIndicatorIcon {
+  position: absolute;
+  bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+/* Responsivo */
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .metricsRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .unifiedCard {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .metricsRow {
+    grid-template-columns: 1fr;
+  }
+}

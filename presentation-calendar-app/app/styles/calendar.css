@@ -405,10 +405,29 @@
 
 .dayPostNum {
   font-weight: 800;
-  font-size: 9.5px;
-  color: var(--muted);
+  font-size: 9px;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
   flex-shrink: 0;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
+
+.dayPostTab.active .dayPostNum {
+  background: #fff;
+  border-color: color-mix(in srgb, var(--accent), transparent 60%);
+  color: var(--accent);
+}
+
+.dayPostNum.collabTag {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #dc2626;
+}
+
 
 .dayPostTitleText {
   overflow: hidden;

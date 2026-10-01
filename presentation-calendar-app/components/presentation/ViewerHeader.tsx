@@ -16,43 +16,66 @@ export function ViewerHeader({
   onExit,
   onPrevMonth,
   onNextMonth,
+  clientMode = false,
+  onShare,
 }: {
   calendar: CalendarRecord;
   currentDate: Date;
   onExit: () => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  clientMode?: boolean;
+  onShare?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [loadingShare, setLoadingShare] = useState(false);
 
-  /** Copia a URL atual e mantém por dois segundos o feedback visual de sucesso. */
+  /** Gera/busca o token único do cliente e copia a URL pública */
   const handleShare = async () => {
+    if (onShare) {
+      onShare();
+      return;
+    }
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setLoadingShare(true);
+      const res = await fetch(`/api/calendars/${calendar.id}/share-token`);
+      const data = await res.json();
+      if (data.token) {
+        const url = `${window.location.origin}/portal/${data.token}`;
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      } else {
+        alert("Não foi possível gerar o link de compartilhamento.");
+      }
     } catch {
-      alert("Não foi possível copiar o link. Copie a URL diretamente da barra do navegador.");
+      alert("Erro ao conectar com a API para gerar link do cliente.");
+    } finally {
+      setLoadingShare(false);
     }
   };
 
   return (
     <header className={styles.appHeader}>
       <div className={styles.identity}>
-        <IconButton
-          type="button"
-          label="Voltar ao Editor"
-          onClick={onExit}
-          variant="glass"
-        >
-          <ArrowLeft />
-        </IconButton>
+        {!clientMode && (
+          <IconButton
+            type="button"
+            label="Voltar ao Editor"
+            onClick={onExit}
+            variant="glass"
+          >
+            <ArrowLeft />
+          </IconButton>
+        )}
         <div className={styles.avatar}>
           {calendar.brand.slice(0, 2).toUpperCase()}
         </div>
         <div className={styles.appTitle}>
           <h1>{calendar.brand}</h1>
-          <span>Apresentação do Calendário de Posts</span>
+          <span>
+            {clientMode ? "Validação do Planejamento de Posts" : "Apresentação do Calendário de Posts"}
+          </span>
         </div>
       </div>
 
@@ -87,23 +110,28 @@ export function ViewerHeader({
           Imprimir / PDF
         </Button>
 
-        <Button
-          type="button"
-          onClick={handleShare}
-          variant="primary"
-          icon={<Share2 size={14} />}
-        >
-          {copied ? "Link Copiado!" : "Compartilhar"}
-        </Button>
+        {!clientMode && (
+          <>
+            <Button
+              type="button"
+              onClick={handleShare}
+              variant="primary"
+              disabled={loadingShare}
+              icon={<Share2 size={14} />}
+            >
+              {loadingShare ? "Gerando..." : copied ? "Link Copiado!" : "Compartilhar"}
+            </Button>
 
-        <IconButton
-          type="button"
-          label="Fechar apresentação"
-          onClick={onExit}
-          variant="ghost"
-        >
-          <X />
-        </IconButton>
+            <IconButton
+              type="button"
+              label="Fechar apresentação"
+              onClick={onExit}
+              variant="ghost"
+            >
+              <X />
+            </IconButton>
+          </>
+        )}
       </div>
     </header>
   );

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowUpRight, Target, Image as ImageIcon } from "lucide-react";
+import { ArrowUpRight, Target, Image as ImageIcon, MessageSquare } from "lucide-react";
 import type { ContentItem } from "@/lib/types";
 import { InstagramMockup } from "./InstagramMockup";
 import { Lightbox } from "./Lightbox";
@@ -15,11 +15,17 @@ export function PostPreview({
   date,
   postTypeConfig,
   postNumber,
+  clientMode = false,
+  clientComment = "",
+  onClientCommentChange,
 }: {
   post: ContentItem;
   date: string;
   postTypeConfig?: any;
   postNumber: number;
+  clientMode?: boolean;
+  clientComment?: string;
+  onClientCommentChange?: (comment: string) => void;
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -100,6 +106,22 @@ export function PostPreview({
                   </div>
                 </div>
               </div>
+
+              {clientMode && (
+                <div className={styles.clientCommentBox}>
+                  <div className={styles.clientCommentHeader}>
+                    <MessageSquare size={13} />
+                    <span>Comentário ou pedido de ajuste para este post:</span>
+                  </div>
+                  <textarea
+                    className={styles.clientCommentInput}
+                    value={clientComment || ""}
+                    onChange={(e) => onClientCommentChange && onClientCommentChange(e.target.value)}
+                    placeholder="Deixe observações ou solicite alterações para esta publicação..."
+                    rows={2}
+                  />
+                </div>
+              )}
             </div>
 
             <div className={styles.visuals}>

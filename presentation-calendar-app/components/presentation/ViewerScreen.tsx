@@ -1,10 +1,9 @@
 "use client";
 /** Apresentação do calendário para leitura, compartilhamento e impressão. */
 
-
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "motion/react";
-import { LayoutTemplate } from "lucide-react";
+import { LayoutTemplate, CheckCircle2, AlertTriangle, MessageSquare, X, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { CalendarRecord, ContentItem } from "@/lib/types";
@@ -14,24 +13,28 @@ import { cn } from "@/lib/utils";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { PresentationCurveBg } from "./PresentationCurveBg";
 import { ViewerHeader } from "./ViewerHeader";
-import { PresentationStrategy } from "./PresentationStrategy";
-import { PresentationCalendar } from "./PresentationCalendar";
+import { PresentationUnifiedIntro } from "./PresentationUnifiedIntro";
+import { PresentationDiscreteFeed } from "./PresentationDiscreteFeed";
 import { PostPreview } from "./PostPreview";
 import styles from "./ViewerScreen.module.css";
 
-/** Compõe capa, estratégia, visão mensal e cartões cronológicos do planejamento. */
+/** Compõe capa, estratégia e visão mensal unificadas, cartões cronológicos e simulação discreta do feed. */
 export function ViewerScreen({
   calendar,
   month,
   items,
   onClose,
   onMonthChange,
+  clientMode = false,
+  clientToken = "",
 }: {
   calendar: CalendarRecord;
   month: Date;
   items: ContentItem[];
-  onClose: () => void;
+  onClose?: () => void;
   onMonthChange?: (newMonth: Date) => void;
+  clientMode?: boolean;
+  clientToken?: string;
 }) {
   /** Ordena uma cópia dos posts por data sem modificar a ordem recebida do Studio. */
   const sortedItems = useMemo(
@@ -39,7 +42,73 @@ export function ViewerScreen({
     [items]
   );
 
-  const brandInitials = (calendar.brand || "CP").slice(0, 2).toUpperCase();
+  // Estado dos comentários individuais por post deixados pelo cliente
+  const [clientComments, setClientComments] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    items.forEach((it) => {
+      const c = it.clientComment || (it as any).client_comment;
+      if (c) initial[it.id] = c;
+    });
+    return initial;
+  });
+
+  // Estado do modal de sequestro de tela ("aprovar com ressalvas" ou "reprovar com ressalvas")
+  const [hijackModalType, setHijackModalType] = useState<"approve_with_notes" | "reject_with_notes" | null>(null);
+  const [generalFeedbackNotes, setGeneralFeedbackNotes] = useState(
+    calendar.clientFeedback || calendar.client_feedback || ""
+  );
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [submittedStatus, setSubmittedStatus] = useState<string | null>(
+    calendar.clientFeedbackStatus || calendar.client_feedback_status || null
+  );
+
+  // Submissão do feedback / aprovação do cliente para a API
+  const handleSubmitReview = async (
+    decision: "approved" | "approved_with_notes" | "rejected_with_notes" | "approve_with_notes" | "reject_with_notes" | string,
+    notes = ""
+  ) => {
+    if (!clientToken) {
+      alert("Token de acesso inválido ou expirado.");
+      return;
+    }
+
+    const normalizedDecision =
+      decision === "approve_with_notes"
+        ? "approved_with_notes"
+        : decision === "reject_with_notes"
+        ? "rejected_with_notes"
+        : decision;
+
+    setSubmittingReview(true);
+    try {
+      const commentsPayload = Object.entries(clientComments).map(([postId, comment]) => ({
+        postId,
+        comment,
+      }));
+
+      const res = await fetch(`/api/portal/${clientToken}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: normalizedDecision,
+          feedbackNotes: notes,
+          postComments: commentsPayload,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Falha ao enviar resposta de validação.");
+      }
+
+      setSubmittedStatus(decision);
+      setHijackModalType(null);
+    } catch (err: any) {
+      alert(err.message || "Erro ao registrar validação. Tente novamente.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   return (
     <div
@@ -57,71 +126,24 @@ export function ViewerScreen({
       <ViewerHeader
         calendar={calendar}
         currentDate={month}
-        onExit={onClose}
+        clientMode={clientMode}
+        onExit={onClose || (() => {})}
         onPrevMonth={() => onMonthChange && onMonthChange(shiftMonth(month, -1))}
         onNextMonth={() => onMonthChange && onMonthChange(shiftMonth(month, 1))}
       />
 
       {/* UI: documento contínuo que também serve de base para impressão/PDF isolado. */}
       <main id="presentation-print-area" className={cn(styles.main, "presentationPrintArea")}>
-        {/* UI: capa com logo, marca e contexto da proposta. */}
+        {/* 1. CARD MACRO UNIFICADO: Capa (Hero) + Resumo do Planejamento + Calendário Mensal em UM só card */}
+        <PresentationUnifiedIntro
+          calendar={calendar}
+          month={month}
+          items={sortedItems}
+        />
+
+        {/* 2. LISTA CRONOLÓGICA DAS POSTAGENS (Briefing, Legenda, Objetivo, Arte e Comentário) */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className={styles.hero}
-        >
-          {calendar.client_logo_url ? (
-            <motion.img
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              src={calendar.client_logo_url}
-              alt={calendar.brand}
-              className={styles.heroLogoImage}
-            />
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className={styles.logo}
-            >
-              <span>{brandInitials}</span>
-            </motion.div>
-          )}
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className={styles.heroTitle}
-          >
-            Proposta de <br />
-            <span>Conteúdo Social</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className={styles.heroSubtitle}
-          >
-            Planejamento de conteúdo de <strong>{calendar.brand}</strong>.
-          </motion.p>
-        </motion.div>
-
-        {/* UI: indicadores de formatos, funil e estratégia cadastrada. */}
-        <PresentationStrategy calendar={calendar} items={sortedItems} />
-
-        {/* UI: visão mensal com atalhos para os cartões completos. */}
-        <PresentationCalendar currentDate={month} items={sortedItems} />
-
-        {/* UI: lista cronológica dos briefings e respectivas artes. */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           className={styles.postsSection}
@@ -140,24 +162,24 @@ export function ViewerScreen({
           ) : (
             <div className={styles.postsList}>
               {sortedItems.map((post, idx) => {
-                // O meio-dia evita mudança de data; IDs internos e nomes PT-BR aceitam formatos legados.
                 const dateObj = new Date(post.date + "T12:00:00");
                 const formattedDate = format(
                   dateObj,
                   "EEEE, dd 'de' MMMM",
                   { locale: ptBR }
                 );
-                const postTypeConfig = POST_TYPES.find(
-                  (pt) => {
-                    const t = post.type.toLowerCase();
-                    return pt.id === t ||
-                      (pt.id === "feed" && (t === "feed" || t === "post")) ||
-                      (pt.id === "story" && (t === "story" || t === "stories")) ||
-                      (pt.id === "carrossel" && (t === "carrossel" || t === "carousel")) ||
-                      (pt.id === "reels" && (t === "reels" || t === "reel" || t === "vídeo" || t === "video")) ||
-                      (pt.id === "feed e story" && !["feed", "story", "stories", "post", "carrossel", "carousel", "reels", "reel", "video", "vídeo"].includes(t));
-                  }
-                );
+                const postTypeConfig = POST_TYPES.find((pt) => {
+                  const t = post.type.toLowerCase();
+                  return (
+                    pt.id === t ||
+                    (pt.id === "feed" && (t === "feed" || t === "post")) ||
+                    (pt.id === "story" && (t === "story" || t === "stories")) ||
+                    (pt.id === "carrossel" && (t === "carrossel" || t === "carousel")) ||
+                    (pt.id === "reels" && (t === "reels" || t === "reel" || t === "vídeo" || t === "video")) ||
+                    (pt.id === "feed e story" &&
+                      !["feed", "story", "stories", "post", "carrossel", "carousel", "reels", "reel", "video", "vídeo"].includes(t))
+                  );
+                });
 
                 return (
                   <div
@@ -176,6 +198,11 @@ export function ViewerScreen({
                       date={post.date}
                       postTypeConfig={postTypeConfig}
                       postNumber={idx + 1}
+                      clientMode={clientMode}
+                      clientComment={clientComments[post.id] || ""}
+                      onClientCommentChange={(val) =>
+                        setClientComments((prev) => ({ ...prev, [post.id]: val }))
+                      }
                     />
 
                     {idx < sortedItems.length - 1 && (
@@ -198,7 +225,146 @@ export function ViewerScreen({
             </span>
           </div>
         </motion.div>
+
+        {/* 3. SIMULAÇÃO DISCRETA DO FEED NO FIM DA APRESENTAÇÃO */}
+        <PresentationDiscreteFeed
+          calendar={calendar}
+          items={sortedItems}
+        />
       </main>
+
+      {/* 4. BARRA FIXA DE APROVAÇÃO DO CLIENTE (Exibida somente no modo cliente) */}
+      {clientMode && (
+        <>
+          <div className="portalApprovalStickyBar">
+            <div className="portalApprovalActions">
+              <button
+                type="button"
+                className="portalApproveFullBtn"
+                onClick={() => handleSubmitReview("approved")}
+                disabled={submittingReview}
+              >
+                <Check size={18} />
+                <span>
+                  {submittingReview ? "Enviando aprovação..." : "Aprovar Calendário Completo"}
+                </span>
+              </button>
+
+              <div className="portalRessalvaLinks">
+                <button
+                  type="button"
+                  className="portalPhraseBtn approveNotes"
+                  onClick={() => setHijackModalType("approve_with_notes")}
+                  disabled={submittingReview}
+                >
+                  Aprovar com ressalvas
+                </button>
+                <span className="portalPhraseSeparator">•</span>
+                <button
+                  type="button"
+                  className="portalPhraseBtn rejectNotes"
+                  onClick={() => setHijackModalType("reject_with_notes")}
+                  disabled={submittingReview}
+                >
+                  Reprovar com ressalvas
+                </button>
+              </div>
+
+              {submittedStatus && (
+                <div style={{ fontSize: "11px", fontWeight: "700", color: "#10b981", marginTop: 4 }}>
+                  ✓ Status atual:{" "}
+                  {submittedStatus === "approved" || submittedStatus === "approve"
+                    ? "Aprovado sem ressalvas"
+                    : submittedStatus === "approved_with_notes" || submittedStatus === "approve_with_notes"
+                    ? "Aprovado com ressalvas"
+                    : "Reprovado com ressalvas"}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 5. SEQUESTRO DE TELA COM MODAL CENTRALIZADO PARA FEEDBACK OBRIGATÓRIO */}
+          {hijackModalType && (
+            <div className="screenHijackModalOverlay" onClick={() => setHijackModalType(null)}>
+              <div className="screenHijackCard" onClick={(e) => e.stopPropagation()}>
+                <div className="screenHijackHeader">
+                  <div
+                    className={`screenHijackBadge ${
+                      hijackModalType === "approve_with_notes" ? "approveNotes" : "rejectNotes"
+                    }`}
+                  >
+                    {hijackModalType === "approve_with_notes" ? (
+                      <>
+                        <AlertTriangle size={14} />
+                        <span>Aprovação com Ressalvas</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle size={14} />
+                        <span>Reprovação com Ressalvas</span>
+                      </>
+                    )}
+                  </div>
+                  <h2>
+                    {hijackModalType === "approve_with_notes"
+                      ? "Aprovar calendário com pontos de ajuste"
+                      : "Reprovar calendário e solicitar refação"}
+                  </h2>
+                  <p>
+                    Por favor, detalhe no campo abaixo os ajustes, alterações ou orientações
+                    necessárias para a equipe de design e social media:
+                  </p>
+                </div>
+
+                <div className="screenHijackBody">
+                  <label htmlFor="screenHijackFeedback">
+                    Feedback Geral & Ressalvas para a Equipe:
+                  </label>
+                  <textarea
+                    id="screenHijackFeedback"
+                    className="screenHijackTextarea"
+                    placeholder="Descreva exatamente o que precisa ser ajustado ou revisto..."
+                    value={generalFeedbackNotes}
+                    onChange={(e) => setGeneralFeedbackNotes(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="screenHijackFooter">
+                  <button
+                    type="button"
+                    className="screenHijackCancelBtn"
+                    onClick={() => setHijackModalType(null)}
+                    disabled={submittingReview}
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="button"
+                    className={`screenHijackSubmitBtn ${
+                      hijackModalType === "approve_with_notes" ? "approveTheme" : "rejectTheme"
+                    }`}
+                    onClick={() => {
+                      if (!generalFeedbackNotes.trim()) {
+                        alert("Por favor, preencha o campo com suas ressalvas antes de confirmar.");
+                        return;
+                      }
+                      handleSubmitReview(hijackModalType, generalFeedbackNotes.trim());
+                    }}
+                    disabled={submittingReview}
+                  >
+                    {submittingReview
+                      ? "Enviando..."
+                      : hijackModalType === "approve_with_notes"
+                      ? "Confirmar Aprovação com Ressalvas"
+                      : "Confirmar Reprovação com Ressalvas"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
