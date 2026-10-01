@@ -206,22 +206,49 @@ export function Calendar({
 
           {selectedDayPosts.length > 0 ? (
             <div className="dayPostsTabs">
-              {selectedDayPosts.map((post, idx) => (
-                <button
-                  key={post.id}
-                  type="button"
-                  className={`dayPostTab ${post.id === selectedId ? "active" : ""}`}
-                  onClick={() => onSelect(post)}
-                >
-                  <span style={{ fontWeight: 800 }}>#{idx + 1}</span>
-                  <strong>{post.title || post.type}</strong>
-                  {post.isCollab && (
-                    <span title="Collab" style={{ display: "inline-flex", alignItems: "center", color: "var(--accent)" }}>
-                      <Users size={10} />
-                    </span>
-                  )}
-                </button>
-              ))}
+              {selectedDayPosts.map((post, idx) => {
+                const getLabel = () => {
+                  if (post.profile) {
+                    if (post.isCollab) {
+                      return post.collabProfile 
+                        ? `${post.profile} + ${post.collabProfile}` 
+                        : `${post.profile} (Collab)`;
+                    }
+                    if (post.title && post.title !== "Nova publicação" && post.title !== "Publicação" && post.title !== post.profile) {
+                      return `${post.profile} • ${post.title}`;
+                    }
+                    return post.profile;
+                  }
+                  if (post.isCollab) {
+                    const base = post.title && post.title !== "Nova publicação" ? post.title : "Publicação";
+                    return `${base} (Collab)`;
+                  }
+                  return post.title || `Publicação #${idx + 1}`;
+                };
+
+                const label = getLabel();
+
+                return (
+                  <button
+                    key={post.id}
+                    type="button"
+                    className={`dayPostTab ${post.id === selectedId ? "active" : ""}`}
+                    onClick={() => onSelect(post)}
+                    title={`Post #${idx + 1}: ${label}`}
+                  >
+                    <div className="dayPostTabMain">
+                      <span className="dayPostNum">#{idx + 1}</span>
+                      <strong className="dayPostTitleText">{label}</strong>
+                    </div>
+                    {post.isCollab && (
+                      <span className="dayPostCollabBadge" title="Publicação em Collab">
+                        <Users size={10} />
+                        <span>Collab</span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <div style={{ fontSize: "10px", color: "var(--muted)", padding: "2px 0" }}>

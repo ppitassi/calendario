@@ -960,11 +960,50 @@
   font-weight: 800;
 }
 
-.dayPostTab strong {
+.dayPostTabMain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.dayPostNum {
+  font-weight: 800;
+  font-size: 9.5px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.dayPostTitleText {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 10px;
+  font-weight: 700;
+}
+
+.dayPostCollabBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--tenant-primary, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .dayPostCollabBadge {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
 }
 
 .dayActionBtn {

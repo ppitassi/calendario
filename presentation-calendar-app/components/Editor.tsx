@@ -52,6 +52,67 @@ export function Editor({
     return Array.from(set);
   }, [availableProfiles, item.profile, item.collabProfile]);
 
+  // Helper para verificar se o título atual é gerado automaticamente
+  const isAutoTitle = (t?: string, currentProfile?: string) => {
+    if (!t) return true;
+    const trimmed = t.trim();
+    if (trimmed === "Nova publicação" || trimmed === "Publicação") return true;
+    if (currentProfile) {
+      if (trimmed === currentProfile || trimmed === `${currentProfile} (Collab)`) return true;
+      if (trimmed.startsWith(`${currentProfile} + `)) return true;
+    }
+    return false;
+  };
+
+  const getComputedTitle = (profile?: string, isCollab?: boolean, collabProfile?: string) => {
+    if (!profile) return "Nova publicação";
+    if (isCollab) {
+      return collabProfile ? `${profile} + ${collabProfile}` : `${profile} (Collab)`;
+    }
+    return profile;
+  };
+
+  const handleSelectProfile = (newProfile: string) => {
+    const shouldUpdateTitle = isAutoTitle(item.title, item.profile);
+    const newTitle = shouldUpdateTitle
+      ? getComputedTitle(newProfile, item.isCollab, item.collabProfile)
+      : item.title;
+
+    onChange({
+      ...itemRef.current,
+      profile: newProfile,
+      title: newTitle,
+    });
+  };
+
+  const handleToggleCollab = (checked: boolean) => {
+    const shouldUpdateTitle = isAutoTitle(item.title, item.profile);
+    const newCollabProfile = checked ? (item.collabProfile || "") : "";
+    const newTitle = shouldUpdateTitle
+      ? getComputedTitle(item.profile, checked, newCollabProfile)
+      : item.title;
+
+    onChange({
+      ...itemRef.current,
+      isCollab: checked,
+      collabProfile: newCollabProfile,
+      title: newTitle,
+    });
+  };
+
+  const handleCollabProfileChange = (collabProfile: string) => {
+    const shouldUpdateTitle = isAutoTitle(item.title, item.profile);
+    const newTitle = shouldUpdateTitle
+      ? getComputedTitle(item.profile, true, collabProfile)
+      : item.title;
+
+    onChange({
+      ...itemRef.current,
+      collabProfile,
+      title: newTitle,
+    });
+  };
+
   const handleAddProfile = () => {
     const raw = newProfileText.trim().replace(/^@+/, "");
     if (!raw) return;
@@ -59,7 +120,7 @@ export function Editor({
     if (onCreateProfile) {
       onCreateProfile(formatted);
     } else {
-      field("profile", formatted);
+      handleSelectProfile(formatted);
     }
     setNewProfileText("");
     setShowAddProfile(false);
@@ -517,14 +578,7 @@ export function Editor({
                   <input
                     type="checkbox"
                     checked={Boolean(item.isCollab)}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      onChange({
-                        ...item,
-                        isCollab: checked,
-                        collabProfile: checked ? (item.collabProfile || "") : "",
-                      });
-                    }}
+                    onChange={(e) => handleToggleCollab(e.target.checked)}
                   />
                   <span className="collabSwitchBadge">
                     {item.isCollab ? "Collab Ativo" : "Collab Desativado"}
@@ -586,7 +640,7 @@ export function Editor({
                     id="mainProfileInput"
                     type="text"
                     value={item.profile || ""}
-                    onChange={(e) => field("profile", e.target.value)}
+                    onChange={(e) => handleSelectProfile(e.target.value)}
                     placeholder={
                       profileSuggestions.length === 0
                         ? "Sem perfil vinculado (clique em Criar Perfil acima)"
@@ -597,7 +651,7 @@ export function Editor({
                     <button
                       type="button"
                       className="clearProfileBtn"
-                      onClick={() => field("profile", "")}
+                      onClick={() => handleSelectProfile("")}
                       title="Remover arroba desta publicação"
                     >
                       <X size={14} />
@@ -610,7 +664,7 @@ export function Editor({
                     <button
                       type="button"
                       className={!item.profile ? "active outline" : ""}
-                      onClick={() => field("profile", "")}
+                      onClick={() => handleSelectProfile("")}
                       title="Publicar sem arroba vinculado"
                     >
                       Sem @
@@ -620,7 +674,7 @@ export function Editor({
                         key={p}
                         type="button"
                         className={item.profile === p ? "active" : ""}
-                        onClick={() => field("profile", p)}
+                        onClick={() => handleSelectProfile(p)}
                       >
                         {p}
                       </button>
@@ -638,14 +692,14 @@ export function Editor({
                     <input
                       type="text"
                       value={item.collabProfile || ""}
-                      onChange={(e) => field("collabProfile", e.target.value)}
+                      onChange={(e) => handleCollabProfileChange(e.target.value)}
                       placeholder="Ex: @perfilB ou @parceiro"
                     />
                     {item.collabProfile && (
                       <button
                         type="button"
                         className="clearProfileBtn"
-                        onClick={() => field("collabProfile", "")}
+                        onClick={() => handleCollabProfileChange("")}
                         title="Remover colaborador desta publicação"
                       >
                         <X size={14} />
@@ -657,7 +711,7 @@ export function Editor({
                       <button
                         type="button"
                         className={!item.collabProfile ? "active outline" : ""}
-                        onClick={() => field("collabProfile", "")}
+                        onClick={() => handleCollabProfileChange("")}
                         title="Sem colaborador"
                       >
                         Sem @
@@ -667,7 +721,7 @@ export function Editor({
                           key={p}
                           type="button"
                           className={item.collabProfile === p ? "active" : ""}
-                          onClick={() => field("collabProfile", p)}
+                          onClick={() => handleCollabProfileChange(p)}
                         >
                           {p}
                         </button>
