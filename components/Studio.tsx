@@ -10,19 +10,24 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   MonitorPlay,
   Plus,
   ArrowLeft,
   Bell,
   AlertCircle,
   X,
+  Sun,
+  Moon,
+  LogOut,
+  Shield,
 } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { Editor } from "./Editor";
 import { Preview } from "./Preview";
 import { Presentation } from "./Presentation";
 import { dateKey, monthKey, monthLabel, shiftMonth, parseMonthKey } from "../lib/date";
-import type { CalendarRecord, ContentItem, ContentType } from "../lib/types";
+import type { CalendarRecord, ContentItem, ContentType, SafeUser } from "../lib/types";
 
 /** Carrega uma competência, coordena sua edição e entrega os mesmos dados às três colunas. */
 export function Studio({
@@ -31,12 +36,20 @@ export function Studio({
   onOpenPresentation,
   onMonthChange,
   initialPresenting = false,
+  currentUser,
+  onLogout,
+  theme,
+  onToggleTheme,
 }: {
   calendarId: string;
   onBack: () => void;
   onOpenPresentation?: () => void;
   onMonthChange?: (month: Date, calId: string) => void;
   initialPresenting?: boolean;
+  currentUser?: SafeUser;
+  onLogout?: () => void;
+  theme?: "light" | "dark";
+  onToggleTheme?: () => void;
 }) {
   const [calendar, setCalendar] = useState<CalendarRecord | null>(null);
   const [items, setItems] = useState<ContentItem[]>([]);
@@ -49,12 +62,18 @@ export function Studio({
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Array<{ id: string; message: string; timestamp: Date }>>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
         setShowNotifications(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(target)) {
+        setUserDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -542,13 +561,31 @@ export function Studio({
           </div>
         </div>
 
-        {/* UI: ferramentas do cabeçalho com notificações e modo apresentação */}
+        {/* UI: ferramentas do cabeçalho unificado com apresentação, notificações, tema e perfil de usuário */}
         <div className="headerTools">
+          <button
+            className="presentButton"
+            onClick={() => {
+              if (onOpenPresentation) {
+                onOpenPresentation();
+              } else {
+                setPresenting(true);
+              }
+            }}
+            title="Apresentação em tela cheia com artes reais"
+          >
+            <MonitorPlay size={14} />
+            <span>Apresentação</span>
+          </button>
+
           <div className="notificationWrapper" ref={notificationRef}>
             <button
               type="button"
               className={`notificationBellBtn ${notifications.length > 0 ? "hasAlerts" : ""}`}
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setUserDropdownOpen(false);
+              }}
               title={notifications.length > 0 ? `${notifications.length} notificações de alerta` : "Notificações"}
             >
               <Bell size={16} />
@@ -603,20 +640,90 @@ export function Studio({
             )}
           </div>
 
-          <button
-            className="presentButton"
-            onClick={() => {
-              if (onOpenPresentation) {
-                onOpenPresentation();
-              } else {
-                setPresenting(true);
-              }
-            }}
-            title="Apresentação em tela cheia com artes reais"
-          >
-            <MonitorPlay size={14} />
-            <span>Apresentação</span>
-          </button>
+          {onToggleTheme && (
+            <button
+              type="button"
+              className="themeToggleHeaderBtn"
+              onClick={onToggleTheme}
+              title={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+              aria-label="Alternar tema"
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
+
+          {currentUser && (
+            <div className="userDropdownWrapper" ref={userDropdownRef}>
+              <button
+                type="button"
+                className="userMenuTrigger"
+                onClick={() => {
+                  setUserDropdownOpen(!userDropdownOpen);
+                  setShowNotifications(false);
+                }}
+                title="Perfil e configurações de usuário"
+              >
+                <div className="userMenuAvatar">
+                  {currentUser.name
+                    ? currentUser.name
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((p) => p[0].toUpperCase())
+                        .join("")
+                    : "US"}
+                </div>
+                <span className="userMenuName">{currentUser.name}</span>
+                <ChevronDown size={14} className="userMenuChevron" />
+              </button>
+
+              {userDropdownOpen && (
+                <div className="userDropdownMenu">
+                  <div className="userDropdownHeader">
+                    <div className="userMenuAvatar large">
+                      {currentUser.name
+                        ? currentUser.name
+                            .split(" ")
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .map((p) => p[0].toUpperCase())
+                            .join("")
+                        : "US"}
+                    </div>
+                    <div className="userDropdownInfo">
+                      <strong>{currentUser.name}</strong>
+                      <small>@{currentUser.username}</small>
+                      <div className="userRoleTag">
+                        <Shield size={10} />
+                        <span>
+                          {currentUser.role === "admin"
+                            ? "Administrador"
+                            : currentUser.role === "social_media"
+                            ? "Social Media"
+                            : "Designer"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {onLogout && (
+                    <div className="userDropdownFooter">
+                      <button
+                        type="button"
+                        className="userLogoutBtn"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onLogout();
+                        }}
+                      >
+                        <LogOut size={14} />
+                        <span>Sair da conta</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 

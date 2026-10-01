@@ -130,7 +130,7 @@
 }
 
 *{box-sizing:border-box}html,body{margin:0;min-width:320px;min-height:100%;background:var(--canvas);color:var(--ink);font-family:var(--font-display),system-ui,sans-serif;transition:background .3s ease,color .3s ease}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}svg{width:18px;height:18px}.appShell{height:100vh;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 50% -30%,color-mix(in srgb, var(--surface), transparent 30%) 0,transparent 50%),var(--canvas)}
-.appHeader{height:72px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:10px 22px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.88);backdrop-filter:blur(20px);box-shadow:0 4px 20px rgba(23,25,36,.04);z-index:5}.brandArea,.headerContext,.headerTools,.postNavigation{display:flex;align-items:center}.brandArea{gap:11px}.logoMark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--accent),#b40b3a);color:#fff;font-weight:900;font-size:12px;box-shadow:0 8px 20px color-mix(in srgb,var(--accent),transparent 70%)}.brandCopy{display:flex;flex-direction:column}.brandCopy strong{font-size:13px}.brandCopy span{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}.headerContext{justify-content:center;gap:16px;min-width:0}.postNavigation{background:var(--surface-soft);border:1px solid var(--border);border-radius:999px;padding:3px;gap:4px}.postNavigation button,.headerTools>button{display:grid;place-items:center;border:0;background:transparent}.postNavigation button{width:28px;height:28px;border-radius:50%}.postNavigation button:hover{background:#fff}.postNavigation span{font-size:10px;font-weight:900;text-transform:uppercase;min-width:100px;text-align:center}.saveStatus{font-size:10px;color:#29926a;font-weight:800}.headerTools{display:flex;align-items:center;gap:7px}.headerTools>button{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}.headerTools .presentButton{width:auto;display:flex;gap:7px;padding:0 13px;background:var(--ink);color:#fff;border-color:var(--ink);font-size:11px;font-weight:800}.appBody{display:flex;flex:1;min-height:0}.plannerShell{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden}
+.appHeader{height:60px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;padding:8px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.92);backdrop-filter:blur(20px);box-shadow:0 2px 12px rgba(23,25,36,.04);z-index:50}.brandArea,.headerContext,.headerTools,.postNavigation{display:flex;align-items:center}.brandArea{gap:11px}.logoMark{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:linear-gradient(145deg,var(--accent),#b40b3a);color:#fff;font-weight:900;font-size:12px;box-shadow:0 6px 16px color-mix(in srgb,var(--accent),transparent 70%)}.brandCopy{display:flex;flex-direction:column}.brandCopy strong{font-size:13px;color:var(--ink)}.brandCopy span{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:1px}.headerContext{justify-content:center;gap:16px;min-width:0}.postNavigation{background:var(--surface-soft);border:1px solid var(--border);border-radius:999px;padding:3px;gap:4px}.postNavigation button,.headerTools>button{display:grid;place-items:center;border:0;background:transparent}.postNavigation button{width:28px;height:28px;border-radius:50%}.postNavigation button:hover{background:#fff}.postNavigation span{font-size:10px;font-weight:900;text-transform:uppercase;min-width:100px;text-align:center}.saveStatus{font-size:10px;color:#29926a;font-weight:800}.headerTools{display:flex;align-items:center;gap:8px}.headerTools>button{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}.headerTools .presentButton{width:auto;display:flex;gap:7px;padding:0 13px;background:var(--ink);color:#fff;border-color:var(--ink);font-size:11px;font-weight:800}.appBody{display:flex;flex:1;min-height:0}.plannerShell{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden}
 /* Coluna esquerda: calendário, dias, indicadores e ações de criação. */
 .calendarPane{width:clamp(236px, 17vw, 268px);flex:0 0 auto;display:flex;flex-direction:column;gap:13px;padding:14px;background:rgba(255,255,255,.72);border-right:1px solid var(--border);overflow:auto}.panelTitle,.monthHeader{display:flex;align-items:center;justify-content:space-between}.panelTitle>span,.sectionLabel,.previewStatus>span{font-size:9px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}.panelTitle button,.monthHeader button{display:grid;place-items:center;border:0;background:transparent;color:var(--muted)}.panelTitle button{width:30px;height:30px;border:1px solid var(--border);border-radius:9px;background:#fff}.monthSurface{border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,.8);padding:12px}.monthHeader{margin-bottom:10px}.monthHeader strong{font-size:10px;text-transform:uppercase}.monthHeader button{width:26px;height:26px}.monthHeader svg{width:14px}.compactCalendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.compactCalendar>span,.compactCalendar>button{height:27px;display:grid;place-items:center}.weekday{font-size:8px;color:var(--muted);font-weight:900}.compactCalendar>button{position:relative;border:0;border-radius:8px;background:transparent;font-size:10px;font-weight:700}.compactCalendar>button:hover{background:#f0f1f5}.compactCalendar>button.populated{background:color-mix(in srgb,var(--accent),transparent 90%);color:var(--accent);font-weight:900}.compactCalendar>button.selected{background:var(--accent);color:#fff;box-shadow:0 5px 12px color-mix(in srgb,var(--accent),transparent 65%)}.compactCalendar i{position:absolute;bottom:3px;width:3px;height:3px;border-radius:50%;background:currentColor}.primaryButton{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:10px;padding:9px 12px;font-size:10px;font-weight:900}.primaryButton{background:var(--accent);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--accent),transparent 68%)}.primaryButton.full{width:100%}
 /* Coluna central: abas, formulário editorial, mídia, notas e estado vazio. */
@@ -1167,11 +1167,183 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
+/* Theme Toggle Button in Studio Header */
+.themeToggleHeaderBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  transition: all .15s ease;
+  cursor: pointer;
+}
+.themeToggleHeaderBtn:hover {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.2));
+}
+
+/* User Menu Trigger & Dropdown in Studio Header */
+.userDropdownWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.userMenuTrigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.userMenuTrigger:hover {
+  background: var(--surface);
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.2));
+}
+.userMenuAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--tenant-primary, #ef4444), #b91c1c);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  letter-spacing: -0.02em;
+}
+.userMenuAvatar.large {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+.userMenuName {
+  font-size: 11px;
+  font-weight: 700;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.userMenuChevron {
+  color: var(--muted);
+  transition: transform .15s ease;
+}
+.userDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.15);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeIn 0.15s ease;
+}
+.userDropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+.userDropdownInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.userDropdownInfo strong {
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.userDropdownInfo small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.userRoleTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--tenant-primary, #ef4444);
+  margin-top: 4px;
+}
+.userDropdownFooter {
+  padding: 6px;
+}
+.userLogoutBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.userLogoutBtn:hover {
+  background: #fef2f2;
+}
+
 /* ===================== DARK MODE — OVERRIDES DE CORES HARDCODED ===================== */
 [data-theme="dark"] .appHeader {
-  background: rgba(20, 22, 34, 0.92);
+  background: rgba(20, 22, 34, 0.94);
   border-bottom-color: var(--border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+[data-theme="dark"] .themeToggleHeaderBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: #f1f5f9;
+}
+[data-theme="dark"] .themeToggleHeaderBtn:hover {
+  background: var(--surface);
+  color: #ffffff;
+}
+[data-theme="dark"] .userMenuTrigger {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: #f1f5f9;
+}
+[data-theme="dark"] .userMenuTrigger:hover {
+  background: var(--surface);
+}
+[data-theme="dark"] .userDropdownMenu {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .userDropdownHeader {
+  background: var(--surface-soft);
+  border-bottom-color: var(--border);
+}
+[data-theme="dark"] .userDropdownInfo strong {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .userLogoutBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 [data-theme="dark"] .calendarPane {
   background: rgba(20, 22, 34, 0.72);
