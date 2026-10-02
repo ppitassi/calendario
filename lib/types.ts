@@ -113,6 +113,8 @@ export type CalendarRecord = {
   client_feedback_status?: string;
   clientFeedbackAt?: string;
   client_feedback_at?: string;
+  is_pre_calendar?: number | boolean;
+  isPreCalendar?: boolean;
 };
 
 /** Notificação persistida para um usuário, inclusive seu estado de leitura. */

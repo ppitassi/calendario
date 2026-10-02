@@ -24,12 +24,14 @@ interface PresentationUnifiedIntroProps {
   calendar: CalendarRecord;
   month: Date;
   items: ContentItem[];
+  isPreCalendar?: boolean;
 }
 
 export function PresentationUnifiedIntro({
   calendar,
   month,
   items,
+  isPreCalendar = false,
 }: PresentationUnifiedIntroProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -158,7 +160,13 @@ export function PresentationUnifiedIntro({
           </motion.div>
         )}
 
-        <span className={styles.heroPretitle}>Planejamento de Conteúdo</span>
+        {isPreCalendar ? (
+          <span className={styles.preCalendarHeroBadge}>
+            📝 Pré-Calendário • Validação de Copywriting
+          </span>
+        ) : (
+          <span className={styles.heroPretitle}>Planejamento de Conteúdo</span>
+        )}
 
         <h1 className={styles.heroTitle}>
           Proposta de <br />
@@ -355,23 +363,25 @@ export function PresentationUnifiedIntro({
                                   : "none",
                             }}
                           >
-                            <div className={styles.popoverPreview}>
-                              {post.imageUrl ? (
-                                <img src={post.imageUrl} alt="Preview" />
-                              ) : (
-                                <div className={styles.popoverPreviewEmpty}>
-                                  <ImageIcon />
+                            {!isPreCalendar && (
+                              <div className={styles.popoverPreview}>
+                                {post.imageUrl ? (
+                                  <img src={post.imageUrl} alt="Preview" />
+                                ) : (
+                                  <div className={styles.popoverPreviewEmpty}>
+                                    <ImageIcon />
+                                  </div>
+                                )}
+                                <div className={styles.popoverTypeBadge}>
+                                  {post.type}
+                                  {post.isCollab
+                                    ? " · Collab"
+                                    : post.profile
+                                    ? ` · ${post.profile}`
+                                    : ""}
                                 </div>
-                              )}
-                              <div className={styles.popoverTypeBadge}>
-                                {post.type}
-                                {post.isCollab
-                                  ? " · Collab"
-                                  : post.profile
-                                  ? ` · ${post.profile}`
-                                  : ""}
                               </div>
-                            </div>
+                            )}
 
                             <div className={styles.popoverCopy}>
                               <h4>{post.head || post.title || "Sem título"}</h4>
@@ -394,7 +404,9 @@ export function PresentationUnifiedIntro({
                               size="small"
                               icon={<ArrowUpRight />}
                             >
-                              VER POST {dayPosts.length > 1 ? `#${pIdx + 1}` : "COMPLETO"}
+                              {isPreCalendar
+                                ? `VER COPY ${dayPosts.length > 1 ? `#${pIdx + 1}` : "COMPLETO"}`
+                                : `VER POST ${dayPosts.length > 1 ? `#${pIdx + 1}` : "COMPLETO"}`}
                             </Button>
                           </div>
                         ))}

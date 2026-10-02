@@ -62,6 +62,26 @@ export function ViewerScreen({
     calendar.clientFeedbackStatus || calendar.client_feedback_status || null
   );
 
+  // Controle de Pré-Calendário (apenas copywriting, omite imagens)
+  const [isPreCalendar, setIsPreCalendar] = useState<boolean>(
+    Boolean(calendar.is_pre_calendar || calendar.isPreCalendar)
+  );
+
+  const handleTogglePreCalendar = async (enabled: boolean) => {
+    setIsPreCalendar(enabled);
+    if (!clientMode && calendar.id) {
+      try {
+        await fetch(`/api/calendars/${calendar.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_pre_calendar: enabled ? 1 : 0 }),
+        });
+      } catch (e) {
+        console.error("Erro ao persistir status de pré-calendário:", e);
+      }
+    }
+  };
+
   // Submissão do feedback / aprovação do cliente para a API
   const handleSubmitReview = async (
     decision: "approved" | "approved_with_notes" | "rejected_with_notes" | "approve_with_notes" | "reject_with_notes" | string,
@@ -130,6 +150,8 @@ export function ViewerScreen({
         onExit={onClose || (() => {})}
         onPrevMonth={() => onMonthChange && onMonthChange(shiftMonth(month, -1))}
         onNextMonth={() => onMonthChange && onMonthChange(shiftMonth(month, 1))}
+        isPreCalendar={isPreCalendar}
+        onTogglePreCalendar={!clientMode ? handleTogglePreCalendar : undefined}
       />
 
       {/* UI: documento contínuo que também serve de base para impressão/PDF isolado. */}
@@ -146,6 +168,7 @@ export function ViewerScreen({
           calendar={calendar}
           month={month}
           items={sortedItems}
+          isPreCalendar={isPreCalendar}
         />
 
         {/* 2. LISTA CRONOLÓGICA DAS POSTAGENS (Briefing, Legenda, Objetivo, Arte e Comentário) */}
@@ -210,6 +233,7 @@ export function ViewerScreen({
                       onClientCommentChange={(val) =>
                         setClientComments((prev) => ({ ...prev, [post.id]: val }))
                       }
+                      isPreCalendar={isPreCalendar}
                     />
 
                     {idx < sortedItems.length - 1 && (
@@ -233,11 +257,13 @@ export function ViewerScreen({
           </div>
         </motion.div>
 
-        {/* 3. SIMULAÇÃO DISCRETA DO FEED NO FIM DA APRESENTAÇÃO */}
-        <PresentationDiscreteFeed
-          calendar={calendar}
-          items={sortedItems}
-        />
+        {/* 3. SIMULAÇÃO DISCRETA DO FEED NO FIM DA APRESENTAÇÃO (Omitida no Pré-Calendário de Copywriting) */}
+        {!isPreCalendar && (
+          <PresentationDiscreteFeed
+            calendar={calendar}
+            items={sortedItems}
+          />
+        )}
       </main>
 
       {/* 4. BARRA FIXA DE APROVAÇÃO DO CLIENTE (Exibida somente no modo cliente) */}
@@ -253,7 +279,11 @@ export function ViewerScreen({
               >
                 <Check size={18} />
                 <span>
-                  {submittingReview ? "Enviando aprovação..." : "Aprovar Calendário Completo"}
+                  {submittingReview
+                    ? "Enviando aprovação..."
+                    : isPreCalendar
+                    ? "Aprovar Pré-Calendário (Copywriting)"
+                    : "Aprovar Calendário Completo"}
                 </span>
               </button>
 
