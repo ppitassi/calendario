@@ -121,12 +121,25 @@ function normalizeRow(row: any): any {
   normalized.clientFeedbackAt = feedbackAt;
   normalized.client_feedback_at = feedbackAt;
 
-  const isPreVal = normalized.isPreCalendar ?? normalized.is_pre_calendar ?? normalized.isprecalendar ?? normalized.client_has_pre_calendar ?? normalized.has_pre_calendar;
-  if (isPreVal !== undefined) {
-    const isPreBool = Boolean(Number(isPreVal) === 1 || isPreVal === true || isPreVal === "1");
-    normalized.is_pre_calendar = isPreBool ? 1 : 0;
-    normalized.isPreCalendar = isPreBool;
-  }
+  const isPreBool = Boolean(
+    Number(normalized.is_pre_calendar) === 1 ||
+    normalized.is_pre_calendar === true ||
+    normalized.is_pre_calendar === "1" ||
+    Number(normalized.isPreCalendar) === 1 ||
+    normalized.isPreCalendar === true ||
+    normalized.isPreCalendar === "1" ||
+    Number(normalized.isprecalendar) === 1 ||
+    normalized.isprecalendar === true ||
+    normalized.isprecalendar === "1" ||
+    Number(normalized.client_has_pre_calendar) === 1 ||
+    normalized.client_has_pre_calendar === true ||
+    normalized.client_has_pre_calendar === "1" ||
+    Number(normalized.has_pre_calendar) === 1 ||
+    normalized.has_pre_calendar === true ||
+    normalized.has_pre_calendar === "1"
+  );
+  normalized.is_pre_calendar = isPreBool ? 1 : 0;
+  normalized.isPreCalendar = isPreBool;
 
   return normalized;
 }

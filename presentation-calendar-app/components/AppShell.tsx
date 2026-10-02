@@ -27,11 +27,16 @@ interface AppShellProps {
 /** Coordena navegação, persistência local de preferências e carregamento dos calendários. */
 export function AppShell({ currentUser, onLogout }: AppShellProps) {
   const [activeScreen, setActiveScreen] = useState<string>(() => {
-    // Restaura somente nomes de tela conhecidos; qualquer resíduo antigo volta ao catálogo.
+    // Restaura somente nomes de tela conhecidos; nunca restaura "presentation" diretamente
+    // pois os dados de apresentação são voláteis em memória.
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("cp:active-screen");
-        if (stored && ["home", "planner", "presentation", "admin_users"].includes(stored)) {
+        const storedCalId = localStorage.getItem("cp:active-calendar-id");
+        if (stored === "planner" && storedCalId) {
+          return "planner";
+        }
+        if (stored && ["home", "admin_users"].includes(stored)) {
           return stored;
         }
       } catch {}
@@ -117,6 +122,15 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
       localStorage.setItem("cp:active-screen", activeScreen);
     } catch {}
   }, [activeScreen]);
+
+  // Se a tela ativa exigir dados que não estão presentes, recua em segurança para "home".
+  useEffect(() => {
+    if (activeScreen === "planner" && !activeCalendarId) {
+      setActiveScreen("home");
+    } else if (activeScreen === "presentation" && !presentationCal) {
+      setActiveScreen("home");
+    }
+  }, [activeScreen, activeCalendarId, presentationCal]);
 
   // Um calendário nulo não apaga a última seleção válida; a próxima garantia pode reutilizá-la.
   useEffect(() => {
@@ -293,42 +307,48 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         />
       )}
 
-      {/* UI: navegação global, seletor de cliente e controles da conta autenticada. */}
-      <Sidebar
-        activeScreen={activeScreen}
-        onNavigate={handleNavigate}
-        currentUser={currentUser}
-        clients={clients}
-        activeClient={activeClient}
-        onSelectClient={handleSelectClient}
-        isPinned={isPinned}
-        onTogglePin={handleTogglePin}
-        onLogout={onLogout}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-        mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
-      />
+      {/* Header superior global: fixado no topo ocupando toda a largura */}
+      {activeScreen !== "presentation" && (activeScreen !== "planner" || !activeCalendarId) && (
+        <Header
+          currentUser={currentUser}
+          onLogout={onLogout}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          activeScreen={activeScreen}
+          activeClient={activeClient}
+          onNavigate={handleNavigate}
+          activeMonth={activeMonth}
+          onMonthChange={setActiveMonth}
+        />
+      )}
 
-      {/* UI: região principal recua conforme a barra esteja fixada ou recolhida. */}
-      <main
-        className={cn(
-          styles.mainArea,
-          isPinned ? styles.mainAreaPinned : styles.mainAreaCollapsed
-        )}
-      >
-        {/* Header superior global: exibido apenas nas telas sem cabeçalho próprio integrado (ex: catálogo de clientes) */}
-        {activeScreen !== "presentation" && activeScreen !== "planner" && (
-          <Header
-            currentUser={currentUser}
-            onLogout={onLogout}
-            theme={theme}
-            onToggleTheme={handleToggleTheme}
-            onOpenMobileMenu={() => setMobileMenuOpen(true)}
-            activeScreen={activeScreen}
-            activeClient={activeClient}
-          />
-        )}
+      <div className={styles.layoutContainer}>
+        {/* UI: navegação global, seletor de cliente e controles da conta autenticada. */}
+        <Sidebar
+          activeScreen={activeScreen}
+          onNavigate={handleNavigate}
+          currentUser={currentUser}
+          clients={clients}
+          activeClient={activeClient}
+          onSelectClient={handleSelectClient}
+          isPinned={isPinned}
+          onTogglePin={handleTogglePin}
+          onLogout={onLogout}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+          hasTopHeader={activeScreen !== "presentation" && (activeScreen !== "planner" || !activeCalendarId)}
+        />
+
+        {/* UI: região principal ao lado da barra lateral */}
+        <main
+          className={cn(
+            styles.mainArea,
+            isPinned ? styles.mainAreaPinned : styles.mainAreaCollapsed
+          )}
+        >
 
         {/* UI: bloqueia trocas de tela enquanto a API localiza ou cria o calendário. */}
         {ensuringCalendar && (
@@ -338,8 +358,12 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           </div>
         )}
 
-        {/* UI: catálogo inicial com indicadores do cliente no mês selecionado. */}
-        {!ensuringCalendar && activeScreen === "home" && (
+        {/* UI: catálogo inicial com indicadores do cliente no mês selecionado (também fallback se faltar dados). */}
+        {!ensuringCalendar && (
+          activeScreen === "home" ||
+          (activeScreen === "planner" && !activeCalendarId) ||
+          (activeScreen === "presentation" && !presentationCal)
+        ) && (
           <ClientsControl
             clients={clients}
             activeMonth={activeMonth}
@@ -405,6 +429,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           <AdminUsers currentUser={currentUser} />
         )}
       </main>
+      </div>
     </div>
   );
 }

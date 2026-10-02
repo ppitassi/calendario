@@ -37,6 +37,7 @@ export async function POST(request: Request) {
           c.segment as client_segment,
           c.logo_url as client_logo_url,
           c.has_multiple_profiles as client_has_multiple_profiles,
+          c.has_pre_calendar as client_has_pre_calendar,
           c.posting_days as client_posting_days,
           (SELECT COUNT(*) FROM calendar_items ci WHERE ci.calendar_id = cal.id) as items_count
         FROM calendars cal
