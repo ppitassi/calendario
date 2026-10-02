@@ -14,16 +14,20 @@ export function Editor({
   onDelete,
   availableProfiles = [],
   onCreateProfile,
+  onDeleteProfile,
   brand = "",
   allItems = [],
+  allCalendarItems = [],
 }: {
   item: ContentItem;
   onChange: (item: ContentItem) => void;
   onDelete: (id: string) => void;
   availableProfiles?: string[];
   onCreateProfile?: (profile: string) => void;
+  onDeleteProfile?: (profile: string) => void;
   brand?: string;
   allItems?: ContentItem[];
+  allCalendarItems?: ContentItem[];
 }) {
   const [tab, setTab] = useState<"content" | "media" | "notes">("content");
   const [uploadingTarget, setUploadingTarget] = useState<"feed" | "story" | null>(null);
@@ -35,6 +39,7 @@ export function Editor({
   const [customUrl, setCustomUrl] = useState("");
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [newProfileText, setNewProfileText] = useState("");
+  const [deletedProfiles, setDeletedProfiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const storyFileInputRef = useRef<HTMLInputElement>(null);
   const itemRef = useRef(item);
@@ -48,12 +53,42 @@ export function Editor({
   const profileSuggestions = useMemo(() => {
     const set = new Set<string>();
     availableProfiles.forEach((p) => {
-      if (p && p.trim()) set.add(p.trim());
+      if (p && p.trim() && !deletedProfiles.includes(p.trim())) set.add(p.trim());
     });
-    if (item.profile && item.profile.trim()) set.add(item.profile.trim());
-    if (item.collabProfile && item.collabProfile.trim()) set.add(item.collabProfile.trim());
+    if (item.profile && item.profile.trim() && !deletedProfiles.includes(item.profile.trim())) {
+      set.add(item.profile.trim());
+    }
+    if (item.collabProfile && item.collabProfile.trim() && !deletedProfiles.includes(item.collabProfile.trim())) {
+      set.add(item.collabProfile.trim());
+    }
     return Array.from(set);
-  }, [availableProfiles, item.profile, item.collabProfile]);
+  }, [availableProfiles, item.profile, item.collabProfile, deletedProfiles]);
+
+  // Verifica se um perfil está em uso ativo em alguma publicação do calendário
+  const isProfileInUse = (p: string) => {
+    if (item.profile === p) return true;
+    if (item.isCollab && item.collabProfile === p) return true;
+    const pool = allCalendarItems && allCalendarItems.length > 0 ? allCalendarItems : allItems;
+    return pool.some((it) => {
+      if (it.id === item.id) return false;
+      if (it.profile === p) return true;
+      if (it.isCollab && it.collabProfile === p) return true;
+      return false;
+    });
+  };
+
+  const handleDeleteProfileClick = (e: React.MouseEvent, p: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setDeletedProfiles((prev) => [...prev, p]);
+    if (item.profile === p) {
+      handleSelectProfile("");
+    }
+    if (item.collabProfile === p) {
+      handleCollabProfileChange("");
+    }
+    onDeleteProfile?.(p);
+  };
 
   // Helper para verificar se o título atual é gerado automaticamente
   const isAutoTitle = (t?: string, currentProfile?: string) => {
@@ -533,22 +568,48 @@ export function Editor({
                   <div className="profilePills">
                     <button
                       type="button"
-                      className={!item.profile ? "active outline" : ""}
+                      className={`profilePillBtn ${!item.profile ? "active outline" : ""}`}
                       onClick={() => handleSelectProfile("")}
                       title="Publicar sem arroba vinculado"
                     >
-                      Sem @
+                      <span className="pillLabel">Sem @</span>
                     </button>
-                    {profileSuggestions.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        className={item.profile === p ? "active" : ""}
-                        onClick={() => handleSelectProfile(p)}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                    {profileSuggestions.map((p) => {
+                      const inUse = isProfileInUse(p);
+                      const isSelected = item.profile === p;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          className={`profilePillBtn ${isSelected ? "active" : ""} ${!inUse && !isSelected ? "unused" : ""}`.trim()}
+                          onClick={() => handleSelectProfile(p)}
+                          title={
+                            inUse
+                              ? `Perfil em uso: ${p}`
+                              : `Perfil não utilizado (${p}). Clique para selecionar ou no X para remover`
+                          }
+                        >
+                          <span className="pillLabel">{p}</span>
+                          {!inUse && !isSelected && (
+                            <span
+                              className="pillDeleteBtn"
+                              role="button"
+                              tabIndex={0}
+                              title={`Excluir tag ${p}`}
+                              onClick={(e) => handleDeleteProfileClick(e, p)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  handleDeleteProfileClick(e as any, p);
+                                }
+                              }}
+                            >
+                              <X size={11} strokeWidth={2.5} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -580,22 +641,48 @@ export function Editor({
                     <div className="profilePills">
                       <button
                         type="button"
-                        className={!item.collabProfile ? "active outline" : ""}
+                        className={`profilePillBtn ${!item.collabProfile ? "active outline" : ""}`}
                         onClick={() => handleCollabProfileChange("")}
                         title="Sem colaborador"
                       >
-                        Sem @
+                        <span className="pillLabel">Sem @</span>
                       </button>
-                      {profileSuggestions.map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          className={item.collabProfile === p ? "active" : ""}
-                          onClick={() => handleCollabProfileChange(p)}
-                        >
-                          {p}
-                        </button>
-                      ))}
+                      {profileSuggestions.map((p) => {
+                        const inUse = isProfileInUse(p);
+                        const isSelected = item.collabProfile === p;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            className={`profilePillBtn ${isSelected ? "active" : ""} ${!inUse && !isSelected ? "unused" : ""}`.trim()}
+                            onClick={() => handleCollabProfileChange(p)}
+                            title={
+                              inUse
+                                ? `Perfil em uso: ${p}`
+                                : `Perfil não utilizado (${p}). Clique para selecionar ou no X para remover`
+                            }
+                          >
+                            <span className="pillLabel">{p}</span>
+                            {!inUse && !isSelected && (
+                              <span
+                                className="pillDeleteBtn"
+                                role="button"
+                                tabIndex={0}
+                                title={`Excluir tag ${p}`}
+                                onClick={(e) => handleDeleteProfileClick(e, p)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    handleDeleteProfileClick(e as any, p);
+                                  }
+                                }}
+                              >
+                                <X size={11} strokeWidth={2.5} />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

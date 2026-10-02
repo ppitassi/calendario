@@ -135,13 +135,29 @@ export function Studio({
   /** Alterna o modo Pré-Calendário (validação de copywriting sem exibição de imagens) */
   const handleTogglePreCalendar = async () => {
     if (!calendar?.id) return;
-    const nextVal = !calendar.is_pre_calendar;
-    setCalendar((prev) => (prev ? { ...prev, is_pre_calendar: nextVal } : prev));
+    const anyCal = calendar as any;
+    const currentVal = Boolean(
+      Number(anyCal.is_pre_calendar) === 1 ||
+      anyCal.is_pre_calendar === true ||
+      anyCal.is_pre_calendar === "1" ||
+      Number(anyCal.isPreCalendar) === 1 ||
+      anyCal.isPreCalendar === true ||
+      Number(anyCal.client_has_pre_calendar) === 1 ||
+      anyCal.client_has_pre_calendar === true
+    );
+    const nextVal = !currentVal;
+    const updatedCal: CalendarRecord = {
+      ...calendar,
+      is_pre_calendar: nextVal ? 1 : 0,
+      isPreCalendar: nextVal,
+      client_has_pre_calendar: nextVal ? 1 : 0,
+    };
+    setCalendar(updatedCal);
     try {
       await fetch(`/api/calendars/${calendar.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_pre_calendar: nextVal ? 1 : 0 }),
+        body: JSON.stringify({ is_pre_calendar: nextVal ? 1 : 0, isPreCalendar: nextVal }),
       });
       addNotification(
         nextVal
@@ -287,10 +303,10 @@ export function Studio({
       return { ...it, id };
     });
 
+    const baseProfiles = targetProfiles !== undefined ? targetProfiles : customProfiles;
     const profilesToSave = Array.from(
       new Set([
-        ...(targetProfiles || []),
-        ...customProfiles,
+        ...(baseProfiles || []),
         ...(cleanItems.map((it) => it.profile?.trim()).filter(Boolean) as string[]),
         ...(cleanItems.map((it) => it.collabProfile?.trim()).filter(Boolean) as string[]),
       ])
@@ -315,6 +331,17 @@ export function Studio({
           weekdayFormats: targetWeekdayFormats,
           items: cleanItems,
           profiles: profilesToSave,
+          is_pre_calendar: targetCal
+            ? (Boolean(
+                Number(targetCal.is_pre_calendar) === 1 ||
+                targetCal.is_pre_calendar === true ||
+                targetCal.is_pre_calendar === "1" ||
+                Number(targetCal.isPreCalendar) === 1 ||
+                targetCal.isPreCalendar === true ||
+                Number(targetCal.client_has_pre_calendar) === 1 ||
+                targetCal.client_has_pre_calendar === true
+              ) ? 1 : 0)
+            : undefined,
         }),
       });
 
@@ -686,6 +713,60 @@ export function Studio({
   };
 
   /**
+   * Exclusão de uma tag de perfil não utilizada:
+   * 1. Remove de customProfiles e localStorage.
+   * 2. Limpa qualquer vínculo residual em itens do calendário.
+   * 3. Persiste a coleção atualizada no banco de dados.
+   */
+  const handleDeleteProfile = (profileToDelete: string) => {
+    const clean = profileToDelete.trim();
+    if (!clean) return;
+
+    const nextProfiles = customProfiles.filter((p) => p !== clean);
+    setCustomProfiles(nextProfiles);
+
+    if (calendar?.client_id) {
+      try {
+        localStorage.setItem(`cp:profiles:${calendar.client_id}`, JSON.stringify(nextProfiles));
+      } catch {}
+    }
+
+    let itemsChanged = false;
+    const updated = items.map((entry) => {
+      let changed = false;
+      let newProfile = entry.profile;
+      let newCollabProfile = entry.collabProfile;
+      let newIsCollab = entry.isCollab;
+
+      if (entry.profile === clean) {
+        newProfile = "";
+        changed = true;
+      }
+      if (entry.collabProfile === clean) {
+        newCollabProfile = "";
+        newIsCollab = false;
+        changed = true;
+      }
+
+      if (!changed) return entry;
+      itemsChanged = true;
+      return {
+        ...entry,
+        profile: newProfile,
+        collabProfile: newCollabProfile,
+        isCollab: newIsCollab,
+      };
+    });
+
+    if (itemsChanged) {
+      setItems(updated);
+      saveChanges(updated, calendar, postingDays, weekdayFormats, nextProfiles);
+    } else {
+      saveChanges(items, calendar, postingDays, weekdayFormats, nextProfiles);
+    }
+  };
+
+  /**
    * Cria um rascunho na data indicada, aplica o perfil se houver exatamente 1 perfil cadastrado,
    * seleciona o novo item e persiste a lista atualizada.
    */
@@ -834,10 +915,36 @@ export function Studio({
   };
 
   // UI: evita montar as três colunas com dados parciais durante a troca de calendário.
-  if (loading || !calendar) {
+  if (loading) {
     return (
       <div className="studioLoading">
-        <p>Carregando calendário do banco de dados local...</p>
+        <p>Carregando calendário...</p>
+      </div>
+    );
+  }
+
+  if (!calendar) {
+    return (
+      <div className="studioLoading" style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", justifyContent: "center", padding: "40px" }}>
+        <p style={{ fontSize: "16px", color: "var(--text-muted, #64748b)", fontWeight: 500 }}>
+          Não foi possível encontrar este calendário ou ele ainda não foi gerado.
+        </p>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            padding: "10px 20px",
+            background: "var(--primary, #0ea5e9)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 600,
+            fontSize: "14px",
+          }}
+        >
+          Voltar ao Início
+        </button>
       </div>
     );
   }
@@ -853,6 +960,17 @@ export function Studio({
       />
     );
   }
+
+  const anyCal = calendar as any;
+  const isPreCalendarActive = Boolean(
+    Number(anyCal.is_pre_calendar) === 1 ||
+    anyCal.is_pre_calendar === true ||
+    anyCal.is_pre_calendar === "1" ||
+    Number(anyCal.isPreCalendar) === 1 ||
+    anyCal.isPreCalendar === true ||
+    Number(anyCal.client_has_pre_calendar) === 1 ||
+    anyCal.client_has_pre_calendar === true
+  );
 
   return (
     <main
@@ -934,12 +1052,12 @@ export function Studio({
         <div className="headerTools">
           {/* Tick de Pré-Calendário */}
           <label
-            className={`preCalendarToggleBtn ${calendar.is_pre_calendar ? "active" : ""}`}
+            className={`preCalendarToggleBtn ${isPreCalendarActive ? "active" : ""}`}
             title="Pré-calendário: aprovação apenas de copywriting antes da produção dos criativos (omite imagens na apresentação)"
           >
             <input
               type="checkbox"
-              checked={Boolean(calendar.is_pre_calendar)}
+              checked={isPreCalendarActive}
               onChange={handleTogglePreCalendar}
             />
             <FileText size={13} />
@@ -1148,10 +1266,12 @@ export function Studio({
                 <Editor
                   item={selected}
                   allItems={monthItems}
+                  allCalendarItems={items}
                   onChange={updateItem}
                   onDelete={removeItem}
                   availableProfiles={availableProfiles}
                   onCreateProfile={handleCreateProfile}
+                  onDeleteProfile={handleDeleteProfile}
                   brand={calendar?.brand || ""}
                 />
               ) : (
@@ -1263,7 +1383,7 @@ export function Studio({
                 <label className="sharePreCalendarCheck">
                   <input
                     type="checkbox"
-                    checked={Boolean(calendar.is_pre_calendar)}
+                    checked={isPreCalendarActive}
                     onChange={handleTogglePreCalendar}
                   />
                   <div>

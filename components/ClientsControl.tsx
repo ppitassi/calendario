@@ -12,17 +12,12 @@ import {
   Search,
   CalendarDays,
   MonitorPlay,
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   X,
   Pencil,
 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { shiftMonth } from "@/lib/date";
-import type { Client, SafeUser } from "@/lib/types";
+import { cn } from "../lib/utils";
+import type { Client, SafeUser } from "../lib/types";
 import styles from "./ClientsControl.module.css";
 
 /** Dados e ações que pertencem ao contêiner; esta tela não duplica a fonte da lista. */
@@ -54,6 +49,7 @@ export function ClientsControl({
   const [newAccent, setNewAccent] = useState("#e3002f");
   const [newLogoUrl, setNewLogoUrl] = useState("");
   const [newHasMultipleProfiles, setNewHasMultipleProfiles] = useState(false);
+  const [newHasPreCalendar, setNewHasPreCalendar] = useState(false);
   const [creating, setCreating] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
@@ -86,6 +82,7 @@ export function ClientsControl({
     setNewAccent("#e3002f");
     setNewLogoUrl("");
     setNewHasMultipleProfiles(false);
+    setNewHasPreCalendar(false);
     setShowModal(true);
   };
 
@@ -97,12 +94,9 @@ export function ClientsControl({
     setNewAccent(client.accent || "#e3002f");
     setNewLogoUrl(client.logo_url || "");
     setNewHasMultipleProfiles(Boolean(client.has_multiple_profiles));
+    setNewHasPreCalendar(Boolean(client.has_pre_calendar));
     setShowModal(true);
   };
-
-  const formattedMonth = format(activeMonth, "MMMM 'de' yyyy", {
-    locale: ptBR,
-  }).toUpperCase();
 
   // Filtra por nome ou segmento sem alterar a lista original recebida do AppShell.
   const filteredClients = useMemo(() => {
@@ -162,6 +156,7 @@ export function ClientsControl({
           accent: newAccent,
           logo_url: newLogoUrl,
           has_multiple_profiles: newHasMultipleProfiles,
+          has_pre_calendar: newHasPreCalendar,
         }),
       });
 
@@ -212,26 +207,8 @@ export function ClientsControl({
         </div>
 
         {/* UI: muda o mês dos KPIs e oferece a criação de um cliente. */}
+        {/* UI: controles da página */}
         <div className={styles.headerControls}>
-          {/* UI: seletor mensal compartilhado com o restante do aplicativo. */}
-          <div className={styles.monthSwitcher}>
-            <button
-              type="button"
-              onClick={() => onMonthChange(shiftMonth(activeMonth, -1))}
-              title="Mês anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className={styles.monthLabel}>{formattedMonth}</span>
-            <button
-              type="button"
-              onClick={() => onMonthChange(shiftMonth(activeMonth, 1))}
-              title="Próximo mês"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
           <button
             type="button"
             className={styles.newClientBtn}
@@ -354,7 +331,25 @@ export function ClientsControl({
                     )}
                   </div>
                   <div className={styles.clientDetails}>
-                    <h3>{client.name}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <h3>{client.name}</h3>
+                      {Boolean(client.has_pre_calendar) && (
+                        <span
+                          style={{
+                            fontSize: "0.68rem",
+                            padding: "2px 7px",
+                            borderRadius: "4px",
+                            background: "rgba(227, 0, 47, 0.15)",
+                            color: "#ff6b81",
+                            fontWeight: 600,
+                            letterSpacing: "0.03em",
+                            border: "1px solid rgba(227, 0, 47, 0.3)",
+                          }}
+                        >
+                          Pré-calendário
+                        </span>
+                      )}
+                    </div>
                     <span>{client.segment || "Segmento não informado"}</span>
                   </div>
                 </div>
@@ -532,6 +527,19 @@ export function ClientsControl({
                   />
                   <label htmlFor="hasMultipleProfiles" style={{ margin: 0 }}>
                     Cliente gerencia mais de um perfil de instagram
+                  </label>
+                </div>
+
+                <div className={styles.formField} style={{ flexDirection: "row", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
+                  <input
+                    type="checkbox"
+                    id="hasPreCalendar"
+                    checked={newHasPreCalendar}
+                    onChange={(e) => setNewHasPreCalendar(e.target.checked)}
+                    style={{ width: "auto" }}
+                  />
+                  <label htmlFor="hasPreCalendar" style={{ margin: 0 }}>
+                    Cliente possui pré-calendário (aprovação de copywriting antes das artes)
                   </label>
                 </div>
               </div>

@@ -37,6 +37,7 @@ export async function POST(request: Request) {
           c.segment as client_segment,
           c.logo_url as client_logo_url,
           c.has_multiple_profiles as client_has_multiple_profiles,
+          c.has_pre_calendar as client_has_pre_calendar,
           c.posting_days as client_posting_days,
           (SELECT COUNT(*) FROM calendar_items ci WHERE ci.calendar_id = cal.id) as items_count
         FROM calendars cal
@@ -78,8 +79,8 @@ export async function POST(request: Request) {
 
       await db.prepare(
         `INSERT INTO calendars (
-          id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, weekday_formats, created_by_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, weekday_formats, is_pre_calendar, created_by_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         id,
         clientId,
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
         "draft",
         JSON.stringify(clientPostingDays),
         JSON.stringify(clientWeekdayFormats),
+        client.has_pre_calendar ? 1 : 0,
         user.id,
         now,
         now

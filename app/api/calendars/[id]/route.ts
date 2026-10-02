@@ -31,6 +31,7 @@ export async function GET(
         c.profiles as client_profiles,
         c.posting_days as client_posting_days,
         c.weekday_formats as client_weekday_formats,
+        c.has_pre_calendar as client_has_pre_calendar,
         creator.name as creator_name,
         creator.role as creator_role,
         assigned.name as assigned_name,
@@ -88,8 +89,8 @@ export async function GET(
       }
     }
 
-    // Busca também perfis utilizados em quaisquer calendários deste cliente
-    if (calendar.client_id) {
+    // Busca também perfis utilizados em quaisquer calendários deste cliente apenas se nenhum perfil estiver cadastrado
+    if (calendar.client_id && profileSet.size === 0 && !calendar.client_profiles) {
       try {
         const usedProfiles = await db.prepare(`
           SELECT DISTINCT ci.profile
@@ -187,6 +188,8 @@ export async function PUT(
       weekdayFormats,
       items,
       profiles,
+      is_pre_calendar,
+      isPreCalendar,
     } = body;
 
     const db = getDb();
@@ -207,6 +210,11 @@ export async function PUT(
     const finalObjective = objective !== undefined ? objective : existing.objective;
     const finalStatus = status !== undefined ? status : existing.status;
     const finalAssignedTo = assignedToId !== undefined ? (assignedToId || null) : existing.assigned_to_id;
+    const finalIsPreCalendar = is_pre_calendar !== undefined
+      ? (is_pre_calendar ? 1 : 0)
+      : isPreCalendar !== undefined
+      ? (isPreCalendar ? 1 : 0)
+      : (existing.is_pre_calendar ?? 0);
 
     await db.prepare(`
       UPDATE calendars
@@ -221,6 +229,7 @@ export async function PUT(
         objective = ?,
         status = ?,
         assigned_to_id = ?,
+        is_pre_calendar = ?,
         updated_at = ?
       WHERE id = ?
     `).run(
@@ -234,6 +243,7 @@ export async function PUT(
       finalObjective ?? "",
       finalStatus ?? "draft",
       finalAssignedTo,
+      finalIsPreCalendar,
       now,
       id
     );
@@ -264,6 +274,18 @@ export async function PUT(
       await db.prepare(`UPDATE calendars SET weekday_formats = ? WHERE id = ?`).run(wFormatsStr, id);
       if (existing.client_id) {
         await db.prepare(`UPDATE clients SET weekday_formats = ? WHERE id = ?`).run(wFormatsStr, existing.client_id);
+      }
+    }
+
+    if ((is_pre_calendar !== undefined || isPreCalendar !== undefined) && existing.client_id) {
+      try {
+        await db.prepare("UPDATE clients SET has_pre_calendar = ?, updated_at = ? WHERE id = ?").run(
+          finalIsPreCalendar,
+          now,
+          existing.client_id
+        );
+      } catch (err) {
+        console.error("Erro ao sincronizar has_pre_calendar no cliente:", err);
       }
     }
 
@@ -371,7 +393,7 @@ export async function PUT(
       });
     }
 
-    return NextResponse.json({ success: true, updated_at: now });
+    return NextResponse.json({ success: true, updated_at: now, is_pre_calendar: finalIsPreCalendar, isPreCalendar: Boolean(finalIsPreCalendar) });
   } catch (error: any) {
     console.error("Error updating calendar:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

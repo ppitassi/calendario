@@ -14,13 +14,19 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   LogOut,
   Menu,
   Shield,
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Calendar,
 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { shiftMonth } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { SafeUser, Client } from "@/lib/types";
 import styles from "./Header.module.css";
@@ -33,6 +39,9 @@ interface HeaderProps {
   onOpenMobileMenu?: () => void;
   activeScreen?: string;
   activeClient?: Client | null;
+  onNavigate?: (screen: string) => void;
+  activeMonth?: Date;
+  onMonthChange?: (month: Date) => void;
 }
 
 export function Header({
@@ -43,6 +52,9 @@ export function Header({
   onOpenMobileMenu,
   activeScreen,
   activeClient,
+  onNavigate,
+  activeMonth,
+  onMonthChange,
 }: HeaderProps) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -93,19 +105,9 @@ export function Header({
       ? "Social Media"
       : "Designer";
 
-  // Rótulo da tela atual
-  const screenTitle =
-    activeScreen === "planner"
-      ? "Planejador de Conteúdo"
-      : activeScreen === "presentation"
-      ? "Apresentação"
-      : activeScreen === "admin_users"
-      ? "Gestão de Usuários"
-      : "Controle de Clientes";
-
   return (
     <header className={styles.header}>
-      {/* Seção Esquerda: Hamburger mobile + Breadcrumb / Identificador de Contexto */}
+      {/* Seção Esquerda: Hamburger mobile + Identidade da Marca + Breadcrumb */}
       <div className={styles.leftSection}>
         {onOpenMobileMenu && (
           <button
@@ -119,16 +121,57 @@ export function Header({
           </button>
         )}
 
+        <div
+          className={cn(styles.brand, onNavigate && styles.brandClickable)}
+          onClick={() => onNavigate && onNavigate("home")}
+          role={onNavigate ? "button" : undefined}
+          tabIndex={onNavigate ? 0 : undefined}
+          title={onNavigate ? "Voltar ao Início" : undefined}
+        >
+          <div className={styles.brandLogo}>
+            <Calendar size={18} strokeWidth={2.2} />
+          </div>
+          <div className={styles.brandText}>
+            <span className={styles.brandTitle}>Calendário</span>
+          </div>
+        </div>
+
         <div className={styles.breadcrumb}>
-          <span className={styles.screenBadge}>{screenTitle}</span>
           {activeClient && activeScreen === "planner" && (
-            <>
-              <span style={{ color: "var(--muted, #94a3b8)", fontSize: "0.8rem" }}>/</span>
-              <span className={styles.clientBadge}>{activeClient.name}</span>
-            </>
+            <span className={styles.clientBadge}>{activeClient.name}</span>
           )}
         </div>
       </div>
+
+      {/* Seção Central: Navegador Mensal Centralizado */}
+      {activeMonth && onMonthChange && (() => {
+        const safeMonth = activeMonth instanceof Date && !isNaN(activeMonth.getTime()) ? activeMonth : new Date();
+        return (
+          <div className={styles.centerSection}>
+            <div className={styles.monthSwitcher}>
+              <button
+                type="button"
+                onClick={() => onMonthChange(shiftMonth(safeMonth, -1))}
+                title="Mês anterior"
+                aria-label="Mês anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className={styles.monthLabel}>
+                {format(safeMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+              </span>
+              <button
+                type="button"
+                onClick={() => onMonthChange(shiftMonth(safeMonth, 1))}
+                title="Próximo mês"
+                aria-label="Próximo mês"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Seção Direita: Notificações + Modo Noturno + Painel de Usuário */}
       <div className={styles.rightSection}>

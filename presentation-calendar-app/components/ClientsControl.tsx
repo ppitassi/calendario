@@ -12,16 +12,11 @@ import {
   Search,
   CalendarDays,
   MonitorPlay,
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   X,
   Pencil,
 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "../lib/utils";
-import { shiftMonth } from "../lib/date";
 import type { Client, SafeUser } from "../lib/types";
 import styles from "./ClientsControl.module.css";
 
@@ -102,10 +97,6 @@ export function ClientsControl({
     setNewHasPreCalendar(Boolean(client.has_pre_calendar));
     setShowModal(true);
   };
-
-  const formattedMonth = format(activeMonth, "MMMM 'de' yyyy", {
-    locale: ptBR,
-  }).toUpperCase();
 
   // Filtra por nome ou segmento sem alterar a lista original recebida do AppShell.
   const filteredClients = useMemo(() => {
@@ -216,26 +207,8 @@ export function ClientsControl({
         </div>
 
         {/* UI: muda o mês dos KPIs e oferece a criação de um cliente. */}
+        {/* UI: controles da página */}
         <div className={styles.headerControls}>
-          {/* UI: seletor mensal compartilhado com o restante do aplicativo. */}
-          <div className={styles.monthSwitcher}>
-            <button
-              type="button"
-              onClick={() => onMonthChange(shiftMonth(activeMonth, -1))}
-              title="Mês anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className={styles.monthLabel}>{formattedMonth}</span>
-            <button
-              type="button"
-              onClick={() => onMonthChange(shiftMonth(activeMonth, 1))}
-              title="Próximo mês"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
           <button
             type="button"
             className={styles.newClientBtn}

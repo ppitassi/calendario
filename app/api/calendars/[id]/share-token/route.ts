@@ -26,7 +26,7 @@ export async function POST(
     } catch {}
 
     const calendar = (await db.prepare(
-      "SELECT id, share_token FROM calendars WHERE id = ?"
+      "SELECT id, client_id, share_token FROM calendars WHERE id = ?"
     ).get(id)) as any;
 
     if (!calendar) {
@@ -34,16 +34,35 @@ export async function POST(
     }
 
     let token = calendar.share_token;
+    const now = new Date().toISOString();
     if (!token || body.forceNew) {
       token = crypto.randomBytes(16).toString("hex");
       await db.prepare(
         "UPDATE calendars SET share_token = ?, updated_at = ? WHERE id = ?"
-      ).run(token, new Date().toISOString(), id);
+      ).run(token, now, id);
+    }
+
+    if (body.is_pre_calendar !== undefined || body.isPreCalendar !== undefined) {
+      const isPreBool = Boolean(
+        Number(body.is_pre_calendar) === 1 ||
+        body.is_pre_calendar === true ||
+        body.is_pre_calendar === "1" ||
+        Number(body.isPreCalendar) === 1 ||
+        body.isPreCalendar === true
+      );
+      const isPreInt = isPreBool ? 1 : 0;
+      await db.prepare("UPDATE calendars SET is_pre_calendar = ?, updated_at = ? WHERE id = ?").run(isPreInt, now, id);
+      if (calendar.client_id) {
+        try {
+          await db.prepare("UPDATE clients SET has_pre_calendar = ?, updated_at = ? WHERE id = ?").run(isPreInt, now, calendar.client_id);
+        } catch {}
+      }
     }
 
     return NextResponse.json({
       success: true,
       shareToken: token,
+      token,
       shareUrl: `/portal/${token}`,
     });
   } catch (error: any) {

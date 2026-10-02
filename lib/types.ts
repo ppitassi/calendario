@@ -103,7 +103,6 @@ export type CalendarRecord = {
   client_segment?: string;
   client_logo_url?: string;
   client_has_multiple_profiles?: number | boolean;
-  client_has_pre_calendar?: number | boolean;
   items_count?: number;
   created_at: string;
   updated_at: string;
@@ -117,6 +116,8 @@ export type CalendarRecord = {
   client_feedback_at?: string;
   is_pre_calendar?: number | boolean;
   isPreCalendar?: boolean;
+  client_has_pre_calendar?: number | boolean;
+  has_pre_calendar?: number | boolean;
 };
 
 /** Notificação persistida para um usuário, inclusive seu estado de leitura. */

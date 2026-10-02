@@ -33,12 +33,14 @@ export async function GET(request: Request) {
         cal.audience,
         cal.objective,
         cal.status,
+        cal.is_pre_calendar,
         cal.created_by_id,
         cal.assigned_to_id,
         cal.created_at,
         cal.updated_at,
         c.name as client_name,
         c.segment as client_segment,
+        c.has_pre_calendar as client_has_pre_calendar,
         creator.name as creator_name,
         creator.role as creator_role,
         assigned.name as assigned_name,
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     const db = getDb();
-    const client = (await db.prepare("SELECT name, accent FROM clients WHERE id = ?").get(clientId)) as { name: string; accent: string } | undefined;
+    const client = (await db.prepare("SELECT name, accent, has_pre_calendar FROM clients WHERE id = ?").get(clientId)) as { name: string; accent: string; has_pre_calendar?: number } | undefined;
     if (!client) {
       return NextResponse.json({ error: "Cliente não encontrado." }, { status: 404 });
     }
@@ -106,9 +108,9 @@ export async function POST(request: Request) {
 
     await db.prepare(`
       INSERT INTO calendars (
-        id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, created_by_id, assigned_to_id, created_at, updated_at
+        id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, is_pre_calendar, created_by_id, assigned_to_id, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       clientId,
@@ -121,6 +123,7 @@ export async function POST(request: Request) {
       audience,
       objective,
       status,
+      client.has_pre_calendar ? 1 : 0,
       user.id,
       assignedToId || null,
       now,

@@ -34,13 +34,15 @@ export async function GET(
         cal.strategy,
         cal.objective,
         cal.status,
+        cal.is_pre_calendar,
         cal.client_feedback,
         cal.client_feedback_status,
         cal.client_feedback_at,
         c.name as client_name,
         c.logo_url as client_logo_url,
         c.profiles as client_profiles,
-        c.has_multiple_profiles as client_has_multiple_profiles
+        c.has_multiple_profiles as client_has_multiple_profiles,
+        c.has_pre_calendar as client_has_pre_calendar
       FROM calendars cal
       LEFT JOIN clients c ON c.id = cal.client_id
       WHERE cal.share_token = ?
@@ -52,6 +54,22 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Normaliza status de pré-calendário considerando tanto o calendário quanto a configuração do cliente
+    const isPre = Boolean(
+      Number(calendar.is_pre_calendar) === 1 ||
+      calendar.is_pre_calendar === true ||
+      calendar.is_pre_calendar === "1" ||
+      Number(calendar.isPreCalendar) === 1 ||
+      calendar.isPreCalendar === true ||
+      calendar.isPreCalendar === "1" ||
+      Number(calendar.client_has_pre_calendar) === 1 ||
+      calendar.client_has_pre_calendar === true ||
+      calendar.client_has_pre_calendar === "1"
+    );
+    calendar.is_pre_calendar = isPre ? 1 : 0;
+    calendar.isPreCalendar = isPre;
+    calendar.client_has_pre_calendar = isPre ? 1 : 0;
 
     // 2. Busca todas as publicações deste calendário
     const items = (await db.prepare(`

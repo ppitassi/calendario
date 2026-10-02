@@ -20,14 +20,22 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { action, generalFeedback = "", postComments = {} } = body;
-
-    if (!["approve", "approve_with_notes", "reject_with_notes"].includes(action)) {
+    const rawAction = body.action || body.status;
+    let action = "approve";
+    if (rawAction === "approved" || rawAction === "approve") {
+      action = "approve";
+    } else if (rawAction === "approved_with_notes" || rawAction === "approve_with_notes") {
+      action = "approve_with_notes";
+    } else if (rawAction === "rejected_with_notes" || rawAction === "reject_with_notes") {
+      action = "reject_with_notes";
+    } else {
       return NextResponse.json(
         { error: "Ação de avaliação inválida." },
         { status: 400 }
       );
     }
+
+    const generalFeedback = body.generalFeedback || body.feedbackNotes || "";
 
     // Se for aprovação ou reprovação COM RESSALVAS, o feedback geral não pode estar vazio
     if (
@@ -79,15 +87,29 @@ export async function POST(
     );
 
     // 3. Atualiza os comentários por postagem específica
-    if (postComments && typeof postComments === "object") {
-      for (const [itemId, comment] of Object.entries(postComments)) {
-        if (itemId && typeof comment === "string") {
-          await db.prepare(`
-            UPDATE calendar_items
-            SET client_comment = ?, updated_at = ?
-            WHERE id = ? AND calendar_id = ?
-          `).run(comment.trim(), now, itemId, calendar.id);
+    const rawComments = body.postComments;
+    const commentsEntries: [string, string][] = [];
+    if (Array.isArray(rawComments)) {
+      for (const item of rawComments) {
+        if (item && item.postId && typeof item.comment === "string") {
+          commentsEntries.push([item.postId, item.comment]);
         }
+      }
+    } else if (rawComments && typeof rawComments === "object") {
+      for (const [itemId, comment] of Object.entries(rawComments)) {
+        if (itemId && typeof comment === "string") {
+          commentsEntries.push([itemId, comment]);
+        }
+      }
+    }
+
+    for (const [itemId, comment] of commentsEntries) {
+      if (itemId && comment.trim()) {
+        await db.prepare(`
+          UPDATE calendar_items
+          SET client_comment = ?, updated_at = ?
+          WHERE id = ? AND calendar_id = ?
+        `).run(comment.trim(), now, itemId, calendar.id);
       }
     }
 

@@ -128,8 +128,9 @@ export function PresentationUnifiedIntro({
     }
   };
 
-  const daysCount = getDaysInMonth(month);
-  const firstDay = getDay(startOfMonth(month));
+  const safeMonth = month instanceof Date && !isNaN(month.getTime()) ? month : new Date();
+  const daysCount = getDaysInMonth(safeMonth);
+  const firstDay = getDay(startOfMonth(safeMonth));
 
   return (
     <motion.div
@@ -290,7 +291,7 @@ export function PresentationUnifiedIntro({
             {Array.from({ length: daysCount }).map((_, i) => {
               const day = i + 1;
               const dateStr = format(
-                new Date(month.getFullYear(), month.getMonth(), day),
+                new Date(safeMonth.getFullYear(), safeMonth.getMonth(), day),
                 "yyyy-MM-dd"
               );
               const dayPosts = postsByDate.get(dateStr) || [];

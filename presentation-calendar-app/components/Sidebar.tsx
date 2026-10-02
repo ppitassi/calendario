@@ -35,6 +35,7 @@ interface SidebarProps {
   onToggleTheme: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  hasTopHeader?: boolean;
 }
 
 /** Renderiza a barra expandida ou recolhida sem manter uma segunda seleção de cliente. */
@@ -52,6 +53,7 @@ export function Sidebar({
   onToggleTheme,
   mobileOpen,
   onCloseMobile,
+  hasTopHeader = false,
 }: SidebarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -151,17 +153,19 @@ export function Sidebar({
       aria-label="Navegação Principal"
       onClick={handleSidebarClick}
     >
-      {/* UI: marca e nome do produto; o texto some no modo recolhido. */}
-      <div className={styles.brand}>
-        <div className={styles.brandLogo}>
-          <Calendar size={18} strokeWidth={2.2} />
-        </div>
-        {isPinned && (
-          <div className={styles.brandText}>
-            <span className={styles.brandTitle}>Calendário</span>
+      {/* UI: marca e nome do produto; exibido somente quando não há cabeçalho global no topo */}
+      {!hasTopHeader && (
+        <div className={styles.brand}>
+          <div className={styles.brandLogo}>
+            <Calendar size={18} strokeWidth={2.2} />
           </div>
-        )}
-      </div>
+          {isPinned && (
+            <div className={styles.brandText}>
+              <span className={styles.brandTitle}>Calendário</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* UI: seletor do cliente; recolhido, o avatar volta ao catálogo. */}
       <div className={styles.clientSelectorSection} ref={dropdownRef}>

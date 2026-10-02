@@ -31,6 +31,7 @@ export async function GET(
         c.profiles as client_profiles,
         c.posting_days as client_posting_days,
         c.weekday_formats as client_weekday_formats,
+        c.has_pre_calendar as client_has_pre_calendar,
         creator.name as creator_name,
         creator.role as creator_role,
         assigned.name as assigned_name,
@@ -276,6 +277,18 @@ export async function PUT(
       }
     }
 
+    if ((is_pre_calendar !== undefined || isPreCalendar !== undefined) && existing.client_id) {
+      try {
+        await db.prepare("UPDATE clients SET has_pre_calendar = ?, updated_at = ? WHERE id = ?").run(
+          finalIsPreCalendar,
+          now,
+          existing.client_id
+        );
+      } catch (err) {
+        console.error("Erro ao sincronizar has_pre_calendar no cliente:", err);
+      }
+    }
+
     if (assignedToId && assignedToId !== user.id && assignedToId !== existing.assigned_to_id) {
       const notifId = crypto.randomUUID();
       await db.prepare(`
@@ -380,7 +393,7 @@ export async function PUT(
       });
     }
 
-    return NextResponse.json({ success: true, updated_at: now });
+    return NextResponse.json({ success: true, updated_at: now, is_pre_calendar: finalIsPreCalendar, isPreCalendar: Boolean(finalIsPreCalendar) });
   } catch (error: any) {
     console.error("Error updating calendar:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

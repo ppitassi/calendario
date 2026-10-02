@@ -1,7 +1,7 @@
 "use client";
 /** Apresentação do calendário para leitura, compartilhamento e impressão. */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "motion/react";
 import { LayoutTemplate, CheckCircle2, AlertTriangle, MessageSquare, X, Check } from "lucide-react";
 import { format } from "date-fns";
@@ -63,9 +63,26 @@ export function ViewerScreen({
   );
 
   // Controle de Pré-Calendário (apenas copywriting, omite imagens)
-  const [isPreCalendar, setIsPreCalendar] = useState<boolean>(
-    Boolean(calendar.is_pre_calendar || calendar.isPreCalendar)
+  const anyCal = calendar as any;
+  const isPreCalendarProp = Boolean(
+    Number(anyCal.is_pre_calendar) === 1 ||
+    anyCal.is_pre_calendar === true ||
+    anyCal.is_pre_calendar === "1" ||
+    Number(anyCal.isPreCalendar) === 1 ||
+    anyCal.isPreCalendar === true ||
+    anyCal.isPreCalendar === "1" ||
+    Number(anyCal.client_has_pre_calendar) === 1 ||
+    anyCal.client_has_pre_calendar === true ||
+    anyCal.client_has_pre_calendar === "1" ||
+    Number(anyCal.has_pre_calendar) === 1 ||
+    anyCal.has_pre_calendar === true ||
+    anyCal.has_pre_calendar === "1"
   );
+  const [isPreCalendar, setIsPreCalendar] = useState<boolean>(isPreCalendarProp);
+
+  useEffect(() => {
+    setIsPreCalendar(isPreCalendarProp);
+  }, [isPreCalendarProp]);
 
   const handleTogglePreCalendar = async (enabled: boolean) => {
     setIsPreCalendar(enabled);
@@ -74,7 +91,7 @@ export function ViewerScreen({
         await fetch(`/api/calendars/${calendar.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ is_pre_calendar: enabled ? 1 : 0 }),
+          body: JSON.stringify({ is_pre_calendar: enabled ? 1 : 0, isPreCalendar: enabled }),
         });
       } catch (e) {
         console.error("Erro ao persistir status de pré-calendário:", e);
@@ -192,12 +209,13 @@ export function ViewerScreen({
           ) : (
             <div className={styles.postsList}>
               {sortedItems.map((post, idx) => {
-                const dateObj = new Date(post.date + "T12:00:00");
-                const formattedDate = format(
-                  dateObj,
-                  "EEEE, dd 'de' MMMM",
-                  { locale: ptBR }
-                );
+                let formattedDate = post.date || "";
+                try {
+                  const dateObj = new Date(post.date + "T12:00:00");
+                  if (!isNaN(dateObj.getTime())) {
+                    formattedDate = format(dateObj, "EEEE, dd 'de' MMMM", { locale: ptBR });
+                  }
+                } catch {}
                 const postTypeConfig = POST_TYPES.find((pt) => {
                   const t = post.type.toLowerCase();
                   return (

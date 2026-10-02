@@ -6,10 +6,9 @@
 /* Seção: Navegação lateral e seus estados de seleção. */
 .sidebar {
   display: flex;
-  position: fixed;
-  z-index: 110;
-  inset-block: 0;
-  left: 0;
+  position: relative;
+  z-index: 90;
+  height: 100%;
   flex-direction: column;
   flex-shrink: 0;
   padding: 1.25rem 0.75rem;
@@ -20,7 +19,6 @@
   user-select: none;
   transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1),
     padding 240ms cubic-bezier(0.22, 1, 0.36, 1);
-  height: 100vh;
   box-sizing: border-box;
   cursor: default;
 }

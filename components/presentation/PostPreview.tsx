@@ -58,9 +58,15 @@ export function PostPreview({
                   </div>
                 </div>
                 <div className={styles.metaPill}>
-                  {format(new Date(date + "T12:00:00"), "dd MMM, yyyy", {
-                    locale: ptBR,
-                  })}
+                  {(() => {
+                    try {
+                      const d = new Date(date + "T12:00:00");
+                      if (!isNaN(d.getTime())) {
+                        return format(d, "dd MMM, yyyy", { locale: ptBR });
+                      }
+                    } catch {}
+                    return date;
+                  })()}
                 </div>
                 <div className={styles.metaPill}>
                   <Icon /> {postTypeConfig?.label || post.type}

@@ -44,8 +44,9 @@ export function ViewerHeader({
       setLoadingShare(true);
       const res = await fetch(`/api/calendars/${calendar.id}/share-token`);
       const data = await res.json();
-      if (data.token) {
-        const url = `${window.location.origin}/portal/${data.token}`;
+      const token = data.shareToken || data.token;
+      if (token) {
+        const url = `${window.location.origin}/portal/${token}`;
         await navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 3000);
