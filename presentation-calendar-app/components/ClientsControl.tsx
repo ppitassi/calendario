@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { shiftMonth } from "@/lib/date";
-import type { Client, SafeUser } from "@/lib/types";
+import { cn } from "../lib/utils";
+import { shiftMonth } from "../lib/date";
+import type { Client, SafeUser } from "../lib/types";
 import styles from "./ClientsControl.module.css";
 
 /** Dados e ações que pertencem ao contêiner; esta tela não duplica a fonte da lista. */
