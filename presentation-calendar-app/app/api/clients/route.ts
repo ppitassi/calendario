@@ -33,6 +33,7 @@ export async function GET(request: Request) {
             c.posting_days,
             c.logo_url,
             c.has_multiple_profiles,
+            c.has_pre_calendar,
             c.created_by_id,
             c.created_at,
             u.name as creator_name,
@@ -58,6 +59,7 @@ export async function GET(request: Request) {
             c.posting_days,
             c.logo_url,
             c.has_multiple_profiles,
+            c.has_pre_calendar,
             c.created_by_id,
             c.created_at,
             u.name as creator_name,
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, segment, accent, logo_url, has_multiple_profiles } = body;
+    const { name, segment, accent, logo_url, has_multiple_profiles, has_pre_calendar } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: "O nome do cliente é obrigatório." }, { status: 400 });
@@ -111,9 +113,9 @@ export async function POST(request: Request) {
     const cleanAccent = accent || "#ef5d3d";
 
     await db.prepare(`
-      INSERT INTO clients (id, name, segment, accent, logo_url, has_multiple_profiles, created_by_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, cleanName, cleanSegment, cleanAccent, logo_url || null, has_multiple_profiles ? 1 : 0, user.id, now, now);
+      INSERT INTO clients (id, name, segment, accent, logo_url, has_multiple_profiles, has_pre_calendar, created_by_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, cleanName, cleanSegment, cleanAccent, logo_url || null, has_multiple_profiles ? 1 : 0, has_pre_calendar ? 1 : 0, user.id, now, now);
 
     const client = await db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
     return NextResponse.json({ client, success: true });

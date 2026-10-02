@@ -38,7 +38,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, segment, accent, logo_url, has_multiple_profiles, profiles } = body;
+    const { name, segment, accent, logo_url, has_multiple_profiles, has_pre_calendar, profiles } = body;
 
     const db = getDb();
     const existing = (await db.prepare("SELECT * FROM clients WHERE id = ?").get(id)) as any;
@@ -61,6 +61,7 @@ export async function PUT(
         accent = ?,
         logo_url = ?,
         has_multiple_profiles = ?,
+        has_pre_calendar = ?,
         profiles = ?,
         updated_at = ?
       WHERE id = ?
@@ -70,6 +71,7 @@ export async function PUT(
       accent !== undefined ? accent : existing.accent,
       logo_url !== undefined ? logo_url : existing.logo_url,
       has_multiple_profiles !== undefined ? (has_multiple_profiles ? 1 : 0) : existing.has_multiple_profiles,
+      has_pre_calendar !== undefined ? (has_pre_calendar ? 1 : 0) : existing.has_pre_calendar,
       finalProfiles,
       now,
       id

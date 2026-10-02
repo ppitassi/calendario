@@ -30,6 +30,7 @@ export type Client = {
   weekday_formats?: Record<number, ContentType>;
   logo_url?: string;
   has_multiple_profiles?: number | boolean;
+  has_pre_calendar?: number | boolean;
   created_by_id: string;
   creator_name?: string;
   calendars_count?: number;

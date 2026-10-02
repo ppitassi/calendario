@@ -78,8 +78,8 @@ export async function POST(request: Request) {
 
       await db.prepare(
         `INSERT INTO calendars (
-          id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, weekday_formats, created_by_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, posting_days, weekday_formats, is_pre_calendar, created_by_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         id,
         clientId,
@@ -94,6 +94,7 @@ export async function POST(request: Request) {
         "draft",
         JSON.stringify(clientPostingDays),
         JSON.stringify(clientWeekdayFormats),
+        client.has_pre_calendar ? 1 : 0,
         user.id,
         now,
         now

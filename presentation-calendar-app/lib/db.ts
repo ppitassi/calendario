@@ -277,6 +277,7 @@ async function initPgSchema(pool: Pool | PoolClient) {
     { table: "calendars", col: "weekday_formats", def: "TEXT DEFAULT '{}'" },
     { table: "clients", col: "logo_url", def: "TEXT" },
     { table: "clients", col: "has_multiple_profiles", def: "INTEGER DEFAULT 0" },
+    { table: "clients", col: "has_pre_calendar", def: "INTEGER DEFAULT 0" },
     { table: "calendars", col: "share_token", def: "TEXT" },
     { table: "calendars", col: "client_feedback", def: "TEXT DEFAULT ''" },
     { table: "calendars", col: "client_feedback_status", def: "TEXT DEFAULT ''" },
@@ -619,6 +620,7 @@ function initSqliteSchema(db: any) {
   try { db.exec("ALTER TABLE calendars ADD COLUMN weekday_formats TEXT DEFAULT '{}';"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN logo_url TEXT;"); } catch {}
   try { db.exec("ALTER TABLE clients ADD COLUMN has_multiple_profiles INTEGER DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE clients ADD COLUMN has_pre_calendar INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE calendars ADD COLUMN share_token TEXT;"); } catch {}
   try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback_status TEXT DEFAULT '';"); } catch {}
