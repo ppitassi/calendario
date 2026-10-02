@@ -1,47 +1,57 @@
 "use client";
 /**
  * Card Macro Unificado da Apresentação:
- * Junta Capa (Hero), Resumo Estratégico (Formatos e Funil) e Calendário Mensal em um único bloco.
+ * Junta Capa (Hero), Resumo Estratégico (Formatos e Funil) e Calendário Mensal
+ * em um ÚNICO card longo contínuo, preservando integralmente o conteúdo e proporções originais
+ * dos 3 blocos empilhados verticalmente com divisores sutis em vidro.
  */
 
-import { useMemo } from "react";
-import { motion } from "motion/react";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { format, getDaysInMonth, startOfMonth, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Layers } from "lucide-react";
+import {
+  ArrowUpRight,
+  Image as ImageIcon,
+  Clock,
+} from "lucide-react";
 import type { CalendarRecord, ContentItem } from "@/lib/types";
+import { DAY_NAMES, POST_TYPES } from "@/lib/constants";
+import { Button } from "../ui/Button/Button";
 import styles from "./PresentationUnifiedIntro.module.css";
 
-const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+interface PresentationUnifiedIntroProps {
+  calendar: CalendarRecord;
+  month: Date;
+  items: ContentItem[];
+}
 
 export function PresentationUnifiedIntro({
   calendar,
   month,
   items,
-}: {
-  calendar: CalendarRecord;
-  month: Date;
-  items: ContentItem[];
-}) {
+}: PresentationUnifiedIntroProps) {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const brandInitials = (calendar.brand || "CP").slice(0, 2).toUpperCase();
 
-  // Métricas calculadas das publicações
+  // 1. Métricas calculadas para o Resumo do Planejamento
   const metrics = useMemo(() => {
     const total = items.length;
     if (total === 0) {
       return {
         total: 0,
         formats: [
-          { label: "Feed e Story", value: 0, color: "#8b5cf6" },
-          { label: "Feed", value: 0, color: "#3b82f6" },
-          { label: "Stories", value: 0, color: "#ec4899" },
-          { label: "Carrossel", value: 0, color: "#10b981" },
-          { label: "Reels", value: 0, color: "#f59e0b" },
+          { label: "Feed e Story", value: 0, tone: styles.feedStory },
+          { label: "Feed", value: 0, tone: styles.feed },
+          { label: "Stories", value: 0, tone: styles.story },
+          { label: "Carrossel", value: 0, tone: styles.middle },
+          { label: "Reels", value: 0, tone: styles.bottom },
         ],
         funnel: [
-          { label: "Topo", value: 0, color: "#3b82f6" },
-          { label: "Meio", value: 0, color: "#8b5cf6" },
-          { label: "Fundo", value: 0, color: "#ef4444" },
+          { label: "Topo", value: 0, tone: styles.top },
+          { label: "Meio", value: 0, tone: styles.middle },
+          { label: "Fundo", value: 0, tone: styles.bottom },
         ],
       };
     }
@@ -67,21 +77,31 @@ export function PresentationUnifiedIntro({
     return {
       total,
       formats: [
-        { label: "Feed e Story", value: pct(counts["Feed e Story"]), color: "#8b5cf6" },
-        { label: "Feed", value: pct(counts.Feed), color: "#3b82f6" },
-        { label: "Stories", value: pct(counts.Story), color: "#ec4899" },
-        { label: "Carrossel", value: pct(counts.Carrossel), color: "#10b981" },
-        { label: "Reels", value: pct(counts.Reels), color: "#f59e0b" },
+        { label: "Feed e Story", value: pct(counts["Feed e Story"]), tone: styles.feedStory },
+        { label: "Feed", value: pct(counts.Feed), tone: styles.feed },
+        { label: "Stories", value: pct(counts.Story), tone: styles.story },
+        { label: "Carrossel", value: pct(counts.Carrossel), tone: styles.middle },
+        { label: "Reels", value: pct(counts.Reels), tone: styles.bottom },
       ],
       funnel: [
-        { label: "Topo", value: pct(funnelCounts.Topo), color: "#3b82f6" },
-        { label: "Meio", value: pct(funnelCounts.Meio), color: "#8b5cf6" },
-        { label: "Fundo", value: pct(funnelCounts.Fundo), color: "#ef4444" },
+        { label: "Topo", value: pct(funnelCounts.Topo), tone: styles.top },
+        { label: "Meio", value: pct(funnelCounts.Meio), tone: styles.middle },
+        { label: "Fundo", value: pct(funnelCounts.Fundo), tone: styles.bottom },
       ],
     };
   }, [items]);
 
-  // Indexação de posts por data para o calendário
+  // Metadados estratégicos cadastrados
+  const persistedDetails = useMemo(() => {
+    return Object.entries({
+      Segmento: calendar.segment || "Geral",
+      "Tom de voz": calendar.tone || "Profissional, acolhedor e estratégico",
+      "Público-alvo": calendar.audience || "Público qualificado da marca",
+      Observações: calendar.strategy || calendar.objective || "",
+    }).filter((entry): entry is [string, string] => Boolean(entry[1]));
+  }, [calendar]);
+
+  // 2. Indexação de posts por data para o Calendário Mensal
   const postsByDate = useMemo(() => {
     const map = new Map<string, ContentItem[]>();
     items.forEach((item) => {
@@ -92,10 +112,17 @@ export function PresentationUnifiedIntro({
     return map;
   }, [items]);
 
+  const handleDayClick = (dateStr: string) => {
+    if (postsByDate.has(dateStr)) {
+      setSelectedDate(dateStr === selectedDate ? null : dateStr);
+    }
+  };
+
   const scrollToPost = (postId: string) => {
     const element = document.getElementById(`post-${postId}`);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
+      setSelectedDate(null);
     }
   };
 
@@ -109,163 +136,286 @@ export function PresentationUnifiedIntro({
       transition={{ duration: 0.4 }}
       className={styles.unifiedCard}
     >
-      {/* 1. TOPO: Identidade da Marca e Título da Apresentação */}
-      <div className={styles.cardHeader}>
-        <div className={styles.brandLogoBox}>
-          {calendar.client_logo_url ? (
-            <img
-              src={calendar.client_logo_url}
-              alt={calendar.brand}
-              className={styles.brandLogoImg}
-            />
-          ) : (
-            <span className={styles.brandInitials}>{brandInitials}</span>
-          )}
-        </div>
+      {/* ============================================================== */}
+      {/* 1. SEÇÃO HERO / CAPA (Conteúdo original preservado integralmente) */}
+      {/* ============================================================== */}
+      <section className={styles.heroSection}>
+        {calendar.client_logo_url ? (
+          <motion.img
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            src={calendar.client_logo_url}
+            alt={calendar.brand}
+            className={styles.heroLogoImage}
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={styles.logoBadge}
+          >
+            <span>{brandInitials}</span>
+          </motion.div>
+        )}
 
-        <div className={styles.headerInfo}>
-          <span className={styles.headerBadge}>Planejamento de Conteúdo</span>
-          <h1 className={styles.heroTitle}>
-            Proposta de <span>Conteúdo Social</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Apresentação oficial de <strong>{calendar.brand}</strong> •{" "}
-            {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+        <span className={styles.heroPretitle}>Planejamento de Conteúdo</span>
+
+        <h1 className={styles.heroTitle}>
+          Proposta de <br />
+          <span>Conteúdo Social</span>
+        </h1>
+
+        <p className={styles.heroSubtitle}>
+          Apresentação oficial de <strong>{calendar.brand}</strong> •{" "}
+          {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+        </p>
+      </section>
+
+      {/* Divisor elegante sutil entre blocos do card longo */}
+      <div className={styles.sectionDivider} />
+
+      {/* ============================================================== */}
+      {/* 2. SEÇÃO RESUMO DO PLANEJAMENTO (3 colunas originais preservadas) */}
+      {/* ============================================================== */}
+      <section className={styles.strategySection}>
+        <div className={styles.sectionHeadingLeft}>
+          <h2 className={styles.sectionTitle}>Resumo do planejamento</h2>
+          <p className={styles.sectionDescription}>
+            Indicadores calculados exclusivamente a partir das publicações cadastradas.
           </p>
         </div>
-      </div>
 
-      {/* 2. CORPO: Resumo do Planejamento (Esquerda) e Calendário Mensal (Direita) */}
-      <div className={styles.mainGrid}>
-        {/* COLUNA ESQUERDA: Indicadores Estratégicos */}
-        <div className={styles.strategyCol}>
-          <div className={styles.colHeader}>
-            <h3>Resumo do planejamento</h3>
-            <p>Indicadores calculados a partir das publicações cadastradas.</p>
+        {/* Grade de 3 colunas: Volume mensal | Formatos | Etapas do funil */}
+        <div className={styles.metricsGrid}>
+          {/* Card Volume */}
+          <div className={styles.metricCard}>
+            <span className={styles.metricCardLabel}>Volume mensal</span>
+            <p className={styles.volumeTotal}>{metrics.total}</p>
           </div>
 
-          <div className={styles.metricsRow}>
-            {/* Volume */}
-            <div className={styles.volumeBox}>
-              <span className={styles.metricBoxLabel}>Volume</span>
-              <p className={styles.volumeNum}>{metrics.total}</p>
-            </div>
-
-            {/* Formatos */}
-            <div className={styles.barsBox}>
-              <span className={styles.barsTitle}>Formatos</span>
+          {/* Card Formatos */}
+          <div className={styles.metricCard}>
+            <span className={styles.metricCardLabel}>Formatos</span>
+            <div className={styles.barsList}>
               {metrics.formats.map((f) => (
-                <div key={f.label} className={styles.barRow}>
-                  <div className={styles.barMeta}>
+                <div key={f.label} className={styles.metricItem}>
+                  <div className={styles.metricHeader}>
                     <span>{f.label}</span>
                     <span>{f.value}%</span>
                   </div>
-                  <div className={styles.barTrack}>
+                  <div className={styles.track}>
                     <div
-                      className={styles.barFill}
-                      style={{ width: `${f.value}%`, background: f.color }}
+                      className={`${styles.fill} ${f.tone}`}
+                      style={{ width: `${f.value}%` }}
                     />
                   </div>
                 </div>
               ))}
             </div>
+          </div>
 
-            {/* Funil */}
-            <div className={styles.barsBox}>
-              <span className={styles.barsTitle}>Etapas do Funil</span>
+          {/* Card Funil */}
+          <div className={styles.metricCard}>
+            <span className={styles.metricCardLabel}>Etapas do funil informadas</span>
+            <div className={styles.barsList}>
               {metrics.funnel.map((fn) => (
-                <div key={fn.label} className={styles.barRow}>
-                  <div className={styles.barMeta}>
+                <div key={fn.label} className={styles.metricItem}>
+                  <div className={styles.metricHeader}>
                     <span>{fn.label}</span>
                     <span>{fn.value}%</span>
                   </div>
-                  <div className={styles.barTrack}>
+                  <div className={styles.track}>
                     <div
-                      className={styles.barFill}
-                      style={{ width: `${fn.value}%`, background: fn.color }}
+                      className={`${styles.fill} ${fn.tone}`}
+                      style={{ width: `${fn.value}%` }}
                     />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Dados descritivos da marca */}
-          <div className={styles.brandDetailsList}>
-            <div className={styles.detailItem}>
-              <span>Segmento</span>
-              <strong>{calendar.segment || "Geral"}</strong>
-            </div>
-            <div className={styles.detailItem}>
-              <span>Tom de Voz</span>
-              <strong>{calendar.tone || "Profissional e acolhedor"}</strong>
-            </div>
-            <div className={styles.detailItem}>
-              <span>Público-Alvo</span>
-              <strong>{calendar.audience || "Público qualificado"}</strong>
-            </div>
-          </div>
         </div>
 
-        {/* COLUNA DIREITA: Visão Macro • Calendário Mensal */}
-        <div className={styles.calendarCol}>
-          <div className={styles.colHeader}>
-            <span className={styles.headerBadge}>Visão Macro</span>
-            <h3>Calendário Mensal</h3>
-          </div>
+        {/* Detalhes estratégicos em 2 colunas */}
+        {persistedDetails.length > 0 && (
+          <dl className={styles.detailsGrid}>
+            {persistedDetails.map(([label, value]) => (
+              <div key={label} className={styles.detailItem}>
+                <dt className={styles.detailLabel}>{label}</dt>
+                <dd className={styles.detailValue}>{value}</dd>
+              </div>
+            ))}
+            {calendar.pillars && (
+              <div className={styles.detailItem}>
+                <dt className={styles.detailLabel}>Colunas de conteúdo</dt>
+                <dd className={styles.detailValue}>{calendar.pillars}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+      </section>
 
-          <div className={styles.calendarCardInner}>
-            <div className={styles.calGrid}>
-              {DAY_NAMES.map((name) => (
-                <div key={name} className={styles.dayHeader}>
-                  {name}
-                </div>
-              ))}
+      {/* Divisor elegante sutil entre blocos do card longo */}
+      <div className={styles.sectionDivider} />
 
-              {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`pre-${i}`} className={`${styles.dayCell} ${styles.empty}`} />
-              ))}
+      {/* ============================================================== */}
+      {/* 3. SEÇÃO CALENDÁRIO MENSAL (Grade original completa com popover) */}
+      {/* ============================================================== */}
+      <section className={styles.calendarSection}>
+        <div className={styles.calendarHeading}>
+          <p className={styles.calendarPretitle}>Visão Macro</p>
+          <h2 className={styles.calendarTitle}>Calendário Mensal</h2>
+        </div>
 
-              {Array.from({ length: daysCount }).map((_, i) => {
-                const day = i + 1;
-                const dateStr = format(
-                  new Date(month.getFullYear(), month.getMonth(), day),
-                  "yyyy-MM-dd"
-                );
-                const dayPosts = postsByDate.get(dateStr) || [];
-                const hasPost = dayPosts.length > 0;
-                const primaryPost = dayPosts[0];
+        <div className={styles.calendarCardInner}>
+          <div className={styles.calendarGrid}>
+            {DAY_NAMES.map((name) => (
+              <div key={name} className={styles.dayName}>
+                {name}
+              </div>
+            ))}
 
-                return (
-                  <button
-                    key={dateStr}
+            {Array.from({ length: firstDay }).map((_, i) => (
+              <div key={`pre-${i}`} className={styles.emptyDay} />
+            ))}
+
+            {Array.from({ length: daysCount }).map((_, i) => {
+              const day = i + 1;
+              const dateStr = format(
+                new Date(month.getFullYear(), month.getMonth(), day),
+                "yyyy-MM-dd"
+              );
+              const dayPosts = postsByDate.get(dateStr) || [];
+              const primaryPost = dayPosts[0];
+              const postTypeConfig = primaryPost
+                ? POST_TYPES.find((pt) => {
+                    const t = primaryPost.type.toLowerCase();
+                    return (
+                      pt.id === t ||
+                      (pt.id === "feed" && (t === "feed" || t === "post")) ||
+                      (pt.id === "story" && (t === "story" || t === "stories")) ||
+                      (pt.id === "carrossel" && (t === "carrossel" || t === "carousel")) ||
+                      (pt.id === "reels" && (t === "reels" || t === "reel" || t === "vídeo" || t === "video")) ||
+                      (pt.id === "feed e story" &&
+                        !["feed", "story", "stories", "post", "carrossel", "carousel", "reels", "reel", "video", "vídeo"].includes(t))
+                    );
+                  })
+                : null;
+              const Icon = postTypeConfig?.icon;
+              const isSelected = selectedDate === dateStr;
+
+              return (
+                <div key={day} style={{ position: "relative" }}>
+                  <motion.button
                     type="button"
-                    className={`${styles.dayCell} ${hasPost ? styles.hasPost : ""}`}
-                    onClick={() => {
-                      if (primaryPost) scrollToPost(primaryPost.id);
-                    }}
-                    title={
-                      hasPost
-                        ? `${dayPosts.length} publicação(ões) no dia ${day}. Clique para visualizar.`
-                        : `Dia ${day}`
-                    }
+                    onClick={() => handleDayClick(dateStr)}
+                    whileHover={dayPosts.length > 0 ? { scale: 1.05, y: -2 } : {}}
+                    whileTap={dayPosts.length > 0 ? { scale: 0.95 } : {}}
+                    className={styles.day}
+                    data-has-post={dayPosts.length > 0 || undefined}
+                    data-selected={isSelected || undefined}
                   >
                     <span>{day}</span>
+                    {dayPosts.length === 1 && (
+                      <>
+                        <div className={styles.dayDeadline}>
+                          <Clock />
+                        </div>
+                        {Icon && (
+                          <div className={styles.dayType}>
+                            <Icon />
+                          </div>
+                        )}
+                      </>
+                    )}
                     {dayPosts.length > 1 && (
-                      <span className={styles.calCountBadge}>{dayPosts.length}</span>
+                      <div className={styles.multiCountBadge}>
+                        {dayPosts.length}
+                      </div>
                     )}
-                    {hasPost && (
-                      <span className={styles.calIndicatorIcon}>
-                        <Layers size={9} />
-                      </span>
+                  </motion.button>
+
+                  {/* Popover completo de publicações com navegação direta */}
+                  <AnimatePresence>
+                    {isSelected && dayPosts.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
+                        animate={{ opacity: 1, y: -10, scale: 1, x: "-50%" }}
+                        exit={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
+                        className={styles.popover}
+                      >
+                        {dayPosts.map((post: ContentItem, pIdx: number) => (
+                          <div
+                            key={post.id}
+                            className={styles.popoverItem}
+                            style={{
+                              borderBottom:
+                                pIdx < dayPosts.length - 1
+                                  ? "1px solid var(--glass-border, rgba(0,0,0,0.08))"
+                                  : "none",
+                            }}
+                          >
+                            <div className={styles.popoverPreview}>
+                              {post.imageUrl ? (
+                                <img src={post.imageUrl} alt="Preview" />
+                              ) : (
+                                <div className={styles.popoverPreviewEmpty}>
+                                  <ImageIcon />
+                                </div>
+                              )}
+                              <div className={styles.popoverTypeBadge}>
+                                {post.type}
+                                {post.isCollab
+                                  ? " · Collab"
+                                  : post.profile
+                                  ? ` · ${post.profile}`
+                                  : ""}
+                              </div>
+                            </div>
+
+                            <div className={styles.popoverCopy}>
+                              <h4>{post.head || post.title || "Sem título"}</h4>
+                              {(post.subhead || post.caption) && (
+                                <p>{post.subhead || post.caption}</p>
+                              )}
+                              <div className={styles.deadlineBadge}>
+                                <Clock />
+                                <span>Status: {post.status}</span>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                scrollToPost(post.id);
+                              }}
+                              className="w-full"
+                              variant="primary"
+                              size="small"
+                              icon={<ArrowUpRight />}
+                            >
+                              VER POST {dayPosts.length > 1 ? `#${pIdx + 1}` : "COMPLETO"}
+                            </Button>
+                          </div>
+                        ))}
+
+                        <div className={styles.arrow} />
+                      </motion.div>
                     )}
-                  </button>
-                );
-              })}
-            </div>
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
+
+          {selectedDate && (
+            <div
+              className={styles.closeLayer}
+              onClick={() => setSelectedDate(null)}
+            />
+          )}
         </div>
-      </div>
+      </section>
     </motion.div>
   );
 }
