@@ -1,0 +1,651 @@
+/**
+ * Sobrescritas Específicas de Componentes para o Modo Noturno
+ * Ajustes de contraste, bordas, superfícies e cores de texto em dark mode.
+ */
+
+/* Header e Navegação */
+[data-theme="dark"] .appHeader {
+  background: rgba(20, 22, 34, 0.94);
+  border-bottom-color: var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .themeToggleHeaderBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .themeToggleHeaderBtn:hover {
+  background: var(--surface);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .userMenuTrigger {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .userMenuTrigger:hover {
+  background: var(--surface);
+}
+
+[data-theme="dark"] .userDropdownMenu {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .userDropdownHeader {
+  background: var(--surface-soft);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .userDropdownInfo strong {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .userLogoutBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+[data-theme="dark"] .postNavigation {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .postNavigation button:hover {
+  background: var(--surface);
+}
+
+[data-theme="dark"] .headerTools > button {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .headerTools .shareClientBtn,
+[data-theme="dark"] .shareClientBtn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .headerTools .shareClientBtn:hover,
+[data-theme="dark"] .shareClientBtn:hover {
+  background: var(--surface-soft);
+  color: #fff;
+}
+
+[data-theme="dark"] .backHomeBtn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .backHomeBtn:hover {
+  background: var(--surface-soft);
+}
+
+/* Coluna de Calendário e Cadência */
+[data-theme="dark"] .calendarPane {
+  background: rgba(20, 22, 34, 0.72);
+  border-right-color: var(--border);
+}
+
+[data-theme="dark"] .panelTitle button {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .monthSurface {
+  background: rgba(30, 33, 48, 0.8);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .compactCalendar > button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .cadenceSection {
+  background: rgba(30, 33, 48, 0.85);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .weekdayToggleBtn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .weekdayToggleBtn:hover {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .weekdayFormatsList {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .weekdayFormatSelect {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .cadenceSummary strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .selectedDayBox {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .selectedDayTitle {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .selectedDayBadge {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .dayPostTab {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .dayPostTab:hover {
+  background: var(--surface);
+}
+
+[data-theme="dark"] .dayPostTab.dropTargetHover {
+  background: color-mix(in srgb, var(--accent), transparent 75%) !important;
+  border-color: var(--accent) !important;
+}
+
+[data-theme="dark"] .dayPostCollabBadge {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .dayActionBtn {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .compactCalendar > button.dropTargetHover {
+  background: color-mix(in srgb, var(--accent), transparent 60%) !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .calendarDragNotice {
+  background: color-mix(in srgb, var(--accent), transparent 85%);
+  border-color: var(--accent);
+  color: #fca5a5;
+}
+
+/* Coluna de Edição */
+[data-theme="dark"] .editorPane {
+  background: var(--canvas);
+}
+
+[data-theme="dark"] .documentTitle {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .metaGrid input,
+[data-theme="dark"] .metaGrid select,
+[data-theme="dark"] .copyGrid input,
+[data-theme="dark"] .copyGrid textarea,
+[data-theme="dark"] .copyGrid select,
+[data-theme="dark"] .mediaPanel input,
+[data-theme="dark"] .notesPanel textarea,
+[data-theme="dark"] .previewStatus select,
+[data-theme="dark"] .comments input {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .headerStatusSelector {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .headerStatusSelect {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .headerStatusSelect option {
+  background: #1e2430;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .quickUploadBtn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .quickUploadBtn:hover {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .editorMediaSection {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .editorSectionTitle {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .secondarySmallBtn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .secondarySmallBtn:hover {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .mediaRowControl {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .mediaCompactBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .mediaCompactBtn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: #475569;
+}
+
+[data-theme="dark"] .mediaCompactBtn.hasMedia {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+[data-theme="dark"] .mediaCompactBtn.hasMedia:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+[data-theme="dark"] .mediaBtnFormat {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .mediaMiniBadge.pending {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .mediaMiniBadge.success {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+[data-theme="dark"] .mediaCompactRemoveBtn {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+[data-theme="dark"] .mediaCompactRemoveBtn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .uploadDropzone {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .uploadedMediaCard {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .dropzoneCopy strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .mediaUrlRow code {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .profileCollabBox {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .profileCollabHeader strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .profileField input {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .profilePills button {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .profilePills button.unused {
+  opacity: 0.45;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: #8892b0;
+}
+
+[data-theme="dark"] .profilePills button.unused:hover {
+  opacity: 0.9;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .profilePills button .pillDeleteBtn {
+  color: #8892b0;
+}
+
+[data-theme="dark"] .profilePills button .pillDeleteBtn:hover {
+  background: rgba(227, 0, 47, 0.3);
+  color: #ff6b81;
+}
+
+[data-theme="dark"] .collabSwitchBadge {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+/* Coluna de Prévia */
+[data-theme="dark"] .previewPane {
+  background: rgba(20, 22, 34, 0.8);
+  border-left-color: var(--border);
+}
+
+[data-theme="dark"] .previewArea {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .feedCard {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .feedCard > header strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .feedEmptyMedia {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .feedEmptyMedia span {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .feedEmptyMedia small {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .comments {
+  border-top-color: var(--border);
+}
+
+[data-theme="dark"] .comments button {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* Autenticação em Modo Noturno */
+[data-theme="dark"] .authWrapper {
+  background: radial-gradient(circle at 50% 10%, var(--surface) 0, transparent 60%), var(--canvas);
+}
+
+[data-theme="dark"] .authCard {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .authHeader h1 {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .authTabs {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .authTabs button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .inputBox {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .inputBox:focus-within {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .inputBox input {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .roleOption {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .roleOption strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .authFooter code {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+/* Notificações em Modo Noturno */
+[data-theme="dark"] .notificationDropdown {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .notificationDropdownHeader {
+  background: var(--surface-soft);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .notificationDropdownHeader strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .notificationItem {
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .notificationItem:hover {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .notificationItemText span {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .notificationBellBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .notificationBellBtn:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* Loaders em Modo Noturno */
+[data-theme="dark"] .fullScreenLoader,
+[data-theme="dark"] .studioLoading {
+  background: var(--canvas);
+}
+
+/* Visão Geral (Kanban e Lista) em Modo Noturno */
+[data-theme="dark"] .overviewContainer {
+  background: var(--canvas);
+}
+
+[data-theme="dark"] .overviewToolbar {
+  background: var(--surface);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .overviewStatPill.total {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .overviewSearchBox input {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .overviewSearchBox input:focus {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .overviewFilterSelect {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .viewSwitchBtn.active {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .overviewCreateBtn {
+  background: var(--accent);
+  color: #fff;
+}
+
+[data-theme="dark"] .kanbanColumn {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .kanbanColumn.dragOver {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+}
+
+[data-theme="dark"] .kanbanColumnHeader {
+  background: var(--surface-soft);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .kanbanCard {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .kanbanCard:hover {
+  border-color: #475569;
+}
+
+[data-theme="dark"] .kanbanCardNoThumb {
+  background: var(--surface);
+  border-bottom-color: var(--border);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .kanbanDateBadge {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .kanbanControlsGrid {
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .kanbanSelect {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .listViewRow {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .listViewRow:hover {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .listInlineSelect {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .listRowBtn {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .viewModeBtn.active {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .clientCommentBanner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  border-left-color: #f59e0b;
+}
+
+[data-theme="dark"] .clientCommentBannerHeader {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .clientCommentText {
+  color: #fef3c7;
+}
+
+
