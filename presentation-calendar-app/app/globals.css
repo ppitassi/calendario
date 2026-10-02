@@ -1,0 +1,28 @@
+/**
+ * Arquitetura de Estilos Globais
+ * Modularizado em blocos especializados para alta manutenibilidade:
+ *
+ * - tokens.css       -> Variáveis de design, cores, tipografia, espaçamento e sombras
+ * - base.css         -> Reset global, layout shell, colunas do studio e loaders
+ * - header.css       -> Header do app, ferramentas, sininho de notificações e menu de usuário
+ * - calendar.css     -> Grade mensal, cadência semanal, seleção de dia e drag-and-drop
+ * - editor.css       -> Abas, campos do formulário, upload de artes e perfis/collab
+ * - preview.css      -> Simulação do feed Instagram, avatares e comentários
+ * - auth.css         -> Telas de login, cadastro, alertas e cards de autenticação
+ * - dark-mode.css    -> Sobrescritas de superfícies e contrastes para tema noturno
+ * - responsive.css   -> Responsividade mobile, gaveta hamburger e breakpoints
+ * - print.css        -> Regras de impressão profissional e exportação para PDF
+ */
+
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/header.css";
+@import "./styles/calendar.css";
+@import "./styles/editor.css";
+@import "./styles/preview.css";
+@import "./styles/overview.css";
+@import "./styles/portal.css";
+@import "./styles/auth.css";
+@import "./styles/dark-mode.css";
+@import "./styles/responsive.css";
+@import "./styles/print.css";

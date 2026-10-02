@@ -1,0 +1,234 @@
+/**
+ * Telas de Autenticação e Configuração de Acesso
+ * Login, registro, seleção de perfis de usuário e alertas do formulário.
+ */
+
+.authWrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 10%, #ffffff 0, transparent 60%), #f4f5f9;
+  padding: 20px;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 16px 40px rgba(23, 25, 36, 0.08);
+}
+
+.authHeader {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.authLogo {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ff174f, #b40b3a);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 16px;
+  box-shadow: 0 8px 24px rgba(255, 23, 79, 0.3);
+}
+
+.authHeader h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #171924;
+}
+
+.authSubtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.authTabs {
+  display: flex;
+  background: #f0f2f7;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+
+.authTabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+
+.authTabs button.active {
+  background: #fff;
+  color: #171924;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.authAlert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.authAlert.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.authAlert.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formField span {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #555b6d;
+}
+
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #fcfdfe;
+}
+
+.inputBox:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 23, 79, 0.12);
+  background: #fff;
+}
+
+.inputBox input {
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  width: 100%;
+}
+
+.inputBox svg {
+  color: var(--muted);
+  flex: none;
+}
+
+.rolePicker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.roleOption {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  background: #fafbfc;
+  transition: all 0.15s;
+}
+
+.roleOption.selected {
+  border-color: var(--accent);
+  background: rgba(255, 23, 79, 0.04);
+}
+
+.roleOption input {
+  margin-top: 2px;
+}
+
+.roleOption strong {
+  display: block;
+  font-size: 12px;
+  color: #171924;
+}
+
+.roleOption small {
+  display: block;
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.authHint {
+  font-size: 10px;
+  color: #8a90a0;
+  margin: 6px 0 0;
+  font-style: italic;
+}
+
+.submitBtn {
+  height: 42px;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.authFooter {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.authFooter small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.authFooter code {
+  background: #f0f2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #171924;
+  font-size: 11px;
+}
+
+.compactBtn {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 11px;
+}

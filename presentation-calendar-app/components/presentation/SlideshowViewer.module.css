@@ -1,0 +1,169 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar a navegação em slides pelas mídias de uma publicação.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Superfície compartilhada pelo carrossel e por seu estado vazio. */
+.cardCommon {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  overflow: hidden;
+  margin-inline: auto;
+  border: 3px solid #ffffff;
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 40px -16px rgba(20, 29, 52, 0.16);
+  transition: transform var(--duration-fast, 140ms);
+  background: #f8fafc;
+}
+
+/* Contêiner da lâmina ativa, controles e paginação. */
+.root {
+  composes: cardCommon;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18rem;
+}
+
+.root:hover {
+  transform: scale(1.02);
+}
+
+.expandable {
+  cursor: pointer;
+}
+
+/* Estado vazio preserva a proporção do carrossel e explica a pendência. */
+.placeholder {
+  composes: cardCommon;
+  cursor: default;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  aspect-ratio: 4 / 5;
+  min-height: 20rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholderContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem 1.5rem;
+  color: #1e293b;
+  text-align: center;
+  z-index: 2;
+  width: 100%;
+}
+
+.iconCircle {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: grid;
+  place-items: center;
+  margin-bottom: 1rem;
+}
+
+.placeholderIcon {
+  width: 2rem;
+  height: 2rem;
+  color: #64748b;
+}
+
+.placeholderTitle {
+  font-family: var(--font-display, "Segoe UI", sans-serif);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.placeholderSubtitle {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #64748b;
+  max-width: 85%;
+}
+
+/* Usa `contain` para mostrar cada lâmina inteira, sem recorte. */
+.image {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  object-fit: contain;
+  display: block;
+}
+
+/* Faixas laterais revelam as setas ao passar o mouse ou focar um controle. */
+.previous,
+.next {
+  position: absolute;
+  inset-block: 0;
+  display: flex;
+  width: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--duration-fast, 140ms);
+  z-index: 5;
+}
+
+.previous {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.3), transparent);
+}
+
+.next {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.3), transparent);
+}
+
+.root:hover .previous,
+.root:hover .next,
+.root:focus-within .previous,
+.root:focus-within .next {
+  opacity: 1;
+}
+
+/* Paginação sobreposta indica e permite escolher a lâmina atual. */
+.dots {
+  position: absolute;
+  bottom: 0.85rem;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  transform: translateX(-50%);
+}
+
+.dot {
+  background: rgba(255, 255, 255, 0.5);
+  border: 0;
+  border-radius: 999px;
+  width: 0.45rem;
+  height: 0.45rem;
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--duration-fast, 140ms);
+}
+
+.dotActive {
+  background: #ffffff;
+  width: 1.1rem;
+}

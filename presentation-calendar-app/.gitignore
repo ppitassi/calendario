@@ -1,0 +1,32 @@
+# Dependências e saídas reproduzíveis
+node_modules/
+.next/
+out/
+coverage/
+artifacts/
+*.tsbuildinfo
+
+# Configuração local e segredos
+.env
+.env.*
+!.env.example
+
+# Estado persistente — deve ser armazenado e copiado fora do Git
+data/*
+!data/.gitkeep
+!data/uploads/
+data/uploads/*
+!data/uploads/.gitkeep
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Execução local
+logs/*
+!logs/.gitkeep
+cookies.txt
+*.log
+.DS_Store
+Thumbs.db

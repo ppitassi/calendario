@@ -1,0 +1,240 @@
+/**
+ * Painel de Prévia do Feed e Simulação de Post
+ * Cartão de feed Instagram, avatares de collab, mídias e comentários.
+ */
+
+.previewRoot {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.previewStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.funnelBadge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 78%);
+  border-radius: 11px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--accent), transparent 92%);
+  color: var(--accent);
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.previewArea {
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #f1f2f6;
+}
+
+.emptyPreview {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* Card de Feed */
+.feedCard {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(23, 25, 36, 0.06);
+}
+
+.feedCard > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.feedCard > header > div:nth-child(2) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.feedCard > header strong {
+  font-size: 10px;
+}
+
+.feedCard > header small {
+  font-size: 8px;
+  color: var(--muted);
+}
+
+.feedCard > header > svg {
+  width: 15px;
+  color: var(--muted);
+}
+
+.feedAvatar {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent), transparent 86%);
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+/* Avatares Sobrepostos de Collab */
+.feedCollabAvatars {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 44px;
+  height: 29px;
+}
+
+.feedCollabAvatars .feedAvatar {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  font-size: 8px;
+}
+
+.feedCollabAvatars .feedAvatar.primary {
+  left: 0;
+  z-index: 2;
+  border: 2px solid #fff;
+}
+
+.feedCollabAvatars .feedAvatar.secondary {
+  left: 15px;
+  z-index: 1;
+  background: #db2777;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+/* Mídia do Feed */
+.feedMedia {
+  width: 100%;
+  display: block;
+  background: transparent;
+  overflow: hidden;
+  position: relative;
+}
+
+.feedRealImg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.feedEmptyMedia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 16px;
+  color: #64748b;
+  background: #f8fafc;
+  width: 100%;
+  min-height: 200px;
+}
+
+.feedEmptyMedia span {
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.feedEmptyMedia small {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+.feedActions {
+  display: flex;
+  gap: 12px;
+  padding: 9px 11px 2px;
+}
+
+.feedActions svg {
+  width: 17px;
+}
+
+.feedCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 11px 12px;
+}
+
+.feedCopy strong {
+  font-size: 11px;
+}
+
+.feedCopy small {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.feedCopy p {
+  margin: 2px 0;
+  font-size: 9px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.feedCopy em {
+  font-style: normal;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.feedCopy code {
+  font-size: 8px;
+  color: #3976a8;
+}
+
+/* Comentários */
+.comments {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 11px;
+}
+
+.comments > p {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.comments > div {
+  display: flex;
+  gap: 6px;
+}
+
+.comments button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.comments button svg {
+  width: 14px;
+}

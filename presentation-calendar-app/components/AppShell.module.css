@@ -1,0 +1,76 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar o contêiner autenticado que coordena cliente, mês, tela e apresentação ativa.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--canvas, #f5f6fa);
+  color: var(--color-text-primary, #111827);
+  position: relative;
+}
+
+.mainArea {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  box-sizing: border-box;
+}
+
+.mainAreaPinned {
+  margin-left: 17rem;
+}
+
+.mainAreaCollapsed {
+  margin-left: 4.5rem;
+}
+
+/* Overlay que bloqueia a área principal enquanto um calendário é garantido. */
+.loadingOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(227, 0, 47, 0.15);
+  border-top-color: var(--tenant-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Rotação contínua do indicador de carregamento. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===================== DARK MODE ===================== */
+:global([data-theme="dark"]) .shell {
+  background: var(--canvas);
+}
+
+/* ===================== MOBILE ===================== */
+@media (max-width: 768px) {
+  .mainAreaPinned,
+  .mainAreaCollapsed {
+    margin-left: 0 !important;
+  }
+}
