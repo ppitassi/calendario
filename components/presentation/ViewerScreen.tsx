@@ -133,7 +133,14 @@ export function ViewerScreen({
       />
 
       {/* UI: documento contínuo que também serve de base para impressão/PDF isolado. */}
-      <main id="presentation-print-area" className={cn(styles.main, "presentationPrintArea")}>
+      <main
+        id="presentation-print-area"
+        className={cn(
+          styles.main,
+          "presentationPrintArea",
+          clientMode && styles.mainWithApproval
+        )}
+      >
         {/* 1. CARD MACRO UNIFICADO: Capa (Hero) + Resumo do Planejamento + Calendário Mensal em UM só card */}
         <PresentationUnifiedIntro
           calendar={calendar}
@@ -236,11 +243,11 @@ export function ViewerScreen({
       {/* 4. BARRA FIXA DE APROVAÇÃO DO CLIENTE (Exibida somente no modo cliente) */}
       {clientMode && (
         <>
-          <div className="portalApprovalStickyBar">
-            <div className="portalApprovalActions">
+          <div className={styles.portalApprovalStickyBar}>
+            <div className={styles.portalApprovalActions}>
               <button
                 type="button"
-                className="portalApproveFullBtn"
+                className={styles.portalApproveFullBtn}
                 onClick={() => handleSubmitReview("approved")}
                 disabled={submittingReview}
               >
@@ -250,19 +257,19 @@ export function ViewerScreen({
                 </span>
               </button>
 
-              <div className="portalRessalvaLinks">
+              <div className={styles.portalRessalvaLinks}>
                 <button
                   type="button"
-                  className="portalPhraseBtn approveNotes"
+                  className={cn(styles.portalPhraseBtn, styles.approveNotes)}
                   onClick={() => setHijackModalType("approve_with_notes")}
                   disabled={submittingReview}
                 >
                   Aprovar com ressalvas
                 </button>
-                <span className="portalPhraseSeparator">•</span>
+                <span className={styles.portalPhraseSeparator}>•</span>
                 <button
                   type="button"
-                  className="portalPhraseBtn rejectNotes"
+                  className={cn(styles.portalPhraseBtn, styles.rejectNotes)}
                   onClick={() => setHijackModalType("reject_with_notes")}
                   disabled={submittingReview}
                 >
@@ -271,8 +278,8 @@ export function ViewerScreen({
               </div>
 
               {submittedStatus && (
-                <div style={{ fontSize: "11px", fontWeight: "700", color: "#10b981", marginTop: 4 }}>
-                  ✓ Status atual:{" "}
+                <div className={styles.approvalStatusNotice}>
+                  ✓ Status registrado:{" "}
                   {submittedStatus === "approved" || submittedStatus === "approve"
                     ? "Aprovado sem ressalvas"
                     : submittedStatus === "approved_with_notes" || submittedStatus === "approve_with_notes"

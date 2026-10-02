@@ -290,3 +290,118 @@
     padding-inline: var(--space-8, 2rem);
   }
 }
+
+/* Espaço extra na parte inferior quando a barra de aprovação está ativa */
+.mainWithApproval {
+  padding-bottom: 8rem;
+}
+
+/* Barra Fixa Inferior de Aprovação do Cliente (Doc Centralizado) */
+.portalApprovalStickyBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-modal, 100);
+  background: var(--glass-surface-strong, rgba(255, 255, 255, 0.94));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+  border-top: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.15));
+  box-shadow: 0 -8px 32px -8px rgba(20, 29, 52, 0.2);
+  padding: var(--space-3, 0.75rem) var(--space-6, 1.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portalApprovalActions {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  text-align: center;
+}
+
+.portalApproveFullBtn {
+  width: 100%;
+  height: 3rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: 0;
+  border-radius: var(--radius-card, 1rem);
+  font-size: var(--font-size-base, 1rem);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transition: all var(--duration-fast, 140ms) ease;
+}
+
+.portalApproveFullBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+
+.portalApproveFullBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portalRessalvaLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3, 0.75rem);
+}
+
+.portalPhraseBtn {
+  background: transparent;
+  border: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: all var(--duration-fast, 140ms) ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.approveNotes {
+  color: #d97706;
+}
+
+.approveNotes:hover {
+  color: #b45309;
+}
+
+.rejectNotes {
+  color: #ef4444;
+}
+
+.rejectNotes:hover {
+  color: #b91c1c;
+}
+
+.portalPhraseSeparator {
+  color: var(--color-text-muted, #94a3b8);
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.approvalStatusNotice {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill, 999px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
