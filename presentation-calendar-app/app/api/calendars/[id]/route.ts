@@ -88,8 +88,8 @@ export async function GET(
       }
     }
 
-    // Busca também perfis utilizados em quaisquer calendários deste cliente
-    if (calendar.client_id) {
+    // Busca também perfis utilizados em quaisquer calendários deste cliente apenas se nenhum perfil estiver cadastrado
+    if (calendar.client_id && profileSet.size === 0 && !calendar.client_profiles) {
       try {
         const usedProfiles = await db.prepare(`
           SELECT DISTINCT ci.profile

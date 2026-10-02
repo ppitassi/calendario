@@ -349,6 +349,29 @@
   color: var(--ink);
 }
 
+[data-theme="dark"] .profilePills button.unused {
+  opacity: 0.45;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: #8892b0;
+}
+
+[data-theme="dark"] .profilePills button.unused:hover {
+  opacity: 0.9;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .profilePills button .pillDeleteBtn {
+  color: #8892b0;
+}
+
+[data-theme="dark"] .profilePills button .pillDeleteBtn:hover {
+  background: rgba(227, 0, 47, 0.3);
+  color: #ff6b81;
+}
+
 [data-theme="dark"] .collabSwitchBadge {
   background: var(--surface-soft);
   border-color: var(--border);
