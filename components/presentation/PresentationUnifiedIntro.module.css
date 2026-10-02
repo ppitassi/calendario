@@ -1,38 +1,39 @@
 /**
  * Card Macro Unificado: Capa + Resumo Estratégico + Calendário Mensal em um único bloco.
+ * Desenvolvido seguindo a arquitetura de "CSS Bricks" e tokens do sistema.
  */
 
 .unifiedCard {
   position: relative;
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.16));
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
   border-radius: var(--radius-overlay, 1.5rem);
-  background: var(--glass-surface, rgba(255, 255, 255, 0.88));
-  box-shadow: var(--shadow-overlay, 0 20px 50px -20px rgba(20, 29, 52, 0.25));
-  backdrop-filter: blur(var(--glass-blur, 19px));
-  padding: 2.25rem 2.5rem;
+  background: var(--glass-surface, rgba(255, 255, 255, 0.74));
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  backdrop-filter: blur(var(--glass-blur, 19px)) saturate(var(--glass-saturation, 122%));
+  padding: var(--space-8, 2rem) var(--space-10, 2.5rem);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--space-8, 2rem);
 }
 
-/* 1. Header do Card (Identidade & Título da Proposta) */
+/* 1. Header do Card (Identidade & Título da Proposta - Bloco Hero) */
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  gap: var(--space-6, 1.5rem);
+  padding-bottom: var(--space-6, 1.5rem);
+  border-bottom: 1px solid var(--glass-border, rgba(37, 48, 76, 0.12));
 }
 
 .brandLogoBox {
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: 1.1rem;
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface-strong, rgba(255, 255, 255, 0.88));
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  box-shadow: var(--shadow-surface, 0 8px 24px -16px rgba(30, 41, 70, 0.34));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,58 +45,61 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 0.4rem;
+  padding: var(--space-2, 0.5rem);
 }
 
 .brandInitials {
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
   font-weight: 900;
-  color: var(--tenant-primary, #ef4444);
+  color: var(--color-action-primary, var(--tenant-primary, #e3002f));
   letter-spacing: -0.02em;
 }
 
 .headerInfo {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1, 0.25rem);
 }
 
 .headerBadge {
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs, 0.75rem);
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--tenant-primary, #ef4444);
+  letter-spacing: var(--tracking-heavy-uppercase, 0.12em);
+  color: var(--color-action-primary, var(--tenant-primary, #e3002f));
 }
 
 .heroTitle {
   margin: 0;
-  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.25rem);
   font-weight: 900;
-  line-height: 1.1;
-  color: #0f172a;
-  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--color-text-primary, #171924);
+  letter-spacing: -0.025em;
 }
 
 .heroTitle span {
-  color: var(--tenant-primary, #ef4444);
+  color: var(--color-action-primary, var(--tenant-primary, #e3002f));
 }
 
 .heroSubtitle {
   margin: 0;
-  font-size: 0.95rem;
-  color: #64748b;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
 }
 
 .heroSubtitle strong {
-  color: #1e293b;
+  color: var(--color-text-primary, #171924);
+  font-weight: 700;
 }
 
 /* 2. Grid de Conteúdo (Esquerda: Resumo Estratégico | Direita: Calendário Mensal) */
 .mainGrid {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 2.5rem;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--space-8, 2rem);
   align-items: start;
 }
 
@@ -103,133 +107,136 @@
 .strategyCol {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5, 1.25rem);
 }
 
 .colHeader {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: var(--space-1, 0.25rem);
 }
 
 .colHeader h3 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--color-text-primary, #171924);
 }
 
 .colHeader p {
   margin: 0;
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
 }
 
 .metricsRow {
   display: grid;
   grid-template-columns: 110px 1fr 1fr;
-  gap: 1rem;
+  gap: var(--space-3, 0.75rem);
+}
+
+.volumeBox,
+.barsBox,
+.brandDetailsList,
+.calendarCardInner {
+  border: 1px solid var(--glass-border, rgba(37, 48, 76, 0.12));
+  border-radius: var(--radius-card, 1rem);
+  background: var(--glass-surface-subtle, rgba(255, 255, 255, 0.56));
+  box-shadow: var(--shadow-surface, 0 8px 24px -16px rgba(30, 41, 70, 0.34));
 }
 
 .volumeBox {
-  background: rgba(248, 250, 252, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4, 1rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .metricBoxLabel {
-  font-size: 0.65rem;
+  font-size: var(--font-size-2xs, 0.625rem);
   font-weight: 800;
   text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.05em;
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  letter-spacing: var(--tracking-heavy-uppercase, 0.08em);
 }
 
 .volumeNum {
-  margin: 0.25rem 0 0;
-  font-size: 2.25rem;
+  margin: var(--space-1, 0.25rem) 0 0;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
   font-weight: 900;
-  color: var(--tenant-primary, #ef4444);
+  color: var(--color-action-primary, var(--tenant-primary, #e3002f));
   line-height: 1;
 }
 
 .barsBox {
-  background: rgba(248, 250, 252, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: var(--space-2, 0.5rem);
 }
 
 .barsTitle {
-  font-size: 0.65rem;
+  font-size: var(--font-size-2xs, 0.625rem);
   font-weight: 800;
   text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.15rem;
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  letter-spacing: var(--tracking-heavy-uppercase, 0.08em);
+  margin-bottom: var(--space-1, 0.25rem);
 }
 
 .barRow {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 2px;
 }
 
 .barMeta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.72rem;
+  font-size: var(--font-size-xs, 0.75rem);
   font-weight: 700;
-  color: #334155;
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
 }
 
 .barTrack {
-  height: 5px;
-  border-radius: 999px;
-  background: #e2e8f0;
+  height: 0.5rem;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--color-text-primary, #171924) 8%, transparent);
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
   border-radius: inherit;
-  transition: width 0.3s ease;
+  transition: width var(--duration-standard, 190ms) var(--ease-standard);
 }
 
 .brandDetailsList {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 0.85rem 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
 }
 
 .detailItem {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 2px;
 }
 
 .detailItem span {
-  font-size: 0.65rem;
+  font-size: var(--font-size-2xs, 0.625rem);
   font-weight: 800;
   text-transform: uppercase;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  letter-spacing: var(--tracking-heavy-uppercase, 0.08em);
 }
 
 .detailItem strong {
-  font-size: 0.82rem;
-  color: #1e293b;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-primary, #171924);
   font-weight: 700;
 }
 
@@ -237,29 +244,25 @@
 .calendarCol {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5, 1.25rem);
 }
 
 .calendarCardInner {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 1.25rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  padding: var(--space-4, 1rem);
 }
 
 .calGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: var(--space-1, 0.25rem);
 }
 
 .dayHeader {
   text-align: center;
-  font-size: 0.68rem;
+  font-size: var(--font-size-2xs, 0.625rem);
   font-weight: 800;
-  color: #64748b;
-  padding-bottom: 6px;
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  padding-bottom: var(--space-2, 0.5rem);
   text-transform: uppercase;
 }
 
@@ -269,33 +272,37 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: #f8fafc;
+  border-radius: var(--radius-card, 1rem);
+  background: var(--color-bg-muted, hsl(224, 24%, 92%));
   border: 1px solid transparent;
-  font-size: 0.85rem;
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm, 0.875rem);
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  opacity: 0.45;
   position: relative;
-  transition: all 0.15s ease;
+  transition: all var(--duration-fast, 140ms) var(--ease-standard);
   user-select: none;
 }
 
 .dayCell.empty {
   background: transparent;
   border: none;
+  opacity: 0;
 }
 
 .dayCell.hasPost {
-  background: var(--tenant-primary, #ef4444);
-  color: #ffffff;
+  opacity: 1;
+  background: var(--color-action-primary, var(--tenant-primary, #e3002f));
+  color: var(--color-text-on-action, #ffffff);
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
-  font-weight: 800;
+  box-shadow: var(--shadow-action);
+  font-weight: 900;
 }
 
 .dayCell.hasPost:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.35);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--color-action-primary, #e3002f) 70%, transparent);
 }
 
 .calCountBadge {
@@ -305,7 +312,7 @@
   font-size: 0.6rem;
   font-weight: 900;
   line-height: 1;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .calIndicatorIcon {
@@ -321,7 +328,7 @@
 @media (max-width: 1024px) {
   .mainGrid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: var(--space-6, 1.5rem);
   }
 
   .metricsRow {
@@ -331,7 +338,7 @@
 
 @media (max-width: 640px) {
   .unifiedCard {
-    padding: 1.5rem 1.25rem;
+    padding: var(--space-5, 1.25rem) var(--space-4, 1rem);
   }
 
   .cardHeader {
