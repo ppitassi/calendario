@@ -531,6 +531,91 @@
   transform: translateY(-1px);
 }
 
+/* Botão / Switch de Pré-Calendário */
+.preCalendarToggleBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px !important;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.preCalendarToggleBtn:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+  border-color: #94a3b8;
+}
+
+.preCalendarToggleBtn input[type="checkbox"] {
+  accent-color: #2563eb;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.preCalendarToggleBtn.active {
+  background: #eff6ff;
+  border-color: #60a5fa;
+  color: #1d4ed8;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Opção de Pré-Calendário no Modal de Compartilhamento */
+.shareModalPreCalendarOption {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.shareModalPreCalendarOption:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.sharePreCalendarCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sharePreCalendarCheck input[type="checkbox"] {
+  accent-color: #2563eb;
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.sharePreCalendarCheck div strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sharePreCalendarCheck div p {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
 .shareModalOverlay {
   position: fixed;
   inset: 0;

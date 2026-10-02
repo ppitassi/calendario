@@ -187,6 +187,8 @@ export async function PUT(
       weekdayFormats,
       items,
       profiles,
+      is_pre_calendar,
+      isPreCalendar,
     } = body;
 
     const db = getDb();
@@ -207,6 +209,11 @@ export async function PUT(
     const finalObjective = objective !== undefined ? objective : existing.objective;
     const finalStatus = status !== undefined ? status : existing.status;
     const finalAssignedTo = assignedToId !== undefined ? (assignedToId || null) : existing.assigned_to_id;
+    const finalIsPreCalendar = is_pre_calendar !== undefined
+      ? (is_pre_calendar ? 1 : 0)
+      : isPreCalendar !== undefined
+      ? (isPreCalendar ? 1 : 0)
+      : (existing.is_pre_calendar ?? 0);
 
     await db.prepare(`
       UPDATE calendars
@@ -221,6 +228,7 @@ export async function PUT(
         objective = ?,
         status = ?,
         assigned_to_id = ?,
+        is_pre_calendar = ?,
         updated_at = ?
       WHERE id = ?
     `).run(
@@ -234,6 +242,7 @@ export async function PUT(
       finalObjective ?? "",
       finalStatus ?? "draft",
       finalAssignedTo,
+      finalIsPreCalendar,
       now,
       id
     );

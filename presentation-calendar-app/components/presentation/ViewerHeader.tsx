@@ -18,6 +18,8 @@ export function ViewerHeader({
   onNextMonth,
   clientMode = false,
   onShare,
+  isPreCalendar = false,
+  onTogglePreCalendar,
 }: {
   calendar: CalendarRecord;
   currentDate: Date;
@@ -26,6 +28,8 @@ export function ViewerHeader({
   onNextMonth: () => void;
   clientMode?: boolean;
   onShare?: () => void;
+  isPreCalendar?: boolean;
+  onTogglePreCalendar?: (enabled: boolean) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [loadingShare, setLoadingShare] = useState(false);
@@ -101,6 +105,26 @@ export function ViewerHeader({
 
       {/* UI: impressão/PDF, cópia do endereço e saída da apresentação. */}
       <div className={styles.actions}>
+        {!clientMode && onTogglePreCalendar && (
+          <label
+            className={`${styles.preCalendarToggle} ${isPreCalendar ? styles.active : ""}`}
+            title="Ativar/desativar modo Pré-Calendário (aprovação apenas de copywriting, sem exibição de imagens)"
+          >
+            <input
+              type="checkbox"
+              checked={isPreCalendar}
+              onChange={(e) => onTogglePreCalendar(e.target.checked)}
+            />
+            <span>Pré-calendário</span>
+          </label>
+        )}
+
+        {clientMode && isPreCalendar && (
+          <div className={styles.preCalendarClientBadge}>
+            <span>📝 Pré-Calendário (Copy)</span>
+          </div>
+        )}
+
         <Button
           type="button"
           onClick={() => window.print()}

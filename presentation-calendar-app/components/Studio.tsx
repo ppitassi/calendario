@@ -28,6 +28,7 @@ import {
   Check,
   CheckCircle,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { Editor } from "./Editor";
@@ -128,6 +129,27 @@ export function Studio({
       console.error("Erro ao gerar novo token:", e);
     } finally {
       setLoadingShareToken(false);
+    }
+  };
+
+  /** Alterna o modo Pré-Calendário (validação de copywriting sem exibição de imagens) */
+  const handleTogglePreCalendar = async () => {
+    if (!calendar?.id) return;
+    const nextVal = !calendar.is_pre_calendar;
+    setCalendar((prev) => (prev ? { ...prev, is_pre_calendar: nextVal } : prev));
+    try {
+      await fetch(`/api/calendars/${calendar.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_pre_calendar: nextVal ? 1 : 0 }),
+      });
+      addNotification(
+        nextVal
+          ? "Modo Pré-calendário ativado: imagens omitidas para validação de copy."
+          : "Modo Pré-calendário desativado: apresentação completa com artes visuais."
+      );
+    } catch (e) {
+      console.error("Erro ao alterar status de pré-calendário:", e);
     }
   };
 
@@ -910,6 +932,20 @@ export function Studio({
 
         {/* UI: ferramentas do cabeçalho unificado com apresentação, notificações, tema e perfil de usuário */}
         <div className="headerTools">
+          {/* Tick de Pré-Calendário */}
+          <label
+            className={`preCalendarToggleBtn ${calendar.is_pre_calendar ? "active" : ""}`}
+            title="Pré-calendário: aprovação apenas de copywriting antes da produção dos criativos (omite imagens na apresentação)"
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(calendar.is_pre_calendar)}
+              onChange={handleTogglePreCalendar}
+            />
+            <FileText size={13} />
+            <span>Pré-calendário</span>
+          </label>
+
           <button
             type="button"
             className="shareClientBtn"
@@ -1220,6 +1256,23 @@ export function Studio({
                     </>
                   )}
                 </button>
+              </div>
+
+              {/* Tick de Pré-Calendário no Modal de Envio */}
+              <div className="shareModalPreCalendarOption">
+                <label className="sharePreCalendarCheck">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(calendar.is_pre_calendar)}
+                    onChange={handleTogglePreCalendar}
+                  />
+                  <div>
+                    <strong>Modo Pré-calendário (Omitir imagens e criativos)</strong>
+                    <p>
+                      A apresentação exibirá exclusivamente os textos, títulos, briefings e legendas para validação de copywriting antes de começar a produção das artes visuais.
+                    </p>
+                  </div>
+                </label>
               </div>
 
               <div className="shareModalFeatures">

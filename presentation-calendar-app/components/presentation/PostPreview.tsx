@@ -18,6 +18,7 @@ export function PostPreview({
   clientMode = false,
   clientComment = "",
   onClientCommentChange,
+  isPreCalendar = false,
 }: {
   post: ContentItem;
   date: string;
@@ -26,6 +27,7 @@ export function PostPreview({
   clientMode?: boolean;
   clientComment?: string;
   onClientCommentChange?: (comment: string) => void;
+  isPreCalendar?: boolean;
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -68,6 +70,19 @@ export function PostPreview({
                     Funil: {post.funnelStage}
                   </div>
                 )}
+                {isPreCalendar && (
+                  <div
+                    className={styles.funnelPill}
+                    style={{
+                      background: "rgba(59, 130, 246, 0.1)",
+                      color: "#2563eb",
+                      borderColor: "rgba(59, 130, 246, 0.25)",
+                      fontWeight: 800,
+                    }}
+                  >
+                    📝 Pré-Calendário: Copywriting
+                  </div>
+                )}
                 {post.isCollab ? (
                   <div className={styles.funnelPill} style={{ background: "#fdf2f8", color: "#db2777", borderColor: "#fbcfe8" }}>
                     COLLAB: {post.profile || "Perfil A"} × {post.collabProfile || "Perfil B"}
@@ -93,7 +108,6 @@ export function PostPreview({
               </div>
 
               <div className={styles.details}>
-
                 <div className={styles.objective}>
                   <div className={styles.objectiveIcon}>
                     <Target />
@@ -117,31 +131,35 @@ export function PostPreview({
                     className={styles.clientCommentInput}
                     value={clientComment || ""}
                     onChange={(e) => onClientCommentChange && onClientCommentChange(e.target.value)}
-                    placeholder="Deixe observações ou solicite alterações para esta publicação..."
+                    placeholder="Deixe observações ou solicite alterações para este texto..."
                     rows={2}
                   />
                 </div>
               )}
             </div>
 
-            <div className={styles.visuals}>
-              <InstagramMockup
-                post={post}
-                brand={post.profile || "Instagram"}
-                onImageClick={(url) => {
-                  if (url) setLightboxOpen(true);
-                }}
-              />
-            </div>
+            {!isPreCalendar && (
+              <div className={styles.visuals}>
+                <InstagramMockup
+                  post={post}
+                  brand={post.profile || "Instagram"}
+                  onImageClick={(url) => {
+                    if (url) setLightboxOpen(true);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <Lightbox
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-        images={images}
-      />
+      {!isPreCalendar && (
+        <Lightbox
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          images={images}
+        />
+      )}
     </div>
   );
 }

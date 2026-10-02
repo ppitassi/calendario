@@ -281,6 +281,7 @@ async function initPgSchema(pool: Pool | PoolClient) {
     { table: "calendars", col: "client_feedback", def: "TEXT DEFAULT ''" },
     { table: "calendars", col: "client_feedback_status", def: "TEXT DEFAULT ''" },
     { table: "calendars", col: "client_feedback_at", def: "TEXT DEFAULT ''" },
+    { table: "calendars", col: "is_pre_calendar", def: "INTEGER DEFAULT 0" },
     { table: "calendar_items", col: "client_comment", def: "TEXT DEFAULT ''" },
   ];
 
@@ -622,6 +623,7 @@ function initSqliteSchema(db: any) {
   try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback_status TEXT DEFAULT '';"); } catch {}
   try { db.exec("ALTER TABLE calendars ADD COLUMN client_feedback_at TEXT DEFAULT '';"); } catch {}
+  try { db.exec("ALTER TABLE calendars ADD COLUMN is_pre_calendar INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE calendar_items ADD COLUMN client_comment TEXT DEFAULT '';"); } catch {}
 
   const existingAdmin = db.prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1").get();
