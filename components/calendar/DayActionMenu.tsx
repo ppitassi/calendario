@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import {
@@ -10,7 +10,9 @@ import {
   Layers,
   Video,
   Image as ImageIcon,
-  Sliders,
+  Check,
+  CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import type { ContentItem, ContentType } from "@/lib/types";
 
@@ -20,6 +22,8 @@ export interface DayActionMenuProps {
   referenceEvents: any[];
   availableProfiles: string[];
   defaultFormat?: ContentType;
+  isPostingDay?: boolean;
+  onTogglePostingDay?: () => void;
   onClose: () => void;
   onCreatePost: (type: ContentType, profile: string) => void;
   onCreateFromReference?: (title: string) => void;
@@ -40,6 +44,8 @@ export function DayActionMenu({
   referenceEvents,
   availableProfiles,
   defaultFormat = "Feed e Story",
+  isPostingDay = false,
+  onTogglePostingDay,
   onClose,
   onCreatePost,
   onCreateFromReference,
@@ -49,14 +55,16 @@ export function DayActionMenu({
   const [selectedProfile, setSelectedProfile] = useState<string>(
     availableProfiles.length === 1 ? availableProfiles[0] : ""
   );
+  const [view, setView] = useState<"menu" | "create" | "holiday">("menu");
+  const [selectedHoliday, setSelectedHoliday] = useState<any>(null);
 
-  // Formatar data legível (ex: 15 de Outubro)
+  // Formatar data legível (ex: 17 de novembro)
   const formattedDate = (() => {
     try {
       const [y, m, d] = date.split("-").map(Number);
       const dt = new Date(y, m - 1, d);
       return dt.toLocaleDateString("pt-BR", {
-        weekday: "long",
+        weekday: "short",
         day: "numeric",
         month: "long",
       });
@@ -71,8 +79,8 @@ export function DayActionMenu({
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        background: "rgba(15, 23, 42, 0.45)",
-        backdropFilter: "blur(4px)",
+        background: "rgba(0, 0, 0, 0.4)",
+        backdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -88,51 +96,44 @@ export function DayActionMenu({
         aria-labelledby="day-menu-title"
         style={{
           width: "100%",
-          maxWidth: "420px",
-          background: "var(--surface, #ffffff)",
-          border: "1px solid var(--border, #e2e8f0)",
-          borderRadius: "16px",
-          boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.2), 0 8px 16px -4px rgba(0, 0, 0, 0.1)",
+          maxWidth: "340px",
+          background: "var(--surface, #1e2230)",
+          border: "1px solid var(--border, rgba(255, 255, 255, 0.12))",
+          borderRadius: "14px",
+          boxShadow: "0 24px 48px -12px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25)",
           overflow: "hidden",
-          animation: "dayMenuFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
+          animation: "dayMenuFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
+          color: "var(--ink, #f1f5f9)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Cabeçalho do Menu */}
+        {/* Cabeçalho estilo Apple popover */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "16px 20px",
-            borderBottom: "1px solid var(--border, #f1f5f9)",
-            background: "var(--surface-soft, #f8fafc)",
+            padding: "12px 14px 10px 14px",
+            borderBottom: "1px solid var(--border, rgba(255, 255, 255, 0.08))",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
             <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: "var(--accent, #ff174f)",
-              }}
-            >
-              Ações para o dia
-            </span>
-            <h3
               id="day-menu-title"
               style={{
-                margin: 0,
-                fontSize: "15px",
-                fontWeight: 800,
-                color: "var(--ink, #0f172a)",
+                fontSize: "13px",
+                fontWeight: 700,
+                color: "var(--ink, #f1f5f9)",
                 textTransform: "capitalize",
               }}
             >
               {formattedDate}
-            </h3>
+            </span>
+            {isPostingDay && (
+              <span style={{ fontSize: "10px", color: "var(--accent, #ff174f)", fontWeight: 600 }}>
+                • Dia padrão de postagem
+              </span>
+            )}
           </div>
 
           <button
@@ -142,35 +143,63 @@ export function DayActionMenu({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "28px",
-              height: "28px",
-              borderRadius: "8px",
-              border: "1px solid var(--border, #e2e8f0)",
-              background: "var(--surface, #ffffff)",
-              color: "var(--muted, #64748b)",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              border: "none",
+              background: "rgba(255, 255, 255, 0.08)",
+              color: "var(--muted, #94a3b8)",
               cursor: "pointer",
             }}
             title="Fechar"
           >
-            <X size={15} />
+            <X size={13} />
           </button>
         </div>
 
-        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Se o dia já tiver posts, lista-os com acesso direto */}
-          {dayPosts.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  color: "var(--muted, #64748b)",
-                }}
-              >
-                Publicações existentes ({dayPosts.length})
-              </span>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        {/* Visualização 1: Menu contextual padrão */}
+        {view === "menu" && (
+          <div style={{ padding: "8px", display: "flex", flexDirection: "column", gap: "2px" }}>
+            <button
+              type="button"
+              onClick={() => setView("create")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 10px",
+                borderRadius: "8px",
+                border: "none",
+                background: "transparent",
+                color: "var(--ink, #f1f5f9)",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "background 0.1s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <Plus size={14} style={{ color: "var(--accent, #ff174f)" }} />
+              <span>Criar publicação</span>
+            </button>
+
+            {/* Publicações do dia */}
+            {dayPosts.length > 0 && (
+              <>
+                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "4px 0" }} />
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: "var(--muted, #8b92a5)",
+                    padding: "4px 8px 2px 8px",
+                  }}
+                >
+                  Publicações ({dayPosts.length})
+                </span>
                 {dayPosts.map((post) => (
                   <button
                     key={post.id}
@@ -183,131 +212,133 @@ export function DayActionMenu({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border, #e2e8f0)",
-                      background: "var(--surface-soft, #f8fafc)",
+                      gap: "8px",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: "rgba(255, 255, 255, 0.03)",
+                      color: "var(--ink, #f1f5f9)",
+                      fontSize: "12px",
                       cursor: "pointer",
                       textAlign: "left",
-                      transition: "all 0.15s ease",
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-                      <span
-                        style={{
-                          fontSize: "10px",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          background: "var(--surface, #ffffff)",
-                          border: "1px solid var(--border, #cbd5e1)",
-                          color: "var(--ink, #1e293b)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {post.type}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          color: "var(--ink, #0f172a)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {post.title || post.profile || "Publicação"}
-                      </span>
-                    </div>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent, #ff174f)", flexShrink: 0 }}>
-                      Abrir →
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {post.title || post.profile || "Publicação"}
                     </span>
+                    <span style={{ fontSize: "10px", color: "var(--muted, #8b92a5)" }}>{post.type}</span>
                   </button>
                 ))}
-              </div>
-            </div>
-          )}
+              </>
+            )}
 
-          {/* Referências Editoriais / Datas Comemorativas */}
-          {referenceEvents.length > 0 && onCreateFromReference && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  color: "var(--muted, #64748b)",
-                }}
-              >
-                Inspirar com Data comemorativa
-              </span>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {/* Feriados / Datas comemorativas */}
+            {referenceEvents.length > 0 && (
+              <>
+                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "4px 0" }} />
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: "var(--muted, #8b92a5)",
+                    padding: "4px 8px 2px 8px",
+                  }}
+                >
+                  Datas comemorativas
+                </span>
                 {referenceEvents.map((ref) => (
                   <button
                     key={ref.externalKey || ref.title}
                     type="button"
                     onClick={() => {
-                      onCreateFromReference(ref.title);
-                      onClose();
+                      setSelectedHoliday(ref);
+                      setView("holiday");
                     }}
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "8px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(14, 165, 233, 0.3)",
-                      background: "rgba(14, 165, 233, 0.08)",
-                      color: "#0369a1",
+                      gap: "6px",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: "transparent",
+                      color: "var(--muted, #cbd5e1)",
+                      fontSize: "11px",
                       cursor: "pointer",
                       textAlign: "left",
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
-                      <span>🗓️</span>
-                      <span style={{ fontSize: "12px", fontWeight: 700 }}>{ref.title}</span>
-                    </div>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "3px",
-                        fontSize: "10px",
-                        fontWeight: 800,
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        background: "rgba(14, 165, 233, 0.2)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Sparkles size={10} />
-                      Usar
+                    <span style={{ width: "4px", height: "4px", borderRadius: "50%", border: "1px solid currentColor" }} />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {ref.title}
                     </span>
                   </button>
                 ))}
-              </div>
+              </>
+            )}
+
+            {/* Alternar dia padrão de postagem */}
+            {onTogglePostingDay && (
+              <>
+                <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "4px 0" }} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    onTogglePostingDay();
+                    onClose();
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: "transparent",
+                    color: "var(--ink, #f1f5f9)",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <Calendar size={13} style={{ color: "var(--muted, #94a3b8)" }} />
+                  <span>{isPostingDay ? "Remover dos dias padrão" : "Definir como dia padrão"}</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Visualização 2: Criar publicação com seleção de formato e perfil */}
+        {view === "create" && (
+          <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #8b92a5)" }}>
+                ESCOLHA O FORMATO
+              </span>
+              <button
+                type="button"
+                onClick={() => setView("menu")}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "11px",
+                  color: "var(--accent, #ff174f)",
+                  cursor: "pointer",
+                }}
+              >
+                Voltar
+              </button>
             </div>
-          )}
 
-          {/* Configuração de Nova Publicação */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                color: "var(--muted, #64748b)",
-              }}
-            >
-              Criar Nova Publicação
-            </span>
-
-            {/* Escolha do Formato */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "6px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "5px" }}>
               {FORMAT_OPTIONS.map((opt) => {
                 const isSelected = selectedFormat === opt.type;
                 const Icon = opt.icon;
@@ -320,55 +351,45 @@ export function DayActionMenu({
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: `1px solid ${isSelected ? "var(--accent, #ff174f)" : "var(--border, #e2e8f0)"}`,
+                      padding: "6px 8px",
+                      borderRadius: "6px",
+                      border: `1px solid ${isSelected ? "var(--accent, #ff174f)" : "rgba(255, 255, 255, 0.08)"}`,
                       background: isSelected
-                        ? "color-mix(in srgb, var(--accent, #ff174f) 8%, var(--surface, #ffffff))"
-                        : "var(--surface, #ffffff)",
-                      color: isSelected ? "var(--accent, #ff174f)" : "var(--ink, #1e293b)",
+                        ? "color-mix(in srgb, var(--accent, #ff174f) 16%, transparent)"
+                        : "rgba(255, 255, 255, 0.04)",
+                      color: isSelected ? "var(--accent, #ff174f)" : "var(--ink, #f1f5f9)",
                       fontSize: "11px",
-                      fontWeight: isSelected ? 800 : 600,
+                      fontWeight: isSelected ? 700 : 500,
                       cursor: "pointer",
-                      transition: "all 0.12s ease",
                     }}
                   >
-                    <Icon size={13} />
+                    <Icon size={12} />
                     <span>{opt.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Escolha do Perfil (se houver mais de 1) */}
             {availableProfiles.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "2px" }}>
-                <label
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    color: "var(--muted, #64748b)",
-                  }}
-                >
-                  Perfil / Linha Editorial:
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, color: "var(--muted, #8b92a5)" }}>
+                  PERFIL / LINHA:
                 </label>
                 <select
                   value={selectedProfile}
                   onChange={(e) => setSelectedProfile(e.target.value)}
                   style={{
-                    padding: "6px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border, #cbd5e1)",
-                    background: "var(--surface, #ffffff)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    color: "var(--ink, #0f172a)",
+                    padding: "5px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    background: "rgba(255, 255, 255, 0.06)",
+                    fontSize: "11px",
+                    color: "var(--ink, #f1f5f9)",
                   }}
                 >
-                  <option value="">Padrão (Sem perfil fixo)</option>
+                  <option value="" style={{ background: "#1e2230" }}>Padrão (Geral)</option>
                   {availableProfiles.map((p) => (
-                    <option key={p} value={p}>
+                    <option key={p} value={p} style={{ background: "#1e2230" }}>
                       {p}
                     </option>
                   ))}
@@ -376,7 +397,6 @@ export function DayActionMenu({
               </div>
             )}
 
-            {/* Botão de confirmação de criação */}
             <button
               type="button"
               onClick={() => {
@@ -384,29 +404,102 @@ export function DayActionMenu({
                 onClose();
               }}
               style={{
-                marginTop: "6px",
+                marginTop: "4px",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "6px",
-                padding: "10px 16px",
-                borderRadius: "10px",
+                padding: "8px 12px",
+                borderRadius: "8px",
                 border: "none",
                 background: "var(--accent, #ff174f)",
                 color: "#ffffff",
-                fontSize: "13px",
-                fontWeight: 800,
+                fontSize: "12px",
+                fontWeight: 700,
                 cursor: "pointer",
-                boxShadow: "0 4px 12px color-mix(in srgb, var(--accent, #ff174f) 35%, transparent)",
-                transition: "filter 0.15s ease",
+                boxShadow: "0 2px 8px color-mix(in srgb, var(--accent, #ff174f) 35%, transparent)",
               }}
             >
-              <Plus size={16} />
-              <span>Criar Publicação Agora</span>
+              <Plus size={14} />
+              <span>Confirmar e Criar</span>
             </button>
           </div>
-        </div>
+        )}
+
+        {/* Visualização 3: Detalhes do Feriado / Data Comemorativa */}
+        {view === "holiday" && selectedHoliday && (
+          <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--ink, #f1f5f9)" }}>
+                {selectedHoliday.title}
+              </span>
+              <button
+                type="button"
+                onClick={() => setView("menu")}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "11px",
+                  color: "var(--accent, #ff174f)",
+                  cursor: "pointer",
+                }}
+              >
+                Voltar
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: "11px", color: "var(--muted, #94a3b8)", lineHeight: 1.4 }}>
+              Data comemorativa oficial ({selectedHoliday.sourceLabel || "Calendário Oficial"}). Deseja incluir no planejamento?
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
+              {onCreateFromReference && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCreateFromReference(selectedHoliday.title);
+                    onClose();
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "var(--accent, #ff174f)",
+                    color: "#ffffff",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Plus size={14} />
+                  <span>Criar publicação sobre esta data</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "transparent",
+                  color: "var(--muted, #94a3b8)",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                }}
+              >
+                Ignorar neste calendário
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

@@ -27,6 +27,7 @@ import {
   ImagePlus,
   Loader2,
   Check,
+  Keyboard,
 } from "lucide-react";
 import type { CalendarRecord, SafeUser } from "../lib/types";
 import { monthLabel, shiftMonth } from "../lib/date";
@@ -53,6 +54,7 @@ export interface StudioHeaderProps {
   onClearNotifications: () => void;
   onRemoveNotification: (id: string) => void;
   onUnapprove?: () => void;
+  onOpenSettings?: () => void;
 }
 
 /** Cabeçalho completo do Studio com identidade, navegação e ferramentas. */
@@ -76,6 +78,7 @@ export function StudioHeader({
   onClearNotifications: _onClearNotifications,
   onRemoveNotification: _onRemoveNotification,
   onUnapprove,
+  onOpenSettings,
 }: StudioHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -552,8 +555,22 @@ export function StudioHeader({
                     </div>
                   </div>
                 </div>
-                {onLogout && (
-                  <div className="userDropdownFooter">
+                <div className="userDropdownFooter">
+                  {onOpenSettings && (
+                    <button
+                      type="button"
+                      className="userLogoutBtn"
+                      style={{ color: "var(--text-main, inherit)", marginBottom: "4px" }}
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onOpenSettings();
+                      }}
+                    >
+                      <Keyboard size={14} />
+                      <span>Atalhos & Teclado</span>
+                    </button>
+                  )}
+                  {onLogout && (
                     <button
                       type="button"
                       className="userLogoutBtn"
@@ -565,8 +582,8 @@ export function StudioHeader({
                       <LogOut size={14} />
                       <span>Sair da conta</span>
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </div>

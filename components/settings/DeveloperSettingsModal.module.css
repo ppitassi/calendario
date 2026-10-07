@@ -141,7 +141,161 @@
 .secondary:hover:not(:disabled) { background: var(--surface-soft, #f1f5f9); }
 .primary:disabled, .secondary:disabled { opacity: 0.55; cursor: not-allowed; }
 
+.tabBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem 0;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  background: var(--surface-soft, rgba(255, 255, 255, 0.02));
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.tabBtn:hover {
+  color: var(--ink, #1e293b);
+}
+
+.tabBtnActive {
+  color: var(--accent, #0284c7);
+  border-bottom-color: var(--accent, #0284c7);
+}
+
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.resetBtn:hover {
+  color: var(--ink, #1e293b);
+  background: var(--surface-soft, rgba(255, 255, 255, 0.06));
+}
+
+.hotkeysList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.hotkeyCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 0.65rem;
+  transition: border-color 0.15s ease;
+}
+
+.hotkeyCard:hover {
+  border-color: rgba(2, 132, 199, 0.3);
+}
+
+.hotkeyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.hotkeyLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink, #f1f5f9);
+}
+
+.hotkeyDesc {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+  line-height: 1.35;
+}
+
+.hotkeyControls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.hotkeySelect {
+  padding: 0.4rem 0.6rem;
+  background: var(--surface, #1e2230);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  color: var(--ink, #f1f5f9);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.hotkeyActionBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent, #0284c7);
+  background: rgba(2, 132, 199, 0.1);
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.hotkeyKeyWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 700;
+}
+
+.hotkeyKeyInput {
+  width: 2rem;
+  height: 1.8rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: var(--surface, #1e2230);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  color: var(--ink, #f1f5f9);
+  outline: none;
+}
+
+.hotkeyKeyInput:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
 .spin { animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+

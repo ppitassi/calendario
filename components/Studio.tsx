@@ -31,6 +31,7 @@ export interface StudioProps {
   onToggleTheme?: () => void;
   initialViewMode?: "calendar" | "extras" | "kanban" | "list";
   onViewModeChange?: (mode: "calendar" | "extras" | "kanban" | "list") => void;
+  onOpenSettings?: () => void;
 }
 
 /** Carrega uma competência, coordena sua edição e entrega os mesmos dados às três colunas. */
@@ -46,6 +47,7 @@ export function Studio({
   onToggleTheme,
   initialViewMode = "calendar",
   onViewModeChange,
+  onOpenSettings,
 }: StudioProps) {
   const {
     calendar,
@@ -197,6 +199,7 @@ export function Studio({
         onClearNotifications={clearNotifications}
         onRemoveNotification={removeNotification}
         onUnapprove={handleUnapproveCalendar}
+        onOpenSettings={onOpenSettings}
       />
 
       {Boolean(calendar.client_feedback || calendar.clientFeedback) && (

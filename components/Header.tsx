@@ -23,6 +23,8 @@ import {
   AlertCircle,
   Sparkles,
   Calendar,
+  Keyboard,
+  Sliders,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,6 +46,7 @@ interface HeaderProps {
   onNavigate?: (screen: string) => void;
   activeMonth?: Date;
   onMonthChange?: (month: Date) => void;
+  onOpenSettings?: () => void;
 }
 
 export function Header({
@@ -57,6 +60,7 @@ export function Header({
   onNavigate,
   activeMonth,
   onMonthChange,
+  onOpenSettings,
 }: HeaderProps) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -308,6 +312,20 @@ export function Header({
               </div>
 
               <div className={styles.menuItemList}>
+                {onOpenSettings && (
+                  <button
+                    type="button"
+                    className={styles.menuItemBtn}
+                    onClick={() => {
+                      setUserDropdownOpen(false);
+                      onOpenSettings();
+                    }}
+                  >
+                    <Keyboard size={15} />
+                    <span>Atalhos & Configurações</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className={styles.menuItemBtn}

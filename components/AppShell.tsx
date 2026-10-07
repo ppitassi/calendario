@@ -356,6 +356,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
           onNavigate={handleNavigate}
           activeMonth={activeMonth}
           onMonthChange={setActiveMonth}
+          onOpenSettings={() => setIsDevSettingsOpen(true)}
         />
       )}
 
@@ -454,6 +455,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
             onToggleTheme={handleToggleTheme}
             initialViewMode={studioViewMode}
             onViewModeChange={(mode) => setStudioViewMode(mode)}
+            onOpenSettings={() => setIsDevSettingsOpen(true)}
           />
         )}
 
@@ -544,12 +546,11 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         }}
       />
 
-      {currentUser.role === "admin" && (
-        <DeveloperSettingsModal
-          isOpen={isDevSettingsOpen}
-          onClose={() => setIsDevSettingsOpen(false)}
-        />
-      )}
+      <DeveloperSettingsModal
+        isOpen={isDevSettingsOpen}
+        onClose={() => setIsDevSettingsOpen(false)}
+        initialTab={currentUser.role === "admin" ? "hotkeys" : "hotkeys"}
+      />
     </div>
   );
 }

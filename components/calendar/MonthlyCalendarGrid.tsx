@@ -29,6 +29,7 @@ import { BatchActionBar } from "./BatchActionBar";
 import { DayActionMenu } from "./DayActionMenu";
 import { PostingCadence } from "./PostingCadence";
 import { Sliders } from "lucide-react";
+import { useHotkeys } from "@/lib/hotkeys";
 import styles from "../MonthlyCalendarGrid.module.css";
 
 // 7 colunas: Segunda a Domingo (conforme Seção 4.1 do plano técnico)
@@ -70,11 +71,12 @@ export function MonthlyCalendarGrid({
   onUpdateWeekdayFormat,
   availableProfiles = [],
 }: MonthlyCalendarGridProps) {
-  // Modo de seleção múltipla de dias para lote
+  // Modo de seleção múltipla de dias para lote (desktop e touch)
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [activeMenuDate, setActiveMenuDate] = useState<string | null>(null);
   const [showCadenceDrawer, setShowCadenceDrawer] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [lastClickedDate, setLastClickedDate] = useState<string | null>(null);
 
   // Drag and Drop
   const [dragSource, setDragSource] = useState<{
@@ -84,7 +86,7 @@ export function MonthlyCalendarGrid({
   } | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
 
-  // Referências editoriais / Feriados (Seção 6 do Plano V2)
+  // Referências editoriais / Feriados
   const [referenceEvents, setReferenceEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -131,15 +133,37 @@ export function MonthlyCalendarGrid({
   }, [referenceEvents]);
 
   // Cálculo da grade: segunda a domingo
-  // getDay(): 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
-  // Ajuste para Segunda = 0: (getDay() + 6) % 7
   const year = month.getFullYear();
   const monthIdx = month.getMonth();
   const firstDayOfWeek = (new Date(year, monthIdx, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
-
-  // Dias do mês anterior para preenchimento suave
   const prevMonthDays = new Date(year, monthIdx, 0).getDate();
+
+  // Configuração dinâmica de teclas de atalho (Settings)
+  const { matchesModifier, hotkeys } = useHotkeys();
+
+  // Todos os dias do mês atual como array ordenado
+  const allCurrentMonthDates = useMemo(() => {
+    const list: string[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      list.push(dateKey(new Date(year, monthIdx, d)));
+    }
+    return list;
+  }, [year, monthIdx, daysInMonth]);
+
+  const togglePostingDayForDate = (key: string) => {
+    if (!onUpdatePostingDays) return;
+    const [y, m, d] = key.split("-").map(Number);
+    const dayOfWeek = new Date(y, m - 1, d).getDay();
+    const count = postingDays.filter((wd) => wd === dayOfWeek).length;
+    let nextDays: number[];
+    if (count === 0) {
+      nextDays = [...postingDays, dayOfWeek].sort((a, b) => a - b);
+    } else {
+      nextDays = postingDays.filter((wd) => wd !== dayOfWeek);
+    }
+    onUpdatePostingDays(nextDays);
+  };
 
   const handleToggleDateSelection = (key: string) => {
     if (selectedDates.includes(key)) {
@@ -149,14 +173,75 @@ export function MonthlyCalendarGrid({
     }
   };
 
-  const handleDayClick = (key: string, dayPosts: ContentItem[]) => {
-    if (isSelectMode) {
+  // Clique em dia seguindo a especificação: SELECIONAR -> CONTEXTUALIZAR -> AGIR
+  // Respeita a tecla configurada em Settings (Ctrl por padrão, ou Alt/Shift/Cmd conforme hotkey)
+  const handleDayClick = (e: React.MouseEvent, key: string) => {
+    const isMultiSelectModifier =
+      matchesModifier(e, "multi_select_click") || e.ctrlKey || e.metaKey;
+    const isRangeSelectModifier =
+      matchesModifier(e, "range_select_click") || e.shiftKey;
+
+    // Multi-seleção de intervalo contínuo
+    if (isRangeSelectModifier && lastClickedDate) {
+      const idxA = allCurrentMonthDates.indexOf(lastClickedDate);
+      const idxB = allCurrentMonthDates.indexOf(key);
+      if (idxA !== -1 && idxB !== -1) {
+        const start = Math.min(idxA, idxB);
+        const end = Math.max(idxA, idxB);
+        const range = allCurrentMonthDates.slice(start, end + 1);
+        const merged = Array.from(new Set([...selectedDates, ...range]));
+        setSelectedDates(merged);
+        setLastClickedDate(key);
+        return;
+      }
+    }
+
+    // Multi-seleção individual com Ctrl / Cmd ou tecla configurada
+    if (isMultiSelectModifier || isSelectMode) {
       handleToggleDateSelection(key);
+      setLastClickedDate(key);
       return;
     }
-    // Abre menu contextual perguntando o que fazer (criar com formato, ver existentes, ou usar inspiração)
+
+    // Clique simples: apenas seleciona o dia e abre o menu de contexto Apple-like
+    setSelectedDates([key]);
+    setLastClickedDate(key);
     setActiveMenuDate(key);
   };
+
+  // Escuta atalhos de teclado do calendário
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignora se estiver digitando em campos de formulário
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+
+      // Atalho para nova publicação rápida (Ctrl + N)
+      if (matchesModifier(e, "new_post_shortcut") && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        const defaultDay = selectedDates[0] || dateKey(new Date(year, monthIdx, 1));
+        setActiveMenuDate(defaultDay);
+      }
+
+      // Atalho para alternar modo seleção (Ctrl + S)
+      if (matchesModifier(e, "toggle_select_mode") && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setIsSelectMode((prev) => !prev);
+      }
+
+      // Atalho para rotina semanal (Ctrl + R)
+      if (matchesModifier(e, "toggle_routine") && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        setShowCadenceDrawer((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [matchesModifier, selectedDates, year, monthIdx]);
+
 
   const handlePostDragStart = (e: React.DragEvent, post: ContentItem) => {
     e.stopPropagation();
@@ -193,7 +278,7 @@ export function MonthlyCalendarGrid({
 
   return (
     <div className={styles.gridContainer}>
-      {/* Barra de Ferramentas Superior do Calendário */}
+      {/* Toolbar nativa Apple-like: ‹ Mês Ano ›  Hoje  |  Rotina  Selecionar  + */}
       <div className={styles.toolbar}>
         <div className={styles.monthControls}>
           <button
@@ -202,7 +287,7 @@ export function MonthlyCalendarGrid({
             onClick={() => onMonthChange(shiftMonth(month, -1))}
             title="Mês anterior"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={15} />
           </button>
           <strong className={styles.monthTitle}>{monthLabel(month)}</strong>
           <button
@@ -211,7 +296,7 @@ export function MonthlyCalendarGrid({
             onClick={() => onMonthChange(shiftMonth(month, 1))}
             title="Próximo mês"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={15} />
           </button>
           <button
             type="button"
@@ -223,6 +308,18 @@ export function MonthlyCalendarGrid({
         </div>
 
         <div className={styles.actions}>
+          {onUpdatePostingDays && (
+            <button
+              type="button"
+              className={`${styles.modeBtn} ${showCadenceDrawer ? styles.modeBtnActive : ""}`}
+              onClick={() => setShowCadenceDrawer(!showCadenceDrawer)}
+              title="Configurar rotina semanal de postagem e formatos padrão"
+            >
+              <Sliders size={13} />
+              <span>Rotina</span>
+            </button>
+          )}
+
           <button
             type="button"
             className={`${styles.modeBtn} ${isSelectMode ? styles.modeBtnActive : ""}`}
@@ -231,36 +328,27 @@ export function MonthlyCalendarGrid({
               if (isSelectMode) setSelectedDates([]);
             }}
           >
-            <CheckSquare size={14} />
-            <span>{isSelectMode ? "Concluir seleção" : "Selecionar dias"}</span>
+            <CheckSquare size={13} />
+            <span>{isSelectMode ? "Concluir" : "Selecionar"}</span>
           </button>
-
-          {onUpdatePostingDays && (
-            <button
-              type="button"
-              className={`${styles.modeBtn} ${showCadenceDrawer ? styles.modeBtnActive : ""}`}
-              onClick={() => setShowCadenceDrawer(!showCadenceDrawer)}
-              title="Configurar automações de cadência e dias fixos"
-            >
-              <Sliders size={14} />
-              <span>Automatizações</span>
-            </button>
-          )}
 
           <button
             type="button"
-            className={styles.primaryActionBtn}
-            onClick={() => setActiveMenuDate(dateKey(new Date(year, monthIdx, 1)))}
+            className={styles.actionPlusBtn}
+            onClick={() => {
+              const defaultDay = selectedDates[0] || dateKey(new Date(year, monthIdx, 1));
+              setActiveMenuDate(defaultDay);
+            }}
+            title="Nova publicação"
           >
-            <Plus size={15} />
-            <span>Criar publicação</span>
+            <Plus size={16} />
           </button>
         </div>
       </div>
 
-      {/* Gaveta de Automação de Cadência Semanal */}
+      {/* Gaveta de Rotina de Postagem */}
       {showCadenceDrawer && onUpdatePostingDays && (
-        <div style={{ marginBottom: "12px", animation: "dayMenuFadeIn 0.2s ease" }}>
+        <div style={{ marginBottom: "10px", animation: "dayMenuFadeIn 0.15s ease" }}>
           <PostingCadence
             postingDays={postingDays}
             weekdayFormats={weekdayFormats}
@@ -281,7 +369,7 @@ export function MonthlyCalendarGrid({
         </div>
       )}
 
-      {/* Cabeçalho dos Dias da Semana (Segunda a Domingo) */}
+      {/* Cabeçalho dos Dias da Semana (28px de altura) */}
       <div className={styles.weekdaysHeader}>
         {WEEKDAYS.map((wd) => (
           <div key={wd} className={styles.weekdayCol}>
@@ -290,14 +378,16 @@ export function MonthlyCalendarGrid({
         ))}
       </div>
 
-      {/* Grade Mensal Full-Size */}
+      {/* Grade Mensal Compacta */}
       <div className={styles.daysGrid}>
-        {/* Dias do mês anterior */}
+        {/* Dias do mês anterior: células normais porém com opacidade discreta */}
         {Array.from({ length: firstDayOfWeek }).map((_, i) => {
           const dayNum = prevMonthDays - firstDayOfWeek + i + 1;
           return (
             <div key={`prev-${i}`} className={`${styles.dayCell} ${styles.outsideMonth}`}>
-              <span className={styles.dayNum}>{dayNum}</span>
+              <div className={styles.cellHeader}>
+                <span className={styles.dayNum}>{dayNum}</span>
+              </div>
             </div>
           );
         })}
@@ -310,6 +400,12 @@ export function MonthlyCalendarGrid({
           const count = dayPosts.length;
           const isSelected = selectedDates.includes(key);
           const isDropTarget = dragOverDate === key;
+          const dayOfWeek = (firstDayOfWeek + i) % 7;
+          // domingo = 0, segunda = 1 ... sábado = 6
+          const actualDayOfWeek = new Date(year, monthIdx, dayNum).getDay();
+          const isCadenceDay = postingDays.includes(actualDayOfWeek);
+
+          const holidays = referencesByDate.get(key) || [];
 
           return (
             <div
@@ -318,19 +414,29 @@ export function MonthlyCalendarGrid({
                 ${styles.dayCell}
                 ${isSelected ? styles.daySelected : ""}
                 ${isDropTarget ? styles.dayDropTarget : ""}
-                ${count > 0 ? styles.dayWithPosts : ""}
               `.trim()}
-              onClick={() => handleDayClick(key, dayPosts)}
+              onClick={(e) => handleDayClick(e, key)}
               onDragOver={(e) => handleCellDragOver(e, key)}
               onDrop={(e) => handleCellDrop(e, key)}
             >
               <div className={styles.cellHeader}>
-                <span className={styles.dayNum}>{dayNum}</span>
+                <div className={styles.dayNumContainer}>
+                  <span className={styles.dayNum}>{dayNum}</span>
+                  {/* Indicador extremamente discreto de dia de postagem padrão (ex: 17 •) */}
+                  {isCadenceDay && (
+                    <span
+                      className={styles.cadenceDot}
+                      title="Dia padrão de postagem da rotina"
+                    />
+                  )}
+                </div>
+
                 {count > 0 && (
                   <span className={styles.postsBadge}>
-                    {count === 1 ? "1 post" : `${count} posts`}
+                    {count} {count === 1 ? "post" : "posts"}
                   </span>
                 )}
+
                 {isSelectMode && (
                   <input
                     type="checkbox"
@@ -342,65 +448,27 @@ export function MonthlyCalendarGrid({
                 )}
               </div>
 
-              {/* Lista de publicações e referências no card do dia */}
+              {/* Lista de publicações e feriados discretos */}
               <div className={styles.cellPostsList}>
-                {/* Referências Editoriais e Feriados Oficiais com ação 'Usar como inspiração' */}
-                {(referencesByDate.get(key) || []).map((refEv: any) => (
+                {/* Feriados: metadados limpos e discretos (sem botões de IA gritando) */}
+                {holidays.map((refEv: any) => (
                   <div
                     key={refEv.externalKey || refEv.title}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "4px",
-                      background: "rgba(14, 165, 233, 0.1)",
-                      border: "1px solid rgba(14, 165, 233, 0.25)",
-                      borderRadius: "5px",
-                      padding: "2px 5px",
-                      fontSize: "0.68rem",
-                      fontWeight: 700,
-                      color: "#0369a1",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
+                    className={styles.holidayItem}
+                    title={`${refEv.title} (Clique para opções)`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Abre o menu para contextualizar o feriado, sem criar nada automaticamente
+                      setSelectedDates([key]);
+                      setActiveMenuDate(key);
                     }}
-                    title={`Data de Referência: ${refEv.title} • Fonte: ${refEv.sourceLabel || "Oficial"} (Clique no + para usar como inspiração)`}
-                    onClick={(e) => e.stopPropagation()}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      <span style={{ fontSize: "0.6rem" }}>🗓️</span>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{refEv.title}</span>
-                    </div>
-
-                    {onCreateFromReference && (
-                      <button
-                        type="button"
-                        style={{
-                          background: "rgba(14, 165, 233, 0.2)",
-                          border: "none",
-                          borderRadius: "3px",
-                          padding: "1px 4px",
-                          fontSize: "0.6rem",
-                          fontWeight: 800,
-                          color: "#0369a1",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "2px",
-                          flexShrink: 0,
-                        }}
-                        title={`Usar "${refEv.title}" como inspiração para nova publicação`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCreateFromReference(key, refEv.title);
-                        }}
-                      >
-                        <Sparkles size={9} />
-                        <span>Inspirar</span>
-                      </button>
-                    )}
+                    <span className={styles.holidayDot} />
+                    <span className={styles.holidayTitle}>{refEv.title}</span>
                   </div>
                 ))}
 
+                {/* Linhas compactas de publicação (24-28px) */}
                 {dayPosts.slice(0, 3).map((post) => {
                   const isPostActive = post.id === selectedId;
                   return (
@@ -442,8 +510,8 @@ export function MonthlyCalendarGrid({
         })}
       </div>
 
-      {/* Barra de Criação em Lote Flutuante */}
-      {isSelectMode && selectedDates.length > 0 && (
+      {/* Barra de Seleção Múltipla Flutuante estilo Apple */}
+      {selectedDates.length > 1 && (
         <BatchActionBar
           selectedDays={selectedDates}
           onClearDays={() => setSelectedDates([])}
@@ -462,6 +530,14 @@ export function MonthlyCalendarGrid({
           dayPosts={postsByDate.get(activeMenuDate) || []}
           referenceEvents={referencesByDate.get(activeMenuDate) || []}
           availableProfiles={availableProfiles}
+          isPostingDay={postingDays.includes(
+            new Date(
+              parseInt(activeMenuDate.split("-")[0], 10),
+              parseInt(activeMenuDate.split("-")[1], 10) - 1,
+              parseInt(activeMenuDate.split("-")[2], 10)
+            ).getDay()
+          )}
+          onTogglePostingDay={() => togglePostingDayForDate(activeMenuDate)}
           onClose={() => setActiveMenuDate(null)}
           onCreatePost={(type, profile) => {
             onCreate(activeMenuDate, type, profile);
