@@ -96,7 +96,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
       {item.head && (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
               HEAD (Título visual)
             </span>
             <button
@@ -107,6 +107,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
                 border: "none",
                 cursor: "pointer",
                 fontSize: "11px",
+                letterSpacing: "0.03em",
                 color: "var(--primary, #0284c7)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -119,11 +120,13 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
           </div>
           <div
             style={{
-              padding: "8px 10px",
+              padding: "10px 12px",
               background: "var(--surface-soft, #f8f9fc)",
-              borderRadius: "6px",
+              borderRadius: "8px",
               fontSize: "13px",
               fontWeight: 700,
+              letterSpacing: "0.03em",
+              lineHeight: 1.4,
               userSelect: "text",
             }}
           >
@@ -135,7 +138,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
       {/* Subhead (Linha de apoio) */}
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
             SUBHEAD (Apoio visual)
           </span>
           {item.subhead ? (
@@ -147,6 +150,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
                 border: "none",
                 cursor: "pointer",
                 fontSize: "11px",
+                letterSpacing: "0.03em",
                 color: "var(--primary, #0284c7)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -160,10 +164,12 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
         </div>
         <div
           style={{
-            padding: "8px 10px",
+            padding: "10px 12px",
             background: "var(--surface-soft, #f8f9fc)",
-            borderRadius: "6px",
+            borderRadius: "8px",
             fontSize: "12px",
+            letterSpacing: "0.025em",
+            lineHeight: 1.45,
             color: item.subhead ? "inherit" : "var(--muted, #94a3b8)",
             fontStyle: item.subhead ? "normal" : "italic",
             userSelect: "text",
@@ -177,7 +183,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
       {item.caption && (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
               LEGENDA (Copy)
             </span>
             <button
@@ -188,6 +194,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
                 border: "none",
                 cursor: "pointer",
                 fontSize: "11px",
+                letterSpacing: "0.03em",
                 color: "var(--primary, #0284c7)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -200,13 +207,15 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
           </div>
           <div
             style={{
-              padding: "8px 10px",
+              padding: "10px 12px",
               background: "var(--surface-soft, #f8f9fc)",
-              borderRadius: "6px",
+              borderRadius: "8px",
               fontSize: "12px",
+              letterSpacing: "0.025em",
+              lineHeight: 1.55,
               whiteSpace: "pre-wrap",
               userSelect: "text",
-              maxHeight: "140px",
+              maxHeight: "150px",
               overflowY: "auto",
             }}
           >
@@ -219,7 +228,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
       {item.cta && (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
               CALL TO ACTION (CTA)
             </span>
             <button
@@ -230,6 +239,7 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
                 border: "none",
                 cursor: "pointer",
                 fontSize: "11px",
+                letterSpacing: "0.03em",
                 color: "var(--primary, #0284c7)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -242,11 +252,13 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
           </div>
           <div
             style={{
-              padding: "6px 10px",
+              padding: "8px 12px",
               background: "var(--surface-soft, #f8f9fc)",
-              borderRadius: "6px",
+              borderRadius: "8px",
               fontSize: "12px",
               fontWeight: 600,
+              letterSpacing: "0.03em",
+              lineHeight: 1.4,
               userSelect: "text",
             }}
           >
