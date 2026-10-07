@@ -4,8 +4,8 @@
  * editor, prévia e apresentação e persiste cada alteração no SQLite/PostgreSQL.
  */
 
-import { useRef } from "react";
-import { Plus, AlertCircle, Undo2, ArrowLeft, Loader2, Check } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, AlertCircle, Undo2, ArrowLeft, Loader2, Check, CloudDownload } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { MonthlyCalendarGrid } from "./calendar/MonthlyCalendarGrid";
 import { Editor } from "./Editor";
@@ -14,6 +14,8 @@ import { Presentation } from "./Presentation";
 import { ExtrasView } from "./extras/ExtrasView";
 import { StudioHeader } from "./StudioHeader";
 import { ShareModal } from "./ShareModal";
+import { DesignerCopyViewer } from "./tasks/DesignerCopyViewer";
+import { InstagramMockup } from "./presentation/InstagramMockup";
 import { useStudio } from "./hooks/useStudio";
 import { useWorkspaceLayout } from "./hooks/useWorkspaceLayout";
 import { monthLabel } from "../lib/date";
@@ -105,6 +107,36 @@ export function Studio({
   const workspaceRef = useRef<HTMLDivElement>(null);
   const layout = useWorkspaceLayout(workspaceRef);
 
+  // Modo de Trabalho (exclusivo para Admin poder alternar entre visão de Social Media e Designer)
+  const [roleWorkspace, setRoleWorkspace] = useState<"social_media" | "designer">(
+    currentUser?.role === "designer" ? "designer" : "social_media"
+  );
+  const [isSyncingNextcloud, setIsSyncingNextcloud] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+
+  const handleSyncNextcloud = async (postId?: string) => {
+    if (!calendarId) return;
+    setIsSyncingNextcloud(true);
+    setSyncFeedback(null);
+    try {
+      const res = await fetch(`/api/tasks/${calendarId}/sync-nextcloud`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId: postId || selected?.id || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao puxar artes do Nextcloud");
+      setSyncFeedback(data.message || `${data.importedCount || 0} arte(s) vinculada(s)!`);
+      if (onMonthChange) onMonthChange(month, calendarId);
+      setTimeout(() => setSyncFeedback(null), 5000);
+    } catch (err: any) {
+      setSyncFeedback(`Erro: ${err.message || "Falha na sincronização"}`);
+      setTimeout(() => setSyncFeedback(null), 5000);
+    } finally {
+      setIsSyncingNextcloud(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="studioLoading">
@@ -185,6 +217,8 @@ export function Studio({
         currentUser={currentUser}
         theme={theme}
         saveStatus={saveStatus}
+        roleWorkspace={roleWorkspace}
+        onRoleWorkspaceChange={setRoleWorkspace}
         onBack={onBack}
         onMonthChange={handleMonthChange}
         onViewModeChange={setViewMode}
@@ -345,6 +379,32 @@ export function Studio({
                       <span>Fechar editor</span>
                     </button>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {/* Botão de Puxar Arte do Nextcloud no Modo Designer */}
+                      {roleWorkspace === "designer" && (
+                        <button
+                          type="button"
+                          onClick={() => handleSyncNextcloud(selected.id)}
+                          disabled={isSyncingNextcloud}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            background: "rgba(16, 185, 129, 0.12)",
+                            border: "1px solid rgba(16, 185, 129, 0.28)",
+                            color: "#059669",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                          title="Puxar arte do Nextcloud diretamente para esta publicação"
+                        >
+                          <CloudDownload size={12} className={isSyncingNextcloud ? "spin" : ""} />
+                          <span>{isSyncingNextcloud ? "Puxando..." : "Puxar do Nextcloud"}</span>
+                        </button>
+                      )}
+
                       {saveStatus && saveStatus !== "idle" && (
                         <span
                           style={{
@@ -382,25 +442,72 @@ export function Studio({
                         </span>
                       )}
                       <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
-                        Modo Split (Área ampla)
+                        {roleWorkspace === "designer" ? "Workspace do Designer" : "Modo Split (Social Media)"}
                       </span>
                     </div>
                   </div>
-                  <Editor
-                    key={selected.id}
-                    item={selected}
-                    onChange={updateItem}
-                    onDelete={(id) => {
-                      removeItem(id);
-                      setSelectedId(null);
-                    }}
-                    availableProfiles={availableProfiles}
-                    onCreateProfile={handleCreateProfile}
-                    onDeleteProfile={handleDeleteProfile}
-                    brand={calendar.brand}
-                    allItems={items}
-                    allCalendarItems={items}
-                  />
+
+                  {syncFeedback && (
+                    <div
+                      style={{
+                        padding: "8px 16px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        background: syncFeedback.startsWith("Erro") ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
+                        color: syncFeedback.startsWith("Erro") ? "#dc2626" : "#059669",
+                        borderBottom: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      {syncFeedback}
+                    </div>
+                  )}
+
+                  {roleWorkspace === "designer" ? (
+                    /* Visualização de Designer: Split com CopyViewer e Mockup Instagram */
+                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "20px" }}>
+                      <DesignerCopyViewer item={selected} />
+                      <div
+                        style={{
+                          background: "var(--surface-soft, #f8f9fc)",
+                          border: "1px solid var(--border, #e3e5ed)",
+                          borderRadius: "12px",
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
+                            Simulação do Instagram
+                          </span>
+                          {Boolean(selected.imageUrl || (selected as any).image_url) && (
+                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#059669", background: "rgba(16,185,129,0.12)", padding: "2px 6px", borderRadius: "999px" }}>
+                              ✓ Arte Vinculada
+                            </span>
+                          )}
+                        </div>
+                        <InstagramMockup post={selected} brand={calendar.brand} />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Visualização de Social Media: Editor Completo */
+                    <Editor
+                      key={selected.id}
+                      item={selected}
+                      onChange={updateItem}
+                      onDelete={(id) => {
+                        removeItem(id);
+                        setSelectedId(null);
+                      }}
+                      availableProfiles={availableProfiles}
+                      onCreateProfile={handleCreateProfile}
+                      onDeleteProfile={handleDeleteProfile}
+                      brand={calendar.brand}
+                      allItems={items}
+                      allCalendarItems={items}
+                    />
+                  )}
                 </div>
               </div>
             ) : (
@@ -499,22 +606,74 @@ export function Studio({
                     justifyContent: "center",
                   }}
                 >
-                  <div style={{ width: "100%", maxWidth: "var(--copy-max, 48rem)" }}>
-                    <Editor
-                      key={selected.id}
-                      item={selected}
-                      onChange={updateItem}
-                      onDelete={(id) => {
-                        removeItem(id);
-                        setSelectedId(null);
-                      }}
-                      availableProfiles={availableProfiles}
-                      onCreateProfile={handleCreateProfile}
-                      onDeleteProfile={handleDeleteProfile}
-                      brand={calendar.brand}
-                      allItems={items}
-                      allCalendarItems={items}
-                    />
+                  <div style={{ width: "100%", maxWidth: roleWorkspace === "designer" ? "min(1200px, 96vw)" : "var(--copy-max, 48rem)" }}>
+                    {roleWorkspace === "designer" ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleSyncNextcloud(selected.id)}
+                            disabled={isSyncingNextcloud}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              background: "rgba(16, 185, 129, 0.12)",
+                              border: "1px solid rgba(16, 185, 129, 0.28)",
+                              color: "#059669",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <CloudDownload size={13} className={isSyncingNextcloud ? "spin" : ""} />
+                            <span>{isSyncingNextcloud ? "Puxando artes..." : "Puxar Artes do Nextcloud"}</span>
+                          </button>
+                        </div>
+                        <DesignerCopyViewer item={selected} />
+                        <div
+                          style={{
+                            background: "var(--surface-soft, #f8f9fc)",
+                            border: "1px solid var(--border, #e3e5ed)",
+                            borderRadius: "12px",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
+                              Simulação do Instagram
+                            </span>
+                            {Boolean(selected.imageUrl || (selected as any).image_url) && (
+                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#059669", background: "rgba(16,185,129,0.12)", padding: "2px 6px", borderRadius: "999px" }}>
+                                ✓ Arte Vinculada
+                              </span>
+                            )}
+                          </div>
+                          <InstagramMockup post={selected} brand={calendar.brand} />
+                        </div>
+                      </div>
+                    ) : (
+                      <Editor
+                        key={selected.id}
+                        item={selected}
+                        onChange={updateItem}
+                        onDelete={(id) => {
+                          removeItem(id);
+                          setSelectedId(null);
+                        }}
+                        availableProfiles={availableProfiles}
+                        onCreateProfile={handleCreateProfile}
+                        onDeleteProfile={handleDeleteProfile}
+                        brand={calendar.brand}
+                        allItems={items}
+                        allCalendarItems={items}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

@@ -28,6 +28,7 @@ import {
   Loader2,
   Check,
   Keyboard,
+  Palette,
 } from "lucide-react";
 import type { CalendarRecord, SafeUser } from "../lib/types";
 import { monthLabel, shiftMonth } from "../lib/date";
@@ -43,6 +44,8 @@ export interface StudioHeaderProps {
   currentUser?: SafeUser;
   theme?: "light" | "dark";
   saveStatus?: "idle" | "saving" | "saved" | "error";
+  roleWorkspace?: "social_media" | "designer";
+  onRoleWorkspaceChange?: (role: "social_media" | "designer") => void;
   onBack: () => void;
   onMonthChange: (month: Date) => void;
   onViewModeChange: (mode: "calendar" | "extras" | "kanban" | "list") => void;
@@ -67,6 +70,8 @@ export function StudioHeader({
   currentUser,
   theme,
   saveStatus,
+  roleWorkspace = "social_media",
+  onRoleWorkspaceChange,
   onBack,
   onMonthChange,
   onViewModeChange,
@@ -295,6 +300,31 @@ export function StudioHeader({
             <ImagePlus size={13} />
             <span>Demandas Extras</span>
           </button>
+
+          {/* Controle exclusivo para Administrador: alternar entre visão de Social Media e visão de Designer */}
+          {currentUser?.role === "admin" && onRoleWorkspaceChange && (
+            <>
+              <div className="viewModeDivider" />
+              <button
+                type="button"
+                className={`viewModeBtn ${roleWorkspace === "social_media" ? "active" : ""}`}
+                onClick={() => onRoleWorkspaceChange("social_media")}
+                title="Modo Social Media: foco em copywriting, briefing e validação"
+              >
+                <FileText size={12} />
+                <span>Social Media</span>
+              </button>
+              <button
+                type="button"
+                className={`viewModeBtn ${roleWorkspace === "designer" ? "active" : ""}`}
+                onClick={() => onRoleWorkspaceChange("designer")}
+                title="Modo Designer: foco em artes, mockups do Instagram e Nextcloud"
+              >
+                <Palette size={12} />
+                <span>Designer</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
