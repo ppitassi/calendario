@@ -152,3 +152,21 @@
     --control-height: 2.75rem;
   }
 }
+
+:root {
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #475569;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --border-soft: #f1f5f9;
+}
+
+[data-theme="dark"] {
+  --text-primary: hsl(220, 14%, 92%);
+  --text-secondary: hsl(220, 10%, 72%);
+  --text-tertiary: hsl(220, 8%, 58%);
+  --text-muted: hsl(220, 8%, 50%);
+  --border: hsl(228, 12%, 22%);
+  --border-soft: hsl(228, 12%, 18%);
+}

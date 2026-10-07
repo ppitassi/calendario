@@ -164,7 +164,7 @@ export function useStudio({
     } finally {
       setLoading(false);
     }
-  }, [calendarId, selectedId]);
+  }, [calendarId]);
 
   useEffect(() => {
     loadCalendar();
