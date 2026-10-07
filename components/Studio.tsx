@@ -256,14 +256,18 @@ export function Studio({
                 month={month}
                 items={monthItems}
                 selectedId={selectedId}
+                postingDays={postingDays}
+                weekdayFormats={weekdayFormats}
                 onMonthChange={handleMonthChange}
                 onSelect={(item) => setSelectedId(item.id)}
-                onCreate={(date) => createOn(date)}
+                onCreate={(date, type, profile) => createOn(date, type, profile)}
                 onCreateFromReference={(d, t) => createFromReference(d, t)}
                 onCreateBatch={(dates, type) => createBatchItems(dates, type)}
                 onMovePost={handleMovePost}
                 onMoveDayPosts={handleMoveDayPosts}
                 onReorderPosts={handleReorderPosts}
+                onUpdatePostingDays={handleUpdatePostingDays}
+                onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
                 availableProfiles={availableProfiles}
               />
             ) : layout.canSplitSocial ? (
@@ -284,14 +288,18 @@ export function Studio({
                     month={month}
                     items={monthItems}
                     selectedId={selectedId}
+                    postingDays={postingDays}
+                    weekdayFormats={weekdayFormats}
                     onMonthChange={handleMonthChange}
                     onSelect={(item) => setSelectedId(item.id)}
-                    onCreate={(date) => createOn(date)}
+                    onCreate={(date, type, profile) => createOn(date, type, profile)}
                     onCreateFromReference={(d, t) => createFromReference(d, t)}
                     onCreateBatch={(dates, type) => createBatchItems(dates, type)}
                     onMovePost={handleMovePost}
                     onMoveDayPosts={handleMoveDayPosts}
                     onReorderPosts={handleReorderPosts}
+                    onUpdatePostingDays={handleUpdatePostingDays}
+                    onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
                     availableProfiles={availableProfiles}
                   />
                 </div>

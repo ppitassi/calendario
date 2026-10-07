@@ -26,6 +26,9 @@ import {
 import { dateKey, monthLabel, shiftMonth } from "@/lib/date";
 import type { ContentItem, ContentType } from "@/lib/types";
 import { BatchActionBar } from "./BatchActionBar";
+import { DayActionMenu } from "./DayActionMenu";
+import { PostingCadence } from "./PostingCadence";
+import { Sliders } from "lucide-react";
 import styles from "../MonthlyCalendarGrid.module.css";
 
 // 7 colunas: Segunda a Domingo (conforme Seção 4.1 do plano técnico)
@@ -35,14 +38,18 @@ interface MonthlyCalendarGridProps {
   month: Date;
   items: ContentItem[];
   selectedId: string | null;
+  postingDays?: number[];
+  weekdayFormats?: Record<number, ContentType>;
   onMonthChange: (date: Date) => void;
   onSelect: (item: ContentItem) => void;
-  onCreate: (date: string) => void;
+  onCreate: (date: string, type?: ContentType, profile?: string) => void;
   onCreateFromReference?: (date: string, title: string) => void;
   onCreateBatch?: (dates: string[], type: ContentType) => void;
   onMovePost?: (postId: string, targetDate: string) => void;
   onMoveDayPosts?: (sourceDate: string, targetDate: string) => void;
   onReorderPosts?: (sourcePostId: string, targetPostId: string, position?: "before" | "after") => void;
+  onUpdatePostingDays?: (days: number[]) => void;
+  onUpdateWeekdayFormat?: (day: number, format: ContentType) => void;
   availableProfiles?: string[];
 }
 
@@ -50,6 +57,8 @@ export function MonthlyCalendarGrid({
   month,
   items,
   selectedId,
+  postingDays = [],
+  weekdayFormats = {},
   onMonthChange,
   onSelect,
   onCreate,
@@ -57,10 +66,14 @@ export function MonthlyCalendarGrid({
   onCreateBatch,
   onMovePost,
   onMoveDayPosts,
+  onUpdatePostingDays,
+  onUpdateWeekdayFormat,
   availableProfiles = [],
 }: MonthlyCalendarGridProps) {
   // Modo de seleção múltipla de dias para lote
   const [isSelectMode, setIsSelectMode] = useState(false);
+  const [activeMenuDate, setActiveMenuDate] = useState<string | null>(null);
+  const [showCadenceDrawer, setShowCadenceDrawer] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
 
   // Drag and Drop
@@ -141,11 +154,8 @@ export function MonthlyCalendarGrid({
       handleToggleDateSelection(key);
       return;
     }
-    if (dayPosts.length > 0) {
-      onSelect(dayPosts[0]);
-    } else {
-      onCreate(key);
-    }
+    // Abre menu contextual perguntando o que fazer (criar com formato, ver existentes, ou usar inspiração)
+    setActiveMenuDate(key);
   };
 
   const handlePostDragStart = (e: React.DragEvent, post: ContentItem) => {
@@ -225,16 +235,51 @@ export function MonthlyCalendarGrid({
             <span>{isSelectMode ? "Concluir seleção" : "Selecionar dias"}</span>
           </button>
 
+          {onUpdatePostingDays && (
+            <button
+              type="button"
+              className={`${styles.modeBtn} ${showCadenceDrawer ? styles.modeBtnActive : ""}`}
+              onClick={() => setShowCadenceDrawer(!showCadenceDrawer)}
+              title="Configurar automações de cadência e dias fixos"
+            >
+              <Sliders size={14} />
+              <span>Automatizações</span>
+            </button>
+          )}
+
           <button
             type="button"
             className={styles.primaryActionBtn}
-            onClick={() => onCreate(dateKey(new Date(year, monthIdx, 1)))}
+            onClick={() => setActiveMenuDate(dateKey(new Date(year, monthIdx, 1)))}
           >
             <Plus size={15} />
             <span>Criar publicação</span>
           </button>
         </div>
       </div>
+
+      {/* Gaveta de Automação de Cadência Semanal */}
+      {showCadenceDrawer && onUpdatePostingDays && (
+        <div style={{ marginBottom: "12px", animation: "dayMenuFadeIn 0.2s ease" }}>
+          <PostingCadence
+            postingDays={postingDays}
+            weekdayFormats={weekdayFormats}
+            totalItemsCount={items.length}
+            itemsWithArtCount={items.filter((i) => Boolean(i.imageUrl)).length}
+            onToggleWeekday={(day) => {
+              const count = postingDays.filter((d) => d === day).length;
+              let nextDays: number[];
+              if (count === 0) {
+                nextDays = [...postingDays, day].sort((a, b) => a - b);
+              } else {
+                nextDays = postingDays.filter((d) => d !== day);
+              }
+              onUpdatePostingDays(nextDays);
+            }}
+            onUpdateWeekdayFormat={onUpdateWeekdayFormat}
+          />
+        </div>
+      )}
 
       {/* Cabeçalho dos Dias da Semana (Segunda a Domingo) */}
       <div className={styles.weekdaysHeader}>
@@ -407,6 +452,33 @@ export function MonthlyCalendarGrid({
             setIsSelectMode(false);
           }}
           availableProfiles={availableProfiles}
+        />
+      )}
+
+      {/* Menu Contextual ao clicar em qualquer dia */}
+      {activeMenuDate && (
+        <DayActionMenu
+          date={activeMenuDate}
+          dayPosts={postsByDate.get(activeMenuDate) || []}
+          referenceEvents={referencesByDate.get(activeMenuDate) || []}
+          availableProfiles={availableProfiles}
+          onClose={() => setActiveMenuDate(null)}
+          onCreatePost={(type, profile) => {
+            onCreate(activeMenuDate, type, profile);
+            setActiveMenuDate(null);
+          }}
+          onCreateFromReference={
+            onCreateFromReference
+              ? (title) => {
+                  onCreateFromReference(activeMenuDate, title);
+                  setActiveMenuDate(null);
+                }
+              : undefined
+          }
+          onSelectPost={(post) => {
+            onSelect(post);
+            setActiveMenuDate(null);
+          }}
         />
       )}
     </div>

@@ -243,14 +243,25 @@ export function useStudioItems({
     }
   };
 
-  const createOn = (date = dateKey(new Date(month.getFullYear(), month.getMonth(), 1))) => {
-    const defaultProfile = availableProfiles.length === 1 ? availableProfiles[0] : "";
-    let defaultType: ContentType = "Feed e Story";
-    try {
-      const parts = date.split("-");
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      defaultType = weekdayFormats[d.getDay()] || "Feed e Story";
-    } catch {}
+  const createOn = (
+    date = dateKey(new Date(month.getFullYear(), month.getMonth(), 1)),
+    initialType?: ContentType,
+    initialProfile?: string
+  ) => {
+    const defaultProfile =
+      initialProfile !== undefined
+        ? initialProfile
+        : availableProfiles.length === 1
+        ? availableProfiles[0]
+        : "";
+    let defaultType: ContentType = initialType || "Feed e Story";
+    if (!initialType) {
+      try {
+        const parts = date.split("-");
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        defaultType = weekdayFormats[d.getDay()] || "Feed e Story";
+      } catch {}
+    }
 
     const newItem: ContentItem = {
       id: crypto.randomUUID(),
