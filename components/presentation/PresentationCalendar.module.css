@@ -1,0 +1,286 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar a visão mensal resumida usada no material de apresentação.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Espaçamento da visão macro e de seu título. */
+.root {
+  position: relative;
+  display: grid;
+  gap: var(--space-12, 3rem);
+}
+
+.heading {
+  display: grid;
+  gap: var(--space-4, 1rem);
+  text-align: center;
+}
+
+.heading p {
+  color: var(--color-action-primary, #e3002f);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.heading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 6vw, 3.75rem);
+  font-weight: 900;
+  margin: 0;
+}
+
+/* Cartão que contém grade, popover e camada de fechamento. */
+.calendarCard {
+  position: relative;
+  overflow: visible;
+  padding: var(--space-8, 2rem);
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface-subtle, rgba(255, 255, 255, 0.56));
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+}
+
+/* Grade de sete colunas usada por cabeçalhos e dias. */
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2, 0.5rem);
+  max-width: 44rem;
+  margin-inline: auto;
+  position: relative;
+}
+
+/* Cabeçalhos, células de dia e sinais de conteúdo publicado. */
+.dayName {
+  padding-bottom: var(--space-4, 1rem);
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  font-size: var(--font-size-2xs, 0.625rem);
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.emptyDay,
+.day {
+  aspect-ratio: 1;
+  border-radius: var(--radius-overlay, 1.5rem);
+}
+
+.emptyDay {
+  background: var(--color-bg-muted, hsl(224, 24%, 92%));
+  opacity: 0.3;
+}
+
+.day {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  overflow: hidden;
+  border: 1px solid transparent;
+  background: var(--color-bg-muted, hsl(224, 24%, 92%));
+  box-shadow: var(--shadow-surface, 0 8px 24px -16px rgba(30, 41, 70, 0.34));
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  cursor: default;
+  opacity: 0.45;
+  transition:
+    box-shadow var(--duration-fast, 140ms),
+    transform var(--duration-fast, 140ms);
+}
+
+.day[data-has-post="true"] {
+  z-index: var(--z-badge, 2);
+  background: var(--color-action-primary, #e3002f);
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  color: var(--color-text-on-action, #fff);
+  cursor: pointer;
+  opacity: 1;
+}
+
+.day[data-selected="true"] {
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(227, 0, 47, 0.15)), var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  transform: scale(1.1);
+}
+
+.day > span {
+  position: relative;
+  z-index: var(--z-content-raised, 1);
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-lg, 1.125rem), 2vw, 1.25rem);
+  font-weight: 700;
+}
+
+.dayDeadline,
+.dayType {
+  position: absolute;
+  right: var(--space-2, 0.5rem);
+  color: var(--color-text-on-action, #fff);
+}
+
+.dayDeadline {
+  top: var(--space-1, 0.25rem);
+  z-index: var(--z-badge, 2);
+  opacity: 0.8;
+}
+
+.dayType {
+  bottom: var(--space-2, 0.5rem);
+  opacity: 0.5;
+}
+
+.dayDeadline svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.dayType svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.popover {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: var(--z-popover, 600);
+  display: flex;
+  width: 16rem;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-2, 0.5rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface-strong, rgba(255, 255, 255, 0.95));
+  box-shadow: var(--shadow-overlay, 0 24px 64px -24px rgba(20, 29, 52, 0.48));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+  pointer-events: auto;
+  transform-origin: bottom;
+}
+
+/* Miniatura e selo de formato dentro do popover diário. */
+.preview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card, 1rem);
+  aspect-ratio: 16/9;
+  background: var(--color-bg-muted, hsl(224, 24%, 92%));
+}
+
+.preview > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--duration-fast, 140ms);
+}
+
+.preview:hover > img {
+  transform: scale(1.1);
+}
+
+.previewEmpty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+}
+
+.previewEmpty svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.typeBadge {
+  position: absolute;
+  top: var(--space-2, 0.5rem);
+  right: var(--space-2, 0.5rem);
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  border-radius: var(--radius-control, 0.75rem);
+  background: color-mix(in srgb, var(--color-bg-inverse, #171924) 50%, transparent);
+  backdrop-filter: blur(var(--glass-blur, 19px));
+  color: var(--color-text-on-action, #fff);
+  font-size: var(--font-size-3xs, 0.5rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.popoverCopy {
+  display: grid;
+  gap: var(--space-1, 0.25rem);
+}
+
+.popoverCopy h4 {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 900;
+  letter-spacing: var(--tracking-heavy, 0.015em);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.popoverCopy p {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
+  font-size: var(--font-size-2xs, 0.625rem);
+  line-height: 1.625;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 0;
+}
+
+.deadlineBadge {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  margin-top: var(--space-1, 0.25rem);
+  padding: 2px var(--space-2, 0.5rem);
+  border-radius: var(--radius-detail, 2px);
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 10%, transparent);
+  color: var(--color-action-primary, #e3002f);
+  font-size: var(--font-size-2xs, 0.625rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.deadlineBadge svg {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+.arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border: 0.5rem solid transparent;
+  border-top-color: var(--glass-surface-strong, rgba(255, 255, 255, 0.95));
+  transform: translateX(-50%);
+}
+
+.closeLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 550;
+}
+
+/* Em telas largas, amplia células e tipografia sem alterar a grade semanal. */
+@media (width >= 768px) {
+  .calendarCard {
+    padding: var(--space-12, 3rem);
+  }
+}

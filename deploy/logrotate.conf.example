@@ -1,0 +1,12 @@
+# Ajuste o caminho e o usuário/grupo antes de copiar para /etc/logrotate.d.
+/srv/calendario/logs/*.log {
+    daily
+    size 10M
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    su calendario calendario
+}

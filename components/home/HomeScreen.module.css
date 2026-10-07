@@ -1,0 +1,515 @@
+.homeContainer {
+  padding: 2rem 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-height: calc(100vh - 70px);
+}
+
+/* Header de boas-vindas com workspace toggle */
+.welcomeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.greetingGroup h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.greetingSubtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 4px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspaceRoleToggle {
+  display: inline-flex;
+  background: var(--surface-soft, #f1f5f9);
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.roleToggleBtn {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.roleToggleBtn.active {
+  background: #ffffff;
+  color: var(--text-primary, #0f172a);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.createDemandBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent, #ef5d3d);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.createDemandBtn:hover {
+  opacity: 0.92;
+}
+
+/* Card 1: Destaque do Prazo Global dos Calendários */
+.globalDeadlineCard {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.globalDeadlineCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent, #ef5d3d), #f97316);
+}
+
+.globalDeadlineTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cycleTitle {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.deadlineHighlight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.deadlineUrgencyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.deadlineUrgencyBadge.today {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.deadlineUrgencyBadge.thisWeek {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.deadlineUrgencyBadge.overdue {
+  background: rgba(225, 29, 72, 0.15);
+  color: #e11d48;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+
+.deadlineUrgencyBadge.normal {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.cycleNotes {
+  font-size: 0.82rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 4px;
+}
+
+.cycleEditBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cycleEditBtn:hover {
+  background: var(--surface-soft, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+/* Métricas do ciclo: Entregues vs Pendentes */
+.cycleProgressSummary {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 12px 16px;
+  background: var(--surface-soft, #f8fafc);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.metricItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+}
+
+.metricItem strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+
+/* Tabela/Lista de Acompanhamento por Designer */
+.followUpSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.followUpHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.followUpTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary, #475569);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.followUpGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.calendarCard {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calendarCard:hover {
+  border-color: var(--accent, #ef5d3d);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.clientName {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.designerPill {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+}
+
+.calendarActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.75rem;
+}
+
+.openCalendarLink {
+  color: var(--accent, #ef5d3d);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Card 2: Precisa de Atenção */
+.attentionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionHeading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attentionBadgesGrid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.attentionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.attentionBadge.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.attentionBadge.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.attentionBadge.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.attentionBadge:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+/* Grid Duplo: Meu Trabalho de Hoje & Próximos 7 Dias / Continuar */
+.mainWorkGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .mainWorkGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workCardContainer {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Tabela limpa de Trabalho de Hoje */
+.workTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.workTable th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  color: var(--text-muted, #64748b);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.workTable td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-soft, #f1f5f9);
+  color: var(--text-primary, #0f172a);
+}
+
+.workTableRow {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.workTableRow:hover {
+  background: var(--surface-soft, #f8fafc);
+}
+
+.demandTitle {
+  font-weight: 600;
+}
+
+.demandClient {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+}
+
+.actionTag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--surface-soft, #f1f5f9);
+  color: var(--text-secondary, #475569);
+}
+
+.overdueWarning {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #dc2626;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+/* Coluna Direita: Próximos 7 Dias & Continuar */
+.sideWorkCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dayGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.dayLabel {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+}
+
+.dayItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--surface-soft, #f8fafc);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dayItem:hover {
+  background: #f1f5f9;
+}
+
+.recentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--surface, #ffffff);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.recentItem:hover {
+  border-color: var(--accent, #ef5d3d);
+}
+
+.emptyStateMessage {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  font-size: 0.85rem;
+}

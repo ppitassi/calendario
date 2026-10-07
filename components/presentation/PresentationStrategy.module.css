@@ -1,0 +1,143 @@
+/**
+ * Responsabilidade visual deste arquivo: estilizar o resumo visual dos pilares da estratégia do cliente.
+ * As seções abaixo seguem a ordem aproximada da árvore React correspondente.
+ */
+
+/* Superfície e título do resumo estratégico. */
+.root {
+  width: 100%;
+  padding: var(--space-10, 2.5rem);
+  border: 1px solid var(--glass-border-highlight, rgba(37, 48, 76, 0.2));
+  border-radius: var(--radius-overlay, 1.5rem);
+  background: var(--glass-surface, rgba(255, 255, 255, 0.74));
+  box-shadow: var(--shadow-surface, 0 8px 24px -16px rgba(30, 41, 70, 0.34));
+  backdrop-filter: blur(var(--glass-blur, 19px));
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 900;
+  margin: 0;
+}
+
+.description {
+  margin-top: var(--space-3, 0.75rem);
+  color: var(--color-text-secondary, hsl(0, 0%, 36%));
+  margin-bottom: 0;
+}
+
+/* Grades dos indicadores calculados e dos dados cadastrados. */
+.metricsGrid,
+.detailsGrid {
+  display: grid;
+  gap: var(--space-6, 1.5rem);
+}
+
+.metricsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: var(--space-10, 2.5rem);
+}
+
+/* Cartões de volume, formatos e etapas do funil. */
+.card {
+  padding: var(--space-6, 1.5rem);
+  border: 1px solid var(--glass-border, rgba(37, 48, 76, 0.12));
+  border-radius: var(--radius-card, 1rem);
+  background: var(--glass-surface-subtle, rgba(255, 255, 255, 0.56));
+}
+
+.label {
+  color: var(--color-text-muted, hsl(0, 0%, 52%));
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.total {
+  margin-top: var(--space-2, 0.5rem);
+  color: var(--color-action-primary, #e3002f);
+  font-size: 2.25rem;
+  font-weight: 900;
+  margin-bottom: 0;
+}
+
+.metric {
+  margin-top: var(--space-3, 0.75rem);
+}
+
+/* Linha que alinha o nome da métrica ao percentual acima da barra. */
+.metricHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+}
+
+.track {
+  height: 0.5rem;
+  margin-top: var(--space-1, 0.25rem);
+  overflow: hidden;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--color-text-primary, #171924) 8%, transparent);
+}
+
+.fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-action-primary, #e3002f);
+}
+
+.feed,
+.top {
+  background: var(--color-status-info, #2563eb);
+}
+
+.story {
+  background: var(--color-status-instagram, #ec4899);
+}
+
+.feedStory {
+  background: linear-gradient(135deg, var(--color-status-info, #2563eb), var(--color-status-instagram, #ec4899));
+}
+
+.middle {
+  background: color-mix(
+    in srgb,
+    var(--color-status-info, #2563eb) 55%,
+    var(--color-status-instagram, #ec4899)
+  );
+}
+
+.bottom {
+  background: var(--color-action-primary, #e3002f);
+}
+
+.detailsGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-8, 2rem);
+}
+
+.detailValue {
+  margin-top: var(--space-2, 0.5rem);
+  white-space: pre-wrap;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-primary, #171924);
+  font-weight: 500;
+  margin-left: 0;
+}
+
+/* Em telas largas, distribui os indicadores e detalhes em múltiplas colunas. */
+@media (width >= 48rem) {
+  .root {
+    padding: var(--space-12, 3rem);
+  }
+}
+
+@media (width < 48rem) {
+  .metricsGrid,
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,674 @@
+/**
+ * Estilos para o simulador visual do Instagram (InstagramMockup)
+ * Suporta Feed, Story, Reels e Carrossel com fidelidade à interface original do Instagram.
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Barra de navegação com setas entre Feed e Story */
+.dualToggleBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--color-bg-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.dualArrowBtn {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--color-text-primary, #0f172a) 8%, transparent);
+  color: var(--color-text-primary, #0f172a);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dualArrowBtn:hover {
+  background: var(--color-action-primary, #e3002f);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.dualIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.dualDivider {
+  opacity: 0.35;
+}
+
+.dualActiveLabel {
+  color: var(--color-action-primary, #e3002f) !important;
+  font-weight: 900;
+}
+
+/* Moldura que encapsula o mockup */
+.phoneFrame {
+  width: 100%;
+  max-width: 22rem;
+  margin-inline: auto;
+  position: relative;
+}
+
+/* =========================================================
+   1. FEED & CARROSSEL CARD
+   ========================================================= */
+.feedCard {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.feedHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  background: #ffffff;
+}
+
+.feedAvatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-action-primary, #e3002f) 14%, transparent);
+  color: var(--color-action-primary, #e3002f);
+  font-size: 0.75rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--color-action-primary, #e3002f) 40%, transparent);
+}
+
+.feedCollabAvatars {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 2.75rem;
+  height: 2rem;
+}
+
+.avatarPrimary {
+  position: absolute;
+  left: 0;
+  z-index: 2;
+}
+
+.avatarSecondary {
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  background: #fdf2f8 !important;
+  color: #db2777 !important;
+  box-shadow: 0 0 0 1.5px #fbcfe8 !important;
+}
+
+.feedHeaderText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.feedHeaderText strong {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedHeaderText small {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.feedHeader svg {
+  color: #64748b;
+  cursor: pointer;
+}
+
+.feedMedia,
+.carouselMedia {
+  width: 100%;
+  display: block;
+  background: transparent;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.feedRealImg,
+.carouselImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.emptyFeedMedia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.emptyFeedMedia span {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.emptyFeedMedia small {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.feedActionRow,
+.carouselActionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem 0.35rem;
+}
+
+.feedActions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  color: #1e293b;
+}
+
+.feedActions svg,
+.feedActionsRight svg {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.feedActions svg:hover,
+.feedActionsRight svg:hover {
+  transform: scale(1.15);
+}
+
+.feedActionsRight {
+  display: flex;
+  align-items: center;
+  color: #1e293b;
+}
+
+.feedCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem 0.85rem 0.85rem;
+  text-align: left;
+}
+
+.feedCopy p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.feedCopy strong {
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+
+.feedCaptionText {
+  color: #475569 !important;
+  white-space: pre-wrap;
+}
+
+.feedCta {
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-action-primary, #e3002f);
+  text-transform: uppercase;
+}
+
+.feedHashtags {
+  font-size: 0.6875rem;
+  color: #0284c7;
+  font-family: inherit;
+  word-break: break-word;
+}
+
+/* Detalhes do Carrossel */
+.carouselCounter {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  z-index: 5;
+}
+
+.slideNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 6;
+  transition: all 0.15s ease;
+}
+
+.slideNavBtn:hover {
+  background: #ffffff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slideNavPrev {
+  left: 0.5rem;
+}
+
+.slideNavNext {
+  right: 0.5rem;
+}
+
+.carouselDots {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.carouselDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.carouselDotActive {
+  background: #0284c7;
+  transform: scale(1.3);
+}
+
+/* =========================================================
+   2. STORY CONTAINER (9:16)
+   ========================================================= */
+.storyContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: #0a0a0c;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.25);
+  border: 3px solid #1e293b;
+}
+
+.storyProgressBars {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 10;
+}
+
+.storyProgressBar {
+  height: 2.5px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+}
+
+.storyProgressBarActive {
+  background: #ffffff;
+}
+
+.storyHeader {
+  position: absolute;
+  top: 1.25rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+
+.storyProfile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.storyAvatar {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec4899, #f97316);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  font-weight: 900;
+  border: 1.5px solid #ffffff;
+}
+
+.storyUsername {
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.storyTime {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.storyDots {
+  color: #ffffff;
+}
+
+.storyMedia {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #0f172a;
+}
+
+.storyImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.emptyStoryMedia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.emptyStoryMedia strong {
+  color: #ffffff;
+  font-size: 0.875rem;
+}
+
+.emptyStoryMedia small {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.storyFooter {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.storyReplyInput {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+}
+
+.storyIcons {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #ffffff;
+}
+
+.storyIcons svg {
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* =========================================================
+   3. REELS CONTAINER (9:16)
+   ========================================================= */
+.reelsContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: #000000;
+  box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.25);
+  border: 3px solid #1e293b;
+}
+
+.reelsHeader {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+}
+
+.reelsTitle {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.reelsMedia {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #0f172a;
+}
+
+.reelsImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.emptyReelsMedia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.emptyReelsMedia strong {
+  color: #ffffff;
+  font-size: 0.875rem;
+}
+
+.emptyReelsMedia small {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.reelsSidebar {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  z-index: 10;
+  color: #ffffff;
+}
+
+.reelsActionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  cursor: pointer;
+}
+
+.reelsActionBtn svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.reelsActionBtn span {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.reelsAudioDisc {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 2px solid #ffffff;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  margin-top: 0.35rem;
+  animation: spinReelsAudio 4s linear infinite;
+}
+
+@keyframes spinReelsAudio {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.reelsFooter {
+  position: absolute;
+  bottom: 0.85rem;
+  left: 0.85rem;
+  right: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  z-index: 10;
+  color: #ffffff;
+  text-align: left;
+}
+
+.reelsProfileRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reelsAvatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #e11d48;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  font-weight: 900;
+  border: 1px solid #ffffff;
+}
+
+.reelsProfileRow strong {
+  font-size: 0.8125rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.reelsFollowBtn {
+  padding: 0.15rem 0.55rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reelsCaption {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reelsAudioRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}

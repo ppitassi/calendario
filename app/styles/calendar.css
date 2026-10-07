@@ -1,0 +1,627 @@
+/**
+ * Painel de Calendário e Cadência Semanal
+ * Grade do calendário, seletor de dias, múltiplos posts, ações de dia e drag-and-drop.
+ */
+
+.panelTitle,
+.monthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panelTitle > span,
+.sectionLabel {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panelTitle button,
+.monthHeader button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.panelTitle button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.monthSurface {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 12px;
+}
+
+.monthHeader {
+  margin-bottom: 10px;
+}
+
+.monthHeader strong {
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.monthHeader button {
+  width: 26px;
+  height: 26px;
+}
+
+.monthHeader svg {
+  width: 14px;
+}
+
+/* Grade Compacta */
+.compactCalendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  text-align: center;
+}
+
+.compactCalendar > span,
+.compactCalendar > button {
+  height: 27px;
+  display: grid;
+  place-items: center;
+}
+
+.weekday {
+  font-size: 8px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.compactCalendar > button {
+  position: relative;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.compactCalendar > button:hover {
+  background: #f0f1f5;
+}
+
+.compactCalendar > button.populated {
+  background: color-mix(in srgb, var(--accent), transparent 90%);
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.compactCalendar > button.selected {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--accent), transparent 65%);
+}
+
+.compactCalendar i {
+  position: absolute;
+  bottom: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.compactCalendar button.hasImage i.imgIndicator {
+  background: #10b981;
+  width: 4px;
+  height: 4px;
+}
+
+.compactCalendar button.daySelectedEmpty {
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent), transparent 94%);
+  font-weight: 800;
+}
+
+.compactCalendar .calMultiCount {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 7px;
+  font-weight: 900;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  min-width: 12px;
+  height: 12px;
+  line-height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+}
+
+.compactCalendar button.selected .calMultiCount {
+  background: #fff;
+  color: var(--accent);
+}
+
+.clearMonthActionBtn {
+  margin-top: 10px;
+  width: 100%;
+  border: 1px dashed rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.03);
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.clearMonthActionBtn:hover {
+  color: #ffffff;
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+/* Seletor de Cadência Semanal */
+.cadenceSection {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cadenceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cadenceHeader span {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cadenceHeader b {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent), transparent 90%);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.weekdayToggles {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.weekdayToggleBtn {
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.weekdayToggleBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fff5f5;
+}
+
+.weekdayToggleBtn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent), transparent 65%);
+  font-weight: 900;
+}
+
+.weekdayFormatsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  animation: notifFadeIn 0.15s ease-out;
+}
+
+.weekdayFormatsHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.weekdayFormatsItems {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.weekdayFormatRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.weekdayFormatDayLabel {
+  font-size: 9px;
+  font-weight: 900;
+  color: #fff;
+  background: var(--accent);
+  padding: 2px 6px;
+  border-radius: 5px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.weekdayFormatSelect {
+  flex: 1;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.weekdayFormatSelect:focus,
+.weekdayFormatSelect:hover {
+  border-color: var(--accent);
+}
+
+.cadenceSummary {
+  font-size: 9px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.cadenceSummary strong {
+  color: #171924;
+}
+
+/* Painel do Dia Selecionado */
+.selectedDayBox {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectedDayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selectedDayTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: #171924;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.selectedDayBadge {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dayPostsTabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dayPostTab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafbfc;
+  padding: 5px 8px;
+  font-size: 10px;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.dayPostTab:hover {
+  background: #f1f5f9;
+}
+
+.dayPostTab.active {
+  background: color-mix(in srgb, var(--accent), transparent 90%);
+  border-color: color-mix(in srgb, var(--accent), transparent 70%);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.dayPostTabMain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.dayPostNum {
+  font-weight: 800;
+  font-size: 9px;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.dayPostTab.active .dayPostNum {
+  background: #fff;
+  border-color: color-mix(in srgb, var(--accent), transparent 60%);
+  color: var(--accent);
+}
+
+.dayPostNum.collabTag {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #dc2626;
+}
+
+
+.dayPostTitleText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dayPostCollabBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--tenant-primary, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dayActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dayActionBtn:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent), transparent 95%);
+}
+
+/* Drag and Drop de Publicações */
+.compactCalendar > button.draggableDay {
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.compactCalendar > button.draggableDay:active {
+  cursor: grabbing;
+}
+
+.compactCalendar > button.isDragSource,
+.dayPostTab.isDragSource {
+  opacity: 0.35 !important;
+  transform: scale(0.92) !important;
+  filter: grayscale(40%);
+}
+
+.compactCalendar > button.dropTargetHover {
+  transform: scale(1.18) !important;
+  z-index: 20 !important;
+  background: color-mix(in srgb, var(--accent), transparent 75%) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 8px 20px color-mix(in srgb, var(--accent), transparent 60%) !important;
+  border-radius: 8px !important;
+  color: var(--accent) !important;
+  animation: dropPulse 1s infinite alternate;
+}
+
+@keyframes dropPulse {
+  0% { transform: scale(1.15); box-shadow: 0 0 0 2px var(--accent), 0 6px 16px color-mix(in srgb, var(--accent), transparent 60%); }
+  100% { transform: scale(1.22); box-shadow: 0 0 0 3px var(--accent), 0 10px 24px color-mix(in srgb, var(--accent), transparent 45%); }
+}
+
+.dropTargetIndicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.dayPostTab[draggable="true"] {
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dayPostTab[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Evita que nós filhos capturem eventos de arrastar/soltar erráticos no Chrome */
+.dayPostTab > .dayPostTabMain * {
+  pointer-events: none;
+}
+
+.dayPostTab.dropTargetBefore {
+  border-color: var(--accent) !important;
+  box-shadow: 0 -3px 0 0 var(--accent), 0 4px 12px color-mix(in srgb, var(--accent), transparent 70%) !important;
+  background: color-mix(in srgb, var(--accent), transparent 90%) !important;
+  transform: translateY(2px);
+}
+
+.dayPostTab.dropTargetAfter {
+  border-color: var(--accent) !important;
+  box-shadow: 0 3px 0 0 var(--accent), 0 4px 12px color-mix(in srgb, var(--accent), transparent 70%) !important;
+  background: color-mix(in srgb, var(--accent), transparent 90%) !important;
+  transform: translateY(-2px);
+}
+
+.dayPostTabEnd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dayPostReorderButtons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+
+.dayPostTab:hover .dayPostReorderButtons {
+  opacity: 1;
+}
+
+.dayPostReorderBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.dayPostReorderBtn:hover {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.dayPostDragHandle {
+  opacity: 0.3;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-right: -1px;
+  cursor: grab;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.dayPostTab:hover .dayPostDragHandle {
+  opacity: 0.8;
+  color: var(--ink);
+}
+
+.calendarDragNotice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent), transparent 90%);
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  animation: fadeIn 0.2s ease;
+}
