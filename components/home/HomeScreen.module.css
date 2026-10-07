@@ -1,24 +1,31 @@
 .homeContainer {
-  padding: 2rem 2.5rem;
-  max-width: 1400px;
+  padding: 2.25rem 3rem;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.25rem;
   min-height: calc(100vh - 70px);
 }
 
-/* Header de boas-vindas com workspace toggle */
+/* 1. Header de boas-vindas com tipografia Display (Coolvetica) */
 .welcomeHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
 }
 
-.greetingGroup h1 {
-  font-size: 1.6rem;
+.greetingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.greetingTitle {
+  font-family: var(--font-display, inherit);
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--text-primary, #0f172a);
   margin: 0;
@@ -26,9 +33,9 @@
 }
 
 .greetingSubtitle {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--text-muted, #64748b);
-  margin-top: 4px;
+  margin: 0;
 }
 
 .headerActions {
@@ -39,558 +46,496 @@
 
 .workspaceRoleToggle {
   display: inline-flex;
-  background: var(--surface-soft, #f1f5f9);
+  background: var(--surface-soft, rgba(0, 0, 0, 0.05));
   padding: 3px;
   border-radius: 999px;
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border-soft, rgba(0, 0, 0, 0.06));
 }
 
 .roleToggleBtn {
   border: none;
   background: transparent;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted, #64748b);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .roleToggleBtn.active {
-  background: #ffffff;
+  background: var(--surface, #ffffff);
   color: var(--text-primary, #0f172a);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .createDemandBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--accent, #ef5d3d);
+  background: var(--tenant-primary, #e3002f);
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 0.85rem;
+  padding: 7px 14px;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s;
 }
 
 .createDemandBtn:hover {
-  opacity: 0.92;
+  opacity: 0.9;
 }
 
-/* Card 1: Destaque do Prazo Global dos Calendários */
-.globalDeadlineCard {
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 14px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+/* 2. Seção do Ciclo — Informação Diretamente no Canvas */
+.cycleSection {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  position: relative;
-  overflow: hidden;
 }
 
-.globalDeadlineCard::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent, #ef5d3d), #f97316);
-}
-
-.globalDeadlineTop {
+.cycleHeaderRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
-.cycleTitle {
-  font-size: 1.15rem;
-  font-weight: 800;
+.cycleSectionTitle {
+  font-family: var(--font-display, inherit);
+  font-size: 1.35rem;
+  font-weight: 700;
   color: var(--text-primary, #0f172a);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
   margin: 0;
-}
-
-.deadlineHighlight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
-}
-
-.deadlineUrgencyBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.deadlineUrgencyBadge.today {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
-.deadlineUrgencyBadge.thisWeek {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-
-.deadlineUrgencyBadge.overdue {
-  background: rgba(225, 29, 72, 0.15);
-  color: #e11d48;
-  border: 1px solid rgba(225, 29, 72, 0.3);
-}
-
-.deadlineUrgencyBadge.normal {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.cycleNotes {
-  font-size: 0.82rem;
-  color: var(--text-muted, #64748b);
-  margin-top: 4px;
+  letter-spacing: -0.015em;
 }
 
 .cycleEditBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: transparent;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  border: none;
   color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .cycleEditBtn:hover {
-  background: var(--surface-soft, #f8fafc);
   color: var(--text-primary, #0f172a);
+  background: var(--surface-soft, rgba(0, 0, 0, 0.04));
 }
 
-/* Métricas do ciclo: Entregues vs Pendentes */
-.cycleProgressSummary {
+.cycleDetailsRow {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 12px 16px;
-  background: var(--surface-soft, #f8fafc);
-  border-radius: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
-.metricItem {
+.deadlineBlock {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 0.85rem;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.microLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted, #64748b);
 }
 
-.metricItem strong {
-  font-size: 1.15rem;
+.deadlineNumberGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deadlineNumber {
+  font-family: var(--font-display, inherit);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+.deadlineTag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.deadlineTag.today {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.deadlineTag.thisWeek {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.deadlineTag.overdue {
+  background: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+}
+
+.deadlineTag.normal {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.cycleStatsBlock {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.statItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.statValue {
+  font-family: var(--font-display, inherit);
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--text-primary, #0f172a);
 }
 
-/* Tabela/Lista de Acompanhamento por Designer */
-.followUpSection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.statDelivered {
+  color: #10b981;
 }
 
-.followUpHeader {
+.statPending {
+  color: #f59e0b;
+}
+
+.statLabel {
+  font-size: 0.82rem;
+  color: var(--text-muted, #64748b);
+}
+
+/* Lista de Calendários Linear */
+.calendarsListBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.calendarsListHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 0.25rem;
 }
 
-.followUpTitle {
-  font-size: 0.85rem;
+.subSectionTitle {
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--text-secondary, #475569);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
 }
 
-.followUpGrid {
+.minimalSelect {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: transparent;
+  color: var(--text-secondary, #334155);
+}
+
+.calendarRowList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendarRowItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.calendarRowItem:hover {
+  background: var(--surface-soft, rgba(0, 0, 0, 0.03));
+}
+
+.calendarRowMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendarRowClient {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.calendarRowMeta {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+}
+
+.calendarRowRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusPill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.pillDelivered {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.pillPending {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.rowArrow {
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Divisor sutil no canvas */
+.canvasDivider {
+  height: 1px;
+  background: var(--border-soft, rgba(0, 0, 0, 0.07));
+  margin: 0.25rem 0;
+}
+
+/* 3. Precisa de Atenção */
+.attentionCanvasSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.canvasSectionTitle {
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.attentionEmptyText {
+  font-size: 0.86rem;
+  color: #10b981;
+  font-weight: 600;
+  margin: 0;
+}
+
+.attentionItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attentionTextItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-primary, #0f172a);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.attentionDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  flex-shrink: 0;
+}
+
+.attentionClientName {
+  color: var(--text-secondary, #475569);
+}
+
+.attentionArrow {
+  color: var(--text-muted, #94a3b8);
+  transition: transform 0.15s ease;
+}
+
+.attentionTextItem:hover .attentionArrow {
+  transform: translateX(3px);
+  color: var(--text-primary, #0f172a);
+}
+
+/* 4. Colunas de Trabalho Direto no Canvas */
+.workColumnsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+@media (max-width: 900px) {
+  .workColumnsGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.workColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.columnEmptyText {
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+
+.workItemsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.workRow:hover {
+  background: var(--surface-soft, rgba(0, 0, 0, 0.03));
+}
+
+.workRowContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workRowTitle {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.workRowSub {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+}
+
+.workRowStatus {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.dayGroupRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.dayGroupLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  padding: 4px 8px;
+}
+
+/* 5. Continuar de onde parei — Objeto Real (Card Reservado) */
+.recentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.recentObjectsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
 }
 
-.calendarCard {
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--border, #e2e8f0);
+.recentObjectCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
   border-radius: 10px;
-  padding: 12px 14px;
+  border: 1px solid var(--border-soft, rgba(0, 0, 0, 0.08));
+  background: var(--surface, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  transition: all 0.15s ease;
 }
 
-.calendarCard:hover {
-  border-color: var(--accent, #ef5d3d);
-  transform: translateY(-2px);
+.recentObjectCard:hover {
+  border-color: var(--border, #cbd5e1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.clientName {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.designerPill {
-  font-size: 0.72rem;
-  color: var(--text-muted, #64748b);
-}
-
-.calendarActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 4px;
-  font-size: 0.75rem;
-}
-
-.openCalendarLink {
-  color: var(--accent, #ef5d3d);
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-/* Card 2: Precisa de Atenção */
-.attentionSection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sectionHeading {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--text-primary, #0f172a);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.attentionBadgesGrid {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.attentionBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.15s;
-}
-
-.attentionBadge.warning {
-  background: rgba(245, 158, 11, 0.1);
-  color: #b45309;
-  border-color: rgba(245, 158, 11, 0.25);
-}
-
-.attentionBadge.danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #b91c1c;
-  border-color: rgba(239, 68, 68, 0.25);
-}
-
-.attentionBadge.info {
-  background: rgba(59, 130, 246, 0.1);
-  color: #1d4ed8;
-  border-color: rgba(59, 130, 246, 0.25);
-}
-
-.attentionBadge:hover {
   transform: translateY(-1px);
-  filter: brightness(0.96);
 }
 
-/* Grid Duplo: Meu Trabalho de Hoje & Próximos 7 Dias / Continuar */
-.mainWorkGrid {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-  .mainWorkGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.workCardContainer {
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 14px;
-  padding: 1.25rem;
+.recentCardBody {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 3px;
 }
 
-/* Tabela limpa de Trabalho de Hoje */
-.workTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-
-.workTable th {
-  text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border, #e2e8f0);
-  color: var(--text-muted, #64748b);
-  font-size: 0.75rem;
+.recentCardTitle {
+  font-size: 0.92rem;
   font-weight: 700;
-  text-transform: uppercase;
-}
-
-.workTable td {
-  padding: 10px;
-  border-bottom: 1px solid var(--border-soft, #f1f5f9);
   color: var(--text-primary, #0f172a);
 }
 
-.workTableRow {
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.workTableRow:hover {
-  background: var(--surface-soft, #f8fafc);
-}
-
-.demandTitle {
-  font-weight: 600;
-}
-
-.demandClient {
-  font-size: 0.75rem;
+.recentCardMeta {
+  font-size: 0.76rem;
   color: var(--text-muted, #64748b);
 }
 
-.actionTag {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: var(--surface-soft, #f1f5f9);
-  color: var(--text-secondary, #475569);
-}
-
-.overdueWarning {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: #dc2626;
-  font-size: 0.7rem;
-  font-weight: 700;
-  margin-left: 6px;
-}
-
-/* Coluna Direita: Próximos 7 Dias & Continuar */
-.sideWorkCol {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.dayGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.dayLabel {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--text-muted, #64748b);
-  text-transform: uppercase;
-}
-
-.dayItem {
+.recentCardAction {
+  color: var(--text-muted, #94a3b8);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  background: var(--surface-soft, #f8fafc);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.15s;
 }
 
-.dayItem:hover {
-  background: #f1f5f9;
-}
-
-.recentGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.recentItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 8px;
-  background: var(--surface, #ffffff);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.recentItem:hover {
-  border-color: var(--accent, #ef5d3d);
-}
-
-.emptyStateMessage {
-  padding: 1.5rem;
-  text-align: center;
-  color: var(--text-muted, #64748b);
-  font-size: 0.85rem;
-}
-
-:global([data-theme="dark"]) .homeContainer {
-  color: var(--text-primary);
-}
-
-:global([data-theme="dark"]) .roleToggleBtn.active {
-  background: var(--surface);
-  color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-:global([data-theme="dark"]) .globalDeadlineCard {
-  background: var(--surface);
-  border-color: var(--border);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-:global([data-theme="dark"]) .cycleProgressSummary {
-  background: var(--surface-soft);
-}
-
-:global([data-theme="dark"]) .calendarCard {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-:global([data-theme="dark"]) .calendarCard:hover {
-  border-color: var(--accent);
-  background: var(--surface-soft);
-}
-
-:global([data-theme="dark"]) .workCardContainer {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-:global([data-theme="dark"]) .workTableRow:hover {
-  background: var(--surface-soft);
-}
-
-:global([data-theme="dark"]) .actionTag {
-  background: var(--surface-soft);
-  color: var(--text-secondary);
-}
-
-:global([data-theme="dark"]) .dayItem {
-  background: var(--surface-soft);
-  color: var(--text-primary);
-}
-
-:global([data-theme="dark"]) .dayItem:hover {
-  background: var(--surface);
-}
-
-:global([data-theme="dark"]) .recentItem {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-:global([data-theme="dark"]) .recentItem:hover {
-  background: var(--surface-soft);
-  border-color: var(--accent);
-}
-
-:global([data-theme="dark"]) .cycleEditBtn {
-  border-color: var(--border);
-  color: var(--text-secondary);
-}
-
-:global([data-theme="dark"]) .cycleEditBtn:hover {
-  background: var(--surface-soft);
-  color: var(--text-primary);
-}
-
+/* Modais de ciclo */
 .cycleModalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -599,43 +544,67 @@
 
 .cycleModalCard {
   background: var(--surface, #ffffff);
-  color: var(--text-primary, #0f172a);
-  border: 1px solid var(--border, #e2e8f0);
-  padding: 1.75rem;
   border-radius: 12px;
-  max-width: 460px;
+  padding: 24px;
   width: 90%;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+  gap: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
-.cycleModalInput, .cycleModalTextarea {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border, #cbd5e1);
-  background: var(--surface-soft, #f8fafc);
-  color: var(--text-primary, #0f172a);
-  font-size: 0.85rem;
+/* Dark Mode */
+:global([data-theme="dark"]) .homeContainer {
+  color: var(--text-primary, #f8fafc);
 }
 
-.cycleModalCancelBtn {
-  background: transparent;
-  border: 1px solid var(--border, #cbd5e1);
-  color: var(--text-secondary, #334155);
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.82rem;
+:global([data-theme="dark"]) .greetingTitle,
+:global([data-theme="dark"]) .cycleSectionTitle,
+:global([data-theme="dark"]) .deadlineNumber,
+:global([data-theme="dark"]) .canvasSectionTitle,
+:global([data-theme="dark"]) .recentCardTitle,
+:global([data-theme="dark"]) .calendarRowClient,
+:global([data-theme="dark"]) .workRowTitle {
+  color: #f8fafc;
 }
 
-.filterSelect {
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border, #e2e8f0);
-  background: var(--surface, #ffffff);
-  color: var(--text-primary, #0f172a);
+:global([data-theme="dark"]) .workspaceRoleToggle {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .roleToggleBtn.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+:global([data-theme="dark"]) .canvasDivider {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .calendarRowItem:hover,
+:global([data-theme="dark"]) .workRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:global([data-theme="dark"]) .recentObjectCard {
+  background: var(--surface, #1e293b);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .recentObjectCard:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+:global([data-theme="dark"]) .minimalSelect {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  background: #1e293b;
+}
+
+:global([data-theme="dark"]) .cycleModalCard {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

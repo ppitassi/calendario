@@ -43,26 +43,12 @@
   cursor: pointer;
 }
 
-.brandLogo {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.65rem;
-  background: var(--tenant-primary, #e3002f);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display, inherit);
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+.brandFavicon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(227, 0, 47, 0.25);
-  transition: transform 0.15s ease;
-}
-
-.brandClickable:hover .brandLogo {
-  transform: scale(1.04);
+  display: block;
 }
 
 .brandText {
@@ -72,11 +58,10 @@
 
 .brandTitle {
   font-family: var(--font-display, inherit);
-  font-size: 0.875rem;
-  font-weight: 900;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--ink, #0f172a);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 

@@ -14,6 +14,8 @@
  * - print.css        -> Regras de impressão profissional e exportação para PDF
  */
 
+@import url("https://fonts.cdnfonts.com/css/coolvetica-2");
+
 @import "./styles/tokens.css";
 @import "./styles/base.css";
 @import "./styles/header.css";

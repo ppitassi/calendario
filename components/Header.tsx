@@ -110,9 +110,22 @@ export function Header({
       ? "Social Media"
       : "Designer";
 
+  // Determina o título dinâmico da seção com base na tela e contexto
+  const getSectionTitle = () => {
+    if (activeScreen === "home") return "Início";
+    if (activeScreen === "planner") {
+      return activeClient ? `${activeClient.name} — Calendário` : "Calendário";
+    }
+    if (activeScreen === "clients") return "Clientes";
+    if (activeScreen === "tasks") return "Tarefas";
+    if (activeScreen === "presentations" || activeScreen === "presentation") return "Apresentações";
+    if (activeScreen === "admin_users") return "Gestão de Usuários";
+    return "Início";
+  };
+
   return (
     <header className={styles.header}>
-      {/* Seção Esquerda: Hamburger mobile + Identidade da Marca + Breadcrumb */}
+      {/* Seção Esquerda: Hamburger mobile + Favicon puro + Título Dinâmico */}
       <div className={styles.leftSection}>
         {onOpenMobileMenu && (
           <button
@@ -133,18 +146,16 @@ export function Header({
           tabIndex={onNavigate ? 0 : undefined}
           title={onNavigate ? "Voltar ao Início" : undefined}
         >
-          <div className={styles.brandLogo}>
-            <Calendar size={18} strokeWidth={2.2} />
-          </div>
+          <img
+            src="/icon.svg"
+            alt="Logo"
+            className={styles.brandFavicon}
+            width={22}
+            height={22}
+          />
           <div className={styles.brandText}>
-            <span className={styles.brandTitle}>Calendário</span>
+            <span className={styles.brandTitle}>{getSectionTitle()}</span>
           </div>
-        </div>
-
-        <div className={styles.breadcrumb}>
-          {activeClient && activeScreen === "planner" && (
-            <span className={styles.clientBadge}>{activeClient.name}</span>
-          )}
         </div>
       </div>
 

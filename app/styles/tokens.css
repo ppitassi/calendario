@@ -6,8 +6,8 @@
 :root {
   --tenant-primary: #e3002f;
   /* Pilhas locais evitam dependência externa e redistribuição de fonte sem licença. */
-  --font-body: "Aptos", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: "Aptos Display", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Coolvetica", "Coolvetica Rg", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-weight-body: 400;
   --font-weight-title: 900;
   --tracking-bold: .0075em;

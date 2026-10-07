@@ -164,19 +164,19 @@ export function HomeScreen({
 
   return (
     <div className={styles.homeContainer}>
-      {/* 1. Header de Boas-vindas com Alternador de Papel (Role-based Workspace) */}
+      {/* 1. Saudação Direta no Canvas */}
       <div className={styles.welcomeHeader}>
         <div className={styles.greetingGroup}>
-          <h1>Bom dia, {currentUser.name.split(" ")[0]}</h1>
+          <h1 className={styles.greetingTitle}>Bom dia, {currentUser.name.split(" ")[0]}</h1>
           <p className={styles.greetingSubtitle}>
             {roleWorkspace === "social_media"
-              ? "Workspace Social Media • Planejamento e validação de copywriting"
-              : "Workspace Designer • Produção de artes e criativos"}
+              ? "Social Media · Planejamento e validação de copywriting"
+              : "Designer · Produção de artes e criativos"}
           </p>
         </div>
 
         <div className={styles.headerActions}>
-          {/* Seletor Social Media / Designer para administradores e papéis múltiplos */}
+          {/* Seletor Social Media / Designer discreto tipo segmented control */}
           {currentUser.role === "admin" && (
             <div className={styles.workspaceRoleToggle}>
               <button
@@ -207,30 +207,13 @@ export function HomeScreen({
         </div>
       </div>
 
-      {/* 2. Destaque: Prazo Global dos Calendários */}
-      <section className={styles.globalDeadlineCard}>
-        <div className={styles.globalDeadlineTop}>
+      {/* 2. Seção Direta no Canvas: Entrega dos Calendários */}
+      <section className={styles.cycleSection}>
+        <div className={styles.cycleHeaderRow}>
           <div>
-            <h2 className={styles.cycleTitle}>{cycle?.title || "Entrega dos Calendários"}</h2>
-            <div className={styles.deadlineHighlight}>
-              <CalendarDays size={18} color="var(--accent, #ef5d3d)" />
-              <span>
-                Prazo geral: <strong>{data?.globalDeadline || "A definir"}</strong>
-              </span>
-              {deadlineUrgency.label && (
-                <span
-                  className={`${styles.deadlineUrgencyBadge} ${
-                    styles[deadlineUrgency.type] || ""
-                  }`}
-                >
-                  {deadlineUrgency.label}
-                </span>
-              )}
-            </div>
-            <p className={styles.cycleNotes}>
-              {cycle?.notes ||
-                "Todos os designers vinculados a este ciclo compartilham a mesma data final de entrega."}
-            </p>
+            <h2 className={styles.cycleSectionTitle}>
+              {cycle?.title ? cycle.title : `Entrega dos calendários de ${monthLabel(new Date()).toLowerCase()}`}
+            </h2>
           </div>
 
           {isAuthorizedToEditCycle && (
@@ -245,286 +228,238 @@ export function HomeScreen({
           )}
         </div>
 
-        {/* Resumo de Entregas do Ciclo */}
-        <div className={styles.cycleProgressSummary}>
-          <div className={styles.metricItem}>
-            <span>Total de Calendários:</span>
-            <strong>{data?.summary?.totalCalendars || 0}</strong>
+        {/* Informações de prazo e contadores sem caixa */}
+        <div className={styles.cycleDetailsRow}>
+          <div className={styles.deadlineBlock}>
+            <span className={styles.microLabel}>Prazo geral</span>
+            <div className={styles.deadlineNumberGroup}>
+              <strong className={styles.deadlineNumber}>
+                {data?.globalDeadline || "A definir"}
+              </strong>
+              {deadlineUrgency.label && (
+                <span className={`${styles.deadlineTag} ${styles[deadlineUrgency.type] || ""}`}>
+                  {deadlineUrgency.label}
+                </span>
+              )}
+            </div>
           </div>
-          <div className={styles.metricItem}>
-            <span style={{ color: "#10b981" }}>Entregues:</span>
-            <strong>{data?.summary?.deliveredCalendars || 0}</strong>
-          </div>
-          <div className={styles.metricItem}>
-            <span style={{ color: "#f59e0b" }}>Pendentes:</span>
-            <strong>{data?.summary?.pendingCalendars || 0}</strong>
+
+          <div className={styles.cycleStatsBlock}>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{data?.summary?.totalCalendars || 0}</span>
+              <span className={styles.statLabel}>
+                {(data?.summary?.totalCalendars || 0) === 1 ? "calendário" : "calendários"}
+              </span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={`${styles.statValue} ${styles.statDelivered}`}>
+                {data?.summary?.deliveredCalendars || 0}
+              </span>
+              <span className={styles.statLabel}>entregues</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={`${styles.statValue} ${styles.statPending}`}>
+                {data?.summary?.pendingCalendars || 0}
+              </span>
+              <span className={styles.statLabel}>pendentes</span>
+            </div>
           </div>
         </div>
 
-        {/* Acompanhamento por Designer / Cliente */}
-        <div className={styles.followUpSection}>
-          <div className={styles.followUpHeader}>
-            <span className={styles.followUpTitle}>
-              {roleWorkspace === "designer"
-                ? "Seus Calendários no Ciclo"
-                : "Acompanhamento de Calendários"}
-            </span>
+        {/* Lista de Calendários de forma sutil e linear */}
+        {filteredCalendars.length > 0 && (
+          <div className={styles.calendarsListBlock}>
+            <div className={styles.calendarsListHeader}>
+              <span className={styles.subSectionTitle}>
+                {roleWorkspace === "designer" ? "Seus calendários no ciclo" : "Acompanhamento"}
+              </span>
 
-            {/* Filtros rápidos */}
-            {roleWorkspace !== "designer" && (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <select
-                  value={filterDesigner}
-                  onChange={(e) => setFilterDesigner(e.target.value)}
-                  style={{
-                    fontSize: "0.75rem",
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--border, #e2e8f0)",
-                  }}
-                >
-                  <option value="all">Todos os Designers</option>
-                  {uniqueDesigners.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
+              {roleWorkspace !== "designer" && (
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <select
+                    value={filterDesigner}
+                    onChange={(e) => setFilterDesigner(e.target.value)}
+                    className={styles.minimalSelect}
+                  >
+                    <option value="all">Todos os Designers</option>
+                    {uniqueDesigners.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
 
-                <select
-                  value={filterClient}
-                  onChange={(e) => setFilterClient(e.target.value)}
-                  style={{
-                    fontSize: "0.75rem",
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--border, #e2e8f0)",
-                  }}
-                >
-                  <option value="all">Todos os Clientes</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
+                  <select
+                    value={filterClient}
+                    onChange={(e) => setFilterClient(e.target.value)}
+                    className={styles.minimalSelect}
+                  >
+                    <option value="all">Todos os Clientes</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
 
-          <div className={styles.followUpGrid}>
-            {filteredCalendars.length === 0 ? (
-              <div style={{ fontSize: "0.82rem", color: "#64748b", padding: "8px 0" }}>
-                Nenhum calendário pendente neste filtro.
-              </div>
-            ) : (
-              filteredCalendars.map((cal: any) => (
+            <div className={styles.calendarRowList}>
+              {filteredCalendars.map((cal: any) => (
                 <div
                   key={cal.id}
-                  className={styles.calendarCard}
-                  onClick={() => setSelectedWorkUnitId(cal.id)}
-                  title="Clique para ver as subdemandas deste calendário na gaveta lateral"
+                  className={styles.calendarRowItem}
+                  onClick={() => handleOpenCalendarByClient(cal.clientId, cal.month)}
+                  title="Abrir calendário"
                 >
-                  <div className={styles.cardHeader}>
-                    <span className={styles.clientName}>{cal.clientName}</span>
+                  <div className={styles.calendarRowMain}>
+                    <span className={styles.calendarRowClient}>{cal.clientName}</span>
+                    <span className={styles.calendarRowMeta}>
+                      {cal.designerName} · {cal.approvedItemsCount}/{cal.itemsCount} aprovados
+                    </span>
+                  </div>
+
+                  <div className={styles.calendarRowRight}>
                     <span
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        padding: "2px 6px",
-                        borderRadius: "999px",
-                        background: cal.isDelivered
-                          ? "rgba(16, 185, 129, 0.1)"
-                          : "rgba(245, 158, 11, 0.1)",
-                        color: cal.isDelivered ? "#059669" : "#d97706",
-                      }}
+                      className={`${styles.statusPill} ${
+                        cal.isDelivered ? styles.pillDelivered : styles.pillPending
+                      }`}
                     >
-                      {cal.isDelivered ? "Entregue" : "Em Produção"}
+                      {cal.isDelivered ? "Entregue" : "Pendente"}
                     </span>
-                  </div>
-
-                  <div className={styles.designerPill}>
-                    Responsável: <strong>{cal.designerName}</strong>
-                  </div>
-
-                  <div className={styles.calendarActions}>
-                    <span style={{ color: "#64748b" }}>
-                      {cal.approvedItemsCount}/{cal.itemsCount} aprovados ({cal.progressPercent}%)
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.openCalendarLink}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenCalendarByClient(cal.clientId, cal.month);
-                      }}
-                    >
-                      <span>Abrir calendário</span>
-                      <ChevronRight size={13} />
-                    </button>
+                    <ChevronRight size={14} className={styles.rowArrow} />
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
-      {/* 3. Bloco: Precisa de Atenção */}
-      <section className={styles.attentionSection}>
-        <h3 className={styles.sectionHeading}>
-          <AlertCircle size={16} color="#d97706" />
-          <span>Precisa de atenção</span>
-        </h3>
+      <div className={styles.canvasDivider} />
 
-        <div className={styles.attentionBadgesGrid}>
-          {data?.attentionItems?.length === 0 ? (
-            <div style={{ fontSize: "0.82rem", color: "#10b981", fontWeight: 600 }}>
-              ✓ Tudo em dia! Nenhuma pendência urgente no momento.
-            </div>
-          ) : (
-            data?.attentionItems?.map((item: any) => (
+      {/* 3. Precisa de Atenção — Direto no canvas */}
+      <section className={styles.attentionCanvasSection}>
+        <h3 className={styles.canvasSectionTitle}>Precisa de atenção</h3>
+        {data?.attentionItems?.length === 0 ? (
+          <p className={styles.attentionEmptyText}>
+            ✓ Tudo em dia. Nenhuma pendência urgente no momento.
+          </p>
+        ) : (
+          <div className={styles.attentionItemsList}>
+            {data?.attentionItems?.map((item: any) => (
               <div
                 key={item.id}
-                className={`${styles.attentionBadge} ${styles[item.badgeType] || ""}`}
+                className={styles.attentionTextItem}
                 onClick={() => handleOpenCalendarByClient(item.clientId, item.month)}
-                title={`Clique para abrir ${item.clientName}`}
               >
+                <span className={styles.attentionDot} />
                 <span>{item.reason}</span>
-                <strong>• {item.clientName}</strong>
-                <ArrowRight size={12} />
+                <strong className={styles.attentionClientName}>· {item.clientName}</strong>
+                <ArrowRight size={13} className={styles.attentionArrow} />
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* 4. Grid Principal: Meu Trabalho de Hoje & Próximos 7 Dias / Continuar */}
-      <div className={styles.mainWorkGrid}>
-        {/* Coluna Esquerda: Meu Trabalho de Hoje */}
-        <section className={styles.workCardContainer}>
-          <h3 className={styles.sectionHeading}>
-            <CheckSquare size={16} />
-            <span>Meu trabalho de hoje</span>
-          </h3>
+      <div className={styles.canvasDivider} />
 
+      {/* 4. Meu trabalho de hoje & Próximos 7 dias — Diretamente no Canvas */}
+      <div className={styles.workColumnsGrid}>
+        {/* Coluna 1: Meu trabalho de hoje */}
+        <section className={styles.workColumn}>
+          <h3 className={styles.canvasSectionTitle}>Meu trabalho de hoje</h3>
           {data?.todayWork?.length === 0 ? (
-            <div className={styles.emptyStateMessage}>
-              Nenhuma publicação programada para entrega hoje.
-            </div>
+            <p className={styles.columnEmptyText}>
+              Nenhuma publicação programada para hoje.
+            </p>
           ) : (
-            <table className={styles.workTable}>
-              <thead>
-                <tr>
-                  <th>Demanda / Cliente</th>
-                  <th>Prazo</th>
-                  <th>Situação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.todayWork?.map((item: any) => (
-                  <tr
-                    key={item.id}
-                    className={styles.workTableRow}
-                    onClick={() => handleOpenCalendarByClient(item.clientId, item.month)}
-                  >
-                    <td>
-                      <div className={styles.demandTitle}>{item.title}</div>
-                      <div className={styles.demandClient}>
-                        {item.clientName} • {item.type}
-                      </div>
-                    </td>
-                    <td>
-                      <span>{item.dueDate}</span>
-                      {item.isAfterGlobalDeadline && (
-                        <span
-                          className={styles.overdueWarning}
-                          title="Atenção: Prevista para depois do prazo global do ciclo"
-                        >
-                          ⚠️ &gt; ciclo
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={styles.actionTag}>{item.actionLabel}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className={styles.workItemsStack}>
+              {data?.todayWork?.map((item: any) => (
+                <div
+                  key={item.id}
+                  className={styles.workRow}
+                  onClick={() => handleOpenCalendarByClient(item.clientId, item.month)}
+                >
+                  <div className={styles.workRowContent}>
+                    <strong className={styles.workRowTitle}>{item.title}</strong>
+                    <span className={styles.workRowSub}>
+                      {item.clientName} · {item.type}
+                    </span>
+                  </div>
+                  <span className={styles.workRowStatus}>{item.actionLabel}</span>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
-        {/* Coluna Direita: Próximos 7 Dias & Continuar de onde parei */}
-        <div className={styles.sideWorkCol}>
-          {/* Próximos 7 Dias */}
-          <section className={styles.workCardContainer}>
-            <h3 className={styles.sectionHeading}>
-              <Clock size={16} />
-              <span>Próximos 7 dias</span>
-            </h3>
-
-            {data?.next7DaysWork?.length === 0 ? (
-              <div className={styles.emptyStateMessage}>
-                Nenhuma entrega agendada para os próximos 7 dias.
-              </div>
-            ) : (
-              data?.next7DaysWork?.map((group: any) => (
-                <div key={group.date} className={styles.dayGroup}>
-                  <span className={styles.dayLabel}>{group.dateFormatted}</span>
+        {/* Coluna 2: Próximos 7 dias */}
+        <section className={styles.workColumn}>
+          <h3 className={styles.canvasSectionTitle}>Próximos 7 dias</h3>
+          {data?.next7DaysWork?.length === 0 ? (
+            <p className={styles.columnEmptyText}>
+              Nenhuma entrega agendada para os próximos 7 dias.
+            </p>
+          ) : (
+            <div className={styles.workItemsStack}>
+              {data?.next7DaysWork?.map((group: any) => (
+                <div key={group.date} className={styles.dayGroupRow}>
+                  <span className={styles.dayGroupLabel}>{group.dateFormatted}</span>
                   {group.items.map((it: any) => (
                     <div
                       key={it.id}
-                      className={styles.dayItem}
+                      className={styles.workRow}
                       onClick={() => handleOpenCalendarByClient(it.clientId, it.month)}
                     >
-                      <div>
-                        <strong>{it.clientName}</strong> • {it.title} ({it.type})
-                      </div>
-                      {it.isAfterGlobalDeadline && (
-                        <span style={{ fontSize: "0.7rem", color: "#dc2626", fontWeight: 700 }}>
-                          ⚠️ pós-ciclo
+                      <div className={styles.workRowContent}>
+                        <strong className={styles.workRowTitle}>{it.clientName}</strong>
+                        <span className={styles.workRowSub}>
+                          {it.title} ({it.type})
                         </span>
-                      )}
+                      </div>
+                      <ChevronRight size={13} className={styles.rowArrow} />
                     </div>
                   ))}
                 </div>
-              ))
-            )}
-          </section>
-
-          {/* Continuar de onde parei */}
-          <section className={styles.workCardContainer}>
-            <h3 className={styles.sectionHeading}>
-              <span>Continuar de onde parei</span>
-            </h3>
-
-            <div className={styles.recentGrid}>
-              {data?.recentCalendars?.length === 0 ? (
-                <div className={styles.emptyStateMessage}>
-                  Nenhum calendário acessado recentemente.
-                </div>
-              ) : (
-                data?.recentCalendars?.map((rec: any) => (
-                  <div
-                    key={rec.id}
-                    className={styles.recentItem}
-                    onClick={() => handleOpenCalendarByClient(rec.clientId, rec.month)}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.85rem" }}>{rec.clientName}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                        {rec.title} • {rec.designerName}
-                      </div>
-                    </div>
-                    <ExternalLink size={13} color="#94a3b8" />
-                  </div>
-                ))
-              )}
+              ))}
             </div>
-          </section>
-        </div>
+          )}
+        </section>
       </div>
+
+      <div className={styles.canvasDivider} />
+
+      {/* 5. Continuar de onde parei — Objeto Real (Card Reservado) */}
+      <section className={styles.recentSection}>
+        <h3 className={styles.canvasSectionTitle}>Continuar de onde parei</h3>
+        {data?.recentCalendars?.length === 0 ? (
+          <p className={styles.columnEmptyText}>Nenhum calendário acessado recentemente.</p>
+        ) : (
+          <div className={styles.recentObjectsGrid}>
+            {data?.recentCalendars?.map((rec: any) => (
+              <div
+                key={rec.id}
+                className={styles.recentObjectCard}
+                onClick={() => handleOpenCalendarByClient(rec.clientId, rec.month)}
+                title={`Abrir planejamento de ${rec.clientName}`}
+              >
+                <div className={styles.recentCardBody}>
+                  <strong className={styles.recentCardTitle}>{rec.clientName}</strong>
+                  <span className={styles.recentCardMeta}>
+                    {rec.title} · {rec.designerName}
+                  </span>
+                </div>
+                <div className={styles.recentCardAction}>
+                  <ExternalLink size={14} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Modal de Configuração do Prazo Global */}
       {showCycleModal && (

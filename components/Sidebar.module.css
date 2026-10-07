@@ -225,40 +225,51 @@
   align-items: center;
   width: 100%;
   border: 1px solid transparent;
-  border-radius: 0.65rem;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
   transition: all 0.15s ease;
-  padding: 0.625rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   gap: 0.75rem;
   text-align: left;
   cursor: pointer;
 }
 
 .navItem:hover {
-  background: var(--color-bg-subtle);
+  background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
   color: var(--color-text-primary);
 }
 
 .navItemActive {
-  background: var(--tenant-primary);
-  color: #fff !important;
-  box-shadow: 0 4px 14px rgba(227, 0, 47, 0.25);
+  background: rgba(227, 0, 47, 0.09);
+  color: var(--tenant-primary, #e3002f) !important;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+:global([data-theme="dark"]) .navItemActive {
+  background: rgba(227, 0, 47, 0.16);
+  color: #ff3366 !important;
 }
 
 .navItemActive:hover {
-  background: var(--tenant-primary);
-  color: #fff !important;
+  background: rgba(227, 0, 47, 0.14);
+  color: var(--tenant-primary, #e3002f) !important;
 }
 
 .navItem svg {
   width: 1.125rem;
   height: 1.125rem;
   flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.navItemActive svg {
+  color: var(--tenant-primary, #e3002f);
 }
 
 .navItemCollapsed {
