@@ -132,13 +132,13 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
         </div>
       )}
 
-      {/* Subhead */}
-      {item.subhead && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
-              SUBHEAD (Apoio)
-            </span>
+      {/* Subhead (Linha de apoio) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
+            SUBHEAD (Apoio visual)
+          </span>
+          {item.subhead ? (
             <button
               type="button"
               onClick={() => copyToClipboard(item.subhead || "", "subhead")}
@@ -156,20 +156,22 @@ export function DesignerCopyViewer({ item }: DesignerCopyViewerProps) {
               {copiedField === "subhead" ? <Check size={11} color="#16a34a" /> : <Copy size={11} />}
               <span>{copiedField === "subhead" ? "Copiado" : "Copiar"}</span>
             </button>
-          </div>
-          <div
-            style={{
-              padding: "8px 10px",
-              background: "var(--surface-soft, #f8f9fc)",
-              borderRadius: "6px",
-              fontSize: "12px",
-              userSelect: "text",
-            }}
-          >
-            {item.subhead}
-          </div>
+          ) : null}
         </div>
-      )}
+        <div
+          style={{
+            padding: "8px 10px",
+            background: "var(--surface-soft, #f8f9fc)",
+            borderRadius: "6px",
+            fontSize: "12px",
+            color: item.subhead ? "inherit" : "var(--muted, #94a3b8)",
+            fontStyle: item.subhead ? "normal" : "italic",
+            userSelect: "text",
+          }}
+        >
+          {item.subhead || "Sem subhead especificado"}
+        </div>
+      </div>
 
       {/* Legenda / Caption */}
       {item.caption && (
