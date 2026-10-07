@@ -6,6 +6,13 @@
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
+  transition: background 0.25s ease;
+}
+
+.overlayExpanded {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
 }
 
 .drawer {
@@ -20,6 +27,12 @@
   animation: slideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   pointer-events: auto;
+  transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawerExpanded {
+  max-width: min(1320px, 94vw);
+  box-shadow: -16px 0 48px rgba(0, 0, 0, 0.55);
 }
 
 @keyframes slideIn {
@@ -740,5 +753,261 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Botões do Header para Designer / Nextcloud / Full Size */
+.syncNextcloudBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #34d399;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.syncNextcloudBtn:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #6ee7b7;
+}
+
+.syncNextcloudBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.expandToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.expandToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.syncFeedbackBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 4px;
+  animation: fadeIn 0.2s ease;
+}
+
+.syncFeedbackBanner.success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
+.syncFeedbackBanner.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.expandHintBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.expandHintBtn:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.previewCardBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.previewCardBtn:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+/* Detalhe da Subdemanda / Workspace do Designer */
+.subtaskDetailContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.subtaskDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #181b22;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.subtaskDetailBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.subtaskDetailTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.subtaskDetailDueDate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.subtaskDetailActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.closeSubtaskBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.closeSubtaskBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* Workspace Grid: Split Copy (esquerda) e Instagram Mockup (direita) */
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 860px) {
+  .drawerExpanded .workspaceGrid {
+    grid-template-columns: minmax(380px, 1fr) minmax(340px, 420px);
+    gap: 28px;
+  }
+}
+
+.workspaceLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.emptyCopyBox {
+  padding: 24px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.workspaceRight {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mockupContainer {
+  background: #171a21;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mockupHeaderInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.hasArtBadge {
+  color: #34d399;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
