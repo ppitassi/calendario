@@ -1,0 +1,165 @@
+/**
+ * Estilos para o MiniCalendarPopover (macOS Calendar Popover Style)
+ * Compacto (280-320px), flutuante, sem sequestrar tela nem abrir drawer lateral.
+ */
+
+.popoverAnchor {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
+  animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popoverCard {
+  width: 290px;
+  background: var(--surface, #1e222b);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 12px 14px;
+  backdrop-filter: blur(20px);
+  user-select: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.monthTitle {
+  font-family: var(--font-display, "Coolvetica", sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ink, #f1f5f9);
+  text-transform: capitalize;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.navBtn:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  color: var(--ink, #ffffff);
+}
+
+.weekdaysRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.weekday {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.emptyCell {
+  height: 32px;
+}
+
+.dayBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--ink, #cbd5e1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  padding: 0;
+}
+
+.dayBtn:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  color: var(--ink, #ffffff);
+}
+
+.dayNum {
+  line-height: 1;
+}
+
+/* Dia de hoje */
+.dayBtn.today .dayNum {
+  color: var(--accent, #ef5d3d);
+  font-weight: 800;
+}
+
+/* Dia selecionado */
+.dayBtn.selected {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.14));
+  color: var(--ink, #ffffff);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--border, rgba(255, 255, 255, 0.2));
+}
+
+.dayBtn.selected.today {
+  background: rgba(239, 93, 61, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(239, 93, 61, 0.4);
+}
+
+/* Dots discretos para publicações */
+.dotContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  position: absolute;
+  bottom: 3px;
+}
+
+.dot {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: var(--muted, #94a3b8);
+}
+
+.dayBtn.selected .dot {
+  background: var(--accent, #ef5d3d);
+}
+
+.dayBtn.hasPosts:hover .dot {
+  background: var(--accent, #ef5d3d);
+}

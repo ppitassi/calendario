@@ -8,7 +8,6 @@ import { useRef, useState } from "react";
 import { Plus, AlertCircle, Undo2, ArrowLeft, Loader2, Check, CloudDownload } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { MonthlyCalendarGrid } from "./calendar/MonthlyCalendarGrid";
-import { MonthlyCalendarDrawer } from "./calendar/MonthlyCalendarDrawer";
 import { Editor } from "./Editor";
 import { Preview } from "./Preview";
 import { Presentation } from "./Presentation";
@@ -297,11 +296,11 @@ export function Studio({
               <DesignerWorkspace
                 calendar={calendar}
                 month={month}
+                onMonthChange={handleMonthChange}
                 items={monthItems}
                 selectedItem={selected}
                 onSelectItem={(item) => setSelectedId(item.id)}
-                onClearSelection={() => setSelectedId(null)}
-                onOpenCalendarDrawer={() => setIsCalendarDrawerOpen(true)}
+                onUpdateItem={updateItem}
                 onSyncNextcloud={handleSyncNextcloud}
                 isSyncingNextcloud={isSyncingNextcloud}
                 syncFeedback={syncFeedback}
@@ -610,31 +609,6 @@ export function Studio({
         onUnapprove={handleUnapproveCalendar}
       />
 
-      {/* Gaveta do Calendário sob demanda para o Designer */}
-      <MonthlyCalendarDrawer
-        isOpen={isCalendarDrawerOpen}
-        onClose={() => setIsCalendarDrawerOpen(false)}
-        brandName={calendar.brand}
-        month={month}
-        items={monthItems}
-        selectedId={selectedId}
-        postingDays={postingDays}
-        weekdayFormats={weekdayFormats}
-        onMonthChange={handleMonthChange}
-        onSelect={(item) => {
-          setSelectedId(item.id);
-          setIsCalendarDrawerOpen(false);
-        }}
-        onCreate={(date, type, profile) => createOn(date, type, profile)}
-        onCreateFromReference={(d, t) => createFromReference(d, t)}
-        onCreateBatch={(dates, type) => createBatchItems(dates, type)}
-        onMovePost={handleMovePost}
-        onMoveDayPosts={handleMoveDayPosts}
-        onReorderPosts={handleReorderPosts}
-        onUpdatePostingDays={handleUpdatePostingDays}
-        onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
-        availableProfiles={availableProfiles}
-      />
     </main>
   );
 }

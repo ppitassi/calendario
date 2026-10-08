@@ -1,0 +1,836 @@
+/**
+ * Estilos para o Designer Workspace (Apple Desktop Pro App)
+ * Inspirado em Finder, Mail, Xcode e Final Cut Pro:
+ * Split-views, source lists compactas, inspectors recolhíveis,
+ * separadores sutis de 1px e hierarquia refinada com Coolvetica.
+ */
+
+.workspaceRoot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: var(--canvas, #0f1117);
+  color: var(--ink, #f1f5f9);
+  overflow: hidden;
+  position: relative;
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* ========================================================
+   HEADER / TOOLBAR GLOBAL
+   ======================================================== */
+.topToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--surface, #151822);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  gap: 12px;
+  z-index: 50;
+  position: relative;
+}
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brandMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  color: var(--accent, #ef5d3d);
+  font-size: 11px;
+}
+
+.workspaceTitle {
+  font-family: var(--font-display, "Coolvetica", sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink, #ffffff);
+}
+
+.contextDivider {
+  width: 1px;
+  height: 14px;
+  background: var(--border, rgba(255, 255, 255, 0.12));
+}
+
+.clientContext {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clientName {
+  font-weight: 600;
+  color: var(--ink, #cbd5e1);
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  color: var(--muted, #64748b);
+}
+
+.actionsToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.toolBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink, #cbd5e1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.toolBtn:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.06));
+  border-color: var(--border, rgba(255, 255, 255, 0.1));
+  color: #fff;
+}
+
+.toolBtn.active {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.1));
+  border-color: var(--border, rgba(255, 255, 255, 0.15));
+  color: var(--accent, #ef5d3d);
+}
+
+.menuDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background: var(--surface, #1e222b);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  z-index: 100;
+  animation: menuIn 0.12s ease-out;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--ink, #cbd5e1);
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.menuItem:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  color: #fff;
+}
+
+.menuDivider {
+  height: 1px;
+  background: var(--border, rgba(255, 255, 255, 0.08));
+  margin: 4px 0;
+}
+
+/* ========================================================
+   3-PANEL SPLIT VIEW
+   ======================================================== */
+.panelsContainer {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* PAINEL 1: SOURCE LIST (ESQUERDA) */
+.sourceListPanel {
+  width: 280px;
+  min-width: 240px;
+  max-width: 340px;
+  background: var(--surface, #141720);
+  border-right: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sourceListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px 14px;
+}
+
+.panelSectionTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted, #64748b);
+}
+
+.filterInfoBadge {
+  font-size: 0.7rem;
+  color: var(--accent, #ef5d3d);
+  cursor: pointer;
+  background: rgba(239, 93, 61, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.sourceListScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 8px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Row compacta (Finder / Mail) */
+.sourceRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  user-select: none;
+  border-left: 2px solid transparent;
+}
+
+.sourceRow:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.04));
+}
+
+.sourceRow.selected {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  border-left-color: var(--accent, #ef5d3d);
+}
+
+.statusIconCol {
+  padding-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statusDot {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.rowMainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.rowTopLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.rowDate {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted, #94a3b8);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rowFormat {
+  font-size: 0.68rem;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+}
+
+.rowTitle {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink, #e2e8f0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.sourceRow.selected .rowTitle {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ========================================================
+   PAINEL 2: CONTENT (CENTRO)
+   ======================================================== */
+.contentPanel {
+  flex: 1;
+  min-width: 0;
+  background: var(--canvas, #0f1117);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.contentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px 14px 28px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  background: transparent;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pieceHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pieceTitle {
+  font-family: var(--font-display, "Coolvetica", sans-serif);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pieceMeta {
+  font-size: 0.8rem;
+  color: var(--muted, #94a3b8);
+}
+
+.navControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navIndexLabel {
+  font-size: 0.76rem;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.navStepBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: var(--surface, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--ink, #cbd5e1);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.navStepBtn:hover:not(:disabled) {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.1));
+  color: #fff;
+}
+
+.navStepBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.contentBody {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ESTADO A: DROPZONE / IMPORTAÇÃO DE ARTE */
+.artDropSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionHeading {
+  font-family: var(--font-display, "Coolvetica", sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--border, rgba(255, 255, 255, 0.16));
+  border-radius: 12px;
+  padding: 40px 24px;
+  background: var(--surface, rgba(255, 255, 255, 0.02));
+  transition: all 0.15s ease;
+  cursor: pointer;
+  gap: 12px;
+  text-align: center;
+}
+
+.dropzone:hover, .dropzone.dragOver {
+  border-color: var(--accent, #ef5d3d);
+  background: rgba(239, 93, 61, 0.04);
+}
+
+.dropIconCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.06));
+  color: var(--muted, #94a3b8);
+}
+
+.dropzone:hover .dropIconCircle {
+  color: var(--accent, #ef5d3d);
+  background: rgba(239, 93, 61, 0.12);
+}
+
+.dropTextPrimary {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink, #cbd5e1);
+}
+
+.dropActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.chooseFileBtn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--accent, #ef5d3d);
+  border: none;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.chooseFileBtn:hover {
+  opacity: 0.9;
+}
+
+.nextcloudBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.nextcloudBtn:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+/* ESTADO B: ARTE JÁ EXISTE (PROTAGONISTA) */
+.artHeroSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.artPreviewFrame {
+  max-width: 520px;
+  width: 100%;
+  max-height: 480px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.artHeroImg {
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  display: block;
+}
+
+.artMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 520px;
+  padding: 0 4px;
+}
+
+.artDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.artFileName {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.artDimensions {
+  font-size: 0.72rem;
+  color: var(--muted, #64748b);
+}
+
+.artActionBtns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.artSecondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: var(--surface, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.artSecondaryBtn:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.12));
+  color: #fff;
+}
+
+.markReadyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #059669;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.markReadyBtn:hover {
+  background: #10b981;
+}
+
+.markReadyBtn.isReady {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+/* BRIEFING & COPY DIRECTLY ON CANVAS (SEM CARDS ANINHADOS) */
+.briefingDirectSection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+
+.briefingHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.copyEntryGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.copyLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+}
+
+.copyFieldLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #64748b);
+}
+
+.copyHoverBtn {
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--muted, #94a3b8);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: opacity 0.12s ease, color 0.12s ease;
+  padding: 0 4px;
+}
+
+.copyEntryGroup:hover .copyHoverBtn {
+  opacity: 1;
+}
+
+.copyHoverBtn:hover {
+  color: var(--accent, #ef5d3d);
+}
+
+.copyHoverBtn.copied {
+  opacity: 1;
+  color: #34d399;
+}
+
+.copyTextDisplay {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--ink, #cbd5e1);
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.copyHeadText {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.copySubheadText {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.copyVisualBriefingText {
+  font-size: 0.84rem;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  padding: 8px 12px;
+  border-radius: 6px;
+  line-height: 1.45;
+}
+
+/* ========================================================
+   PAINEL 3: INSPECTOR / PREVIEW (DIREITA)
+   ======================================================== */
+.inspectorPanel {
+  width: 320px;
+  min-width: 300px;
+  max-width: 340px;
+  background: var(--surface, #141720);
+  border-left: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: width 0.18s ease;
+}
+
+.inspectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+
+.inspectorTitle {
+  font-family: var(--font-display, "Coolvetica", sans-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.inspectorControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collapseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.collapseBtn:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  color: #fff;
+}
+
+.inspectorBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Botão Flutuante de Reabrir Inspector */
+.reopenInspectorBtn {
+  position: absolute;
+  top: 56px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: var(--surface, #1e222b);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  color: var(--ink, #cbd5e1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 40;
+  transition: all 0.12s ease;
+}
+
+.reopenInspectorBtn:hover {
+  background: var(--surface-soft, #262c38);
+  color: #fff;
+}
+
+/* ========================================================
+   FEEDBACK TOAST (DISCRETO)
+   ======================================================== */
+.toastFeedback {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  animation: slideUpToast 0.15s ease-out;
+}
+
+@keyframes slideUpToast {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1024px) {
+  .sourceListPanel {
+    width: 240px;
+  }
+  .inspectorPanel {
+    width: 300px;
+  }
+}

@@ -1,29 +1,39 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Calendar as CalendarIcon,
   CloudDownload,
-  ExternalLink,
+  ChevronLeft,
   ChevronRight,
-  Sparkles,
+  MoreHorizontal,
+  Upload,
+  Check,
   CheckCircle2,
-  Clock,
-  Layers,
+  Copy,
+  ExternalLink,
+  SlidersHorizontal,
+  Eye,
+  PanelRightClose,
+  PanelRightOpen,
   ArrowRight,
+  Image as ImageIcon,
+  FolderOpen,
 } from "lucide-react";
-import { DesignerCopyViewer } from "./DesignerCopyViewer";
+import { MiniCalendarPopover } from "../calendar/MiniCalendarPopover";
 import { InstagramMockup } from "../presentation/InstagramMockup";
-import type { ContentItem, CalendarRecord } from "@/lib/types";
+import { monthLabel } from "@/lib/date";
+import type { ContentItem, ContentStatus, CalendarRecord } from "@/lib/types";
+import styles from "./DesignerWorkspace.module.css";
 
 interface DesignerWorkspaceProps {
   calendar: CalendarRecord;
   month: Date;
+  onMonthChange: (date: Date) => void;
   items: ContentItem[];
   selectedItem: ContentItem | null;
   onSelectItem: (item: ContentItem) => void;
-  onClearSelection: () => void;
-  onOpenCalendarDrawer: () => void;
+  onUpdateItem?: (item: ContentItem) => void;
   onSyncNextcloud: (postId?: string) => Promise<void>;
   isSyncingNextcloud: boolean;
   syncFeedback: string | null;
@@ -32,479 +42,794 @@ interface DesignerWorkspaceProps {
 export function DesignerWorkspace({
   calendar,
   month,
+  onMonthChange,
   items,
   selectedItem,
   onSelectItem,
-  onClearSelection,
-  onOpenCalendarDrawer,
+  onUpdateItem,
   onSyncNextcloud,
   isSyncingNextcloud,
   syncFeedback,
 }: DesignerWorkspaceProps) {
-  // Ordena itens pela data
-  const sortedItems = [...items].sort((a, b) => a.date.localeCompare(b.date));
+  // Mini Calendar Popover State
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Inspector recolhível
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+
+  // Menu de ações •••
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Menu de Importar
+  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+  const importBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Drag & drop local
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Feedback de cópia discreto por campo
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Filtro de data via mini-calendário (opcional)
+  const [activeDateFilter, setActiveDateFilter] = useState<string | null>(null);
+
+  // Ordenação de publicações por data
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => a.date.localeCompare(b.date));
+  }, [items]);
+
+  // Itens exibidos (considerando filtro do mini calendário, se ativo)
+  const visibleItems = useMemo(() => {
+    if (!activeDateFilter) return sortedItems;
+    const filtered = sortedItems.filter((it) => it.date === activeDateFilter);
+    return filtered.length > 0 ? filtered : sortedItems;
+  }, [sortedItems, activeDateFilter]);
+
+  // Se nenhum item selecionado, seleciona o primeiro por padrão
+  useEffect(() => {
+    if (!selectedItem && visibleItems.length > 0) {
+      onSelectItem(visibleItems[0]);
+    }
+  }, [selectedItem, visibleItems, onSelectItem]);
+
+  // Navegação por teclado: ↑ / ↓ ou J / K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignora se estiver digitando em input ou textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowDown" || e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        navigatePiece(1);
+      } else if (e.key === "ArrowUp" || e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        navigatePiece(-1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
+  // Fechar menus ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        isMenuOpen &&
+        menuBtnRef.current &&
+        !menuBtnRef.current.contains(e.target as Node)
+      ) {
+        setIsMenuOpen(false);
+      }
+      if (
+        isImportMenuOpen &&
+        importBtnRef.current &&
+        !importBtnRef.current.contains(e.target as Node)
+      ) {
+        setIsImportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen, isImportMenuOpen]);
+
+  // Índice da peça atual
+  const currentIndex = selectedItem
+    ? visibleItems.findIndex((it) => it.id === selectedItem.id)
+    : -1;
+
+  // Navegar entre peças (-1 = anterior, 1 = próxima)
+  const navigatePiece = (delta: number) => {
+    if (visibleItems.length === 0) return;
+    let nextIdx = currentIndex + delta;
+    if (nextIdx < 0) nextIdx = 0;
+    if (nextIdx >= visibleItems.length) nextIdx = visibleItems.length - 1;
+    onSelectItem(visibleItems[nextIdx]);
+  };
+
+  // Copiar campo com feedback temporário
+  const handleCopyText = async (text: string, fieldName: string) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 1800);
+    } catch (err) {
+      console.error("Erro ao copiar:", err);
+    }
+  };
+
+  // Copiar briefing completo
+  const handleCopyFullBriefing = () => {
+    if (!selectedItem) return;
+    const parts = [
+      selectedItem.head ? `HEAD:\n${selectedItem.head}` : null,
+      selectedItem.subhead ? `SUBHEAD:\n${selectedItem.subhead}` : null,
+      selectedItem.caption ? `LEGENDA:\n${selectedItem.caption}` : null,
+      selectedItem.cta ? `CTA:\n${selectedItem.cta}` : null,
+      selectedItem.visual ? `DIRETRIZ VISUAL:\n${selectedItem.visual}` : null,
+    ].filter(Boolean);
+
+    handleCopyText(parts.join("\n\n"), "all_briefing");
+    setIsMenuOpen(false);
+  };
+
+  // Upload de arte a partir de arquivo local
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedItem || !onUpdateItem) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        const updated: ContentItem = {
+          ...selectedItem,
+          imageUrl: data.url,
+          status: "Produção",
+        };
+        onUpdateItem(updated);
+      }
+    } catch (err) {
+      console.error("Falha no upload de arte:", err);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // Marcar como Pronta e avançar para próxima
+  const handleMarkReady = () => {
+    if (!selectedItem || !onUpdateItem) return;
+    const isAlreadyReady = selectedItem.status === "Aprovado";
+    const nextStatus: ContentStatus = isAlreadyReady ? "Produção" : "Aprovado";
+
+    const updated: ContentItem = {
+      ...selectedItem,
+      status: nextStatus,
+    };
+    onUpdateItem(updated);
+
+    // Se marcou como pronta, avança suavemente para a próxima publicação
+    if (!isAlreadyReady && currentIndex < visibleItems.length - 1) {
+      setTimeout(() => {
+        navigatePiece(1);
+      }, 400);
+    }
+  };
+
+  // Status visual Apple Style
+  const renderStatusDot = (item: ContentItem) => {
+    const hasArt = Boolean(item.imageUrl || (item as any).image_url);
+    const rawStatus = (item.status as unknown as string);
+    const isReady = item.status === "Aprovado" || rawStatus === "Pronto";
+    const hasChanges = rawStatus === "Alteração" || rawStatus === "Ajuste";
+    const inProgress = item.status === "Produção";
+
+    if (hasChanges) {
+      return <span className={styles.statusDot} style={{ color: "#ef4444" }} title="Alteração solicitada">!</span>;
+    }
+    if (isReady) {
+      return <span className={styles.statusDot} style={{ color: "#10b981" }} title="Pronta">✓</span>;
+    }
+    if (hasArt) {
+      return <span className={styles.statusDot} style={{ color: "#38bdf8" }} title="Arte anexada">●</span>;
+    }
+    if (inProgress) {
+      return <span className={styles.statusDot} style={{ color: "#f59e0b" }} title="Em produção">◐</span>;
+    }
+    return <span className={styles.statusDot} style={{ color: "#64748b" }} title="Não iniciada">○</span>;
+  };
+
+  // Formatar data abreviada: 03 NOV
+  const formatDateAbrev = (dStr: string) => {
+    if (!dStr) return "";
+    const parts = dStr.split("-");
+    if (parts.length < 3) return dStr;
+    const day = parts[2];
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const monthsShort = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+    return `${day} ${monthsShort[monthIdx] || ""}`;
+  };
+
+  const hasArt = Boolean(selectedItem?.imageUrl || (selectedItem as any)?.image_url);
+  const currentArtUrl = selectedItem?.imageUrl || (selectedItem as any)?.image_url || "";
+  const isReady = selectedItem?.status === "Aprovado" || (selectedItem?.status as unknown as string) === "Pronto";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        minHeight: 0,
-        height: "100%",
-        background: "var(--canvas, #f8f9fc)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Barra de Ferramentas / Contexto Nativo do Designer */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 24px",
-          background: "var(--surface, #ffffff)",
-          borderBottom: "1px solid var(--border, #e2e8f0)",
-          gap: "16px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "rgba(239, 93, 61, 0.12)",
-              color: "var(--accent, #ef5d3d)",
-            }}
-          >
-            <Sparkles size={18} />
+    <div className={styles.workspaceRoot}>
+      {/* ========================================================
+          1. HEADER / TOOLBAR GLOBAL (Estilo Apple Desktop)
+          ======================================================== */}
+      <header className={styles.topToolbar}>
+        {/* Lado Esquerdo: Identidade Apple */}
+        <div className={styles.brandGroup}>
+          <div className={styles.brandMark}>
+            <ImageIcon size={13} />
           </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "1.1rem",
-                  fontWeight: 800,
-                  color: "var(--ink, #1e293b)",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                Espaço Criativo do Designer
-              </h2>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#059669",
-                  background: "rgba(16, 185, 129, 0.12)",
-                  padding: "2px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                {sortedItems.length} {sortedItems.length === 1 ? "peça" : "peças"} no mês
-              </span>
-            </div>
-            <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>
-              {calendar.brand} • Foco em cópia, simulação no Instagram e importação de artes
-            </span>
+          <span className={styles.workspaceTitle}>Designer</span>
+
+          <div className={styles.contextDivider} />
+
+          <div className={styles.clientContext}>
+            <span className={styles.clientName}>{calendar.brand}</span>
+            <span>·</span>
+            <span>{monthLabel(month)}</span>
+            <span className={styles.countBadge}>({sortedItems.length} peças)</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* Botão de Destaque: Abrir o Calendário como Drawer */}
-          <button
-            type="button"
-            onClick={onOpenCalendarDrawer}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "7px 14px",
-              borderRadius: "8px",
-              background: "var(--surface-soft, #f1f5f9)",
-              border: "1px solid var(--border, #cbd5e1)",
-              color: "var(--ink, #1e293b)",
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: "pointer",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-              transition: "all 0.15s ease",
-            }}
-            title="Abrir o calendário do mês como gaveta lateral (Drawer)"
-          >
-            <CalendarIcon size={14} color="#ef5d3d" />
-            <span>Calendário do Mês (Drawer)</span>
-          </button>
-
-          {/* Botão Sincronizar Nextcloud */}
-          <button
-            type="button"
-            onClick={() => onSyncNextcloud(selectedItem?.id)}
-            disabled={isSyncingNextcloud}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "7px 14px",
-              borderRadius: "8px",
-              background: "rgba(16, 185, 129, 0.12)",
-              border: "1px solid rgba(16, 185, 129, 0.3)",
-              color: "#059669",
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: isSyncingNextcloud ? "not-allowed" : "pointer",
-              transition: "all 0.15s ease",
-            }}
-            title="Importar ou vincular artes diretamente do Nextcloud"
-          >
-            <CloudDownload size={14} className={isSyncingNextcloud ? "spin" : ""} />
-            <span>{isSyncingNextcloud ? "Puxando artes..." : "Puxar do Nextcloud"}</span>
-          </button>
-        </div>
-      </div>
-
-      {syncFeedback && (
-        <div
-          style={{
-            padding: "8px 24px",
-            fontSize: "12px",
-            fontWeight: 600,
-            background: syncFeedback.startsWith("Erro")
-              ? "rgba(239, 68, 68, 0.12)"
-              : "rgba(16, 185, 129, 0.12)",
-            color: syncFeedback.startsWith("Erro") ? "#dc2626" : "#059669",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
-          }}
-        >
-          {syncFeedback}
-        </div>
-      )}
-
-      {/* Conteúdo Principal do Designer: Split de Duas Colunas ou Lista + Workspace */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: selectedItem
-            ? "minmax(320px, 360px) minmax(680px, 1fr)"
-            : "1fr",
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
-        {/* Coluna Lateral: Lista de Publicações do Mês */}
-        <div
-          style={{
-            borderRight: selectedItem ? "1px solid var(--border, #e2e8f0)" : "none",
-            background: "var(--surface, #ffffff)",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            overflowY: "auto",
-            maxWidth: selectedItem ? undefined : "1000px",
-            margin: selectedItem ? undefined : "0 auto",
-            width: "100%",
-            padding: selectedItem ? "12px 16px" : "24px 32px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "14px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "var(--muted, #64748b)",
-              }}
-            >
-              Publicações do Ciclo ({sortedItems.length})
-            </span>
-
+        {/* Lado Direito: Toolbar Compacta */}
+        <div className={styles.actionsToolbar}>
+          {/* Botão Calendário -> Abre Mini Popover Contextual */}
+          <div style={{ position: "relative" }}>
             <button
+              ref={calendarBtnRef}
               type="button"
-              onClick={onOpenCalendarDrawer}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                background: "transparent",
-                border: "none",
-                color: "var(--accent, #ef5d3d)",
-                fontSize: "11px",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
+              className={`${styles.toolBtn} ${isCalendarOpen ? styles.active : ""}`}
+              onClick={() => setIsCalendarOpen((prev) => !prev)}
+              title="Abrir navegador de datas (Mini Calendário)"
             >
-              <CalendarIcon size={12} />
-              <span>Ver no Calendário</span>
+              <CalendarIcon size={14} />
+              <span>Calendário</span>
             </button>
+
+            {/* Mini Calendário Popover Flutuante */}
+            <MiniCalendarPopover
+              isOpen={isCalendarOpen}
+              onClose={() => setIsCalendarOpen(false)}
+              month={month}
+              onMonthChange={onMonthChange}
+              items={items}
+              selectedDate={activeDateFilter || selectedItem?.date}
+              onSelectDate={(dStr) => {
+                setActiveDateFilter(dStr);
+                // Encontra a primeira peça desta data e seleciona
+                const firstOnDate = sortedItems.find((it) => it.date === dStr);
+                if (firstOnDate) {
+                  onSelectItem(firstOnDate);
+                }
+                setIsCalendarOpen(false);
+              }}
+            />
           </div>
 
-          {sortedItems.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "48px 16px",
-                color: "var(--muted, #64748b)",
-              }}
+          {/* Menu Importar (Computador / Nextcloud) */}
+          <div style={{ position: "relative" }}>
+            <button
+              ref={importBtnRef}
+              type="button"
+              className={`${styles.toolBtn} ${isImportMenuOpen ? styles.active : ""}`}
+              onClick={() => setIsImportMenuOpen((prev) => !prev)}
+              title="Importar arte do computador ou Nextcloud"
             >
-              <p style={{ margin: "0 0 12px 0", fontSize: "0.95rem", fontWeight: 600 }}>
-                Nenhuma publicação cadastrada neste ciclo.
-              </p>
-              <button
-                type="button"
-                onClick={onOpenCalendarDrawer}
-                style={{
-                  background: "var(--accent, #ef5d3d)",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  fontWeight: 700,
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
-              >
-                Abrir Calendário para Criar
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {sortedItems.map((item) => {
-                const isSelected = selectedItem?.id === item.id;
-                const hasArt = Boolean(item.imageUrl || (item as any).image_url);
+              <Upload size={14} />
+              <span>Importar</span>
+            </button>
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => onSelectItem(item)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "10px",
-                      background: isSelected
-                        ? "rgba(239, 93, 61, 0.08)"
-                        : "var(--surface-soft, #f8f9fc)",
-                      border: isSelected
-                        ? "1px solid var(--accent, #ef5d3d)"
-                        : "1px solid var(--border, #e2e8f0)",
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            fontWeight: 800,
-                            color: "var(--muted, #64748b)",
-                          }}
-                        >
-                          {item.date}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: 700,
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            background: "rgba(59, 130, 246, 0.12)",
-                            color: "#2563eb",
-                          }}
-                        >
-                          {item.type}
-                        </span>
-                        {hasArt && (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: 700,
-                              color: "#059669",
-                              background: "rgba(16, 185, 129, 0.12)",
-                              padding: "1px 6px",
-                              borderRadius: "4px",
-                            }}
-                          >
-                            ✓ Arte
-                          </span>
-                        )}
-                      </div>
-                      <strong
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          color: "var(--ink, #1e293b)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {item.title || item.head || "Publicação sem título"}
-                      </strong>
-                    </div>
-
-                    <ChevronRight
-                      size={16}
-                      color={isSelected ? "var(--accent, #ef5d3d)" : "#94a3b8"}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Coluna Direita: Workspace Ativo com CopyViewer e Mockup Instagram */}
-        {selectedItem && (
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              padding: "24px 32px",
-              background: "var(--canvas, #f8f9fc)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-            }}
-          >
-            {/* Topo do Item Selecionado */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    color: "var(--muted, #64748b)",
-                  }}
-                >
-                  Publicação em {selectedItem.date} • {selectedItem.type}
-                </span>
-                <h3
-                  style={{
-                    margin: "2px 0 0 0",
-                    fontSize: "1.3rem",
-                    fontWeight: 800,
-                    color: "var(--ink, #1e293b)",
-                  }}
-                >
-                  {selectedItem.title || selectedItem.head || "Sem título"}
-                </h3>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {isImportMenuOpen && (
+              <div className={styles.menuDropdown}>
                 <button
                   type="button"
-                  onClick={() => onSyncNextcloud(selectedItem.id)}
-                  disabled={isSyncingNextcloud}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    background: "rgba(16, 185, 129, 0.12)",
-                    border: "1px solid rgba(16, 185, 129, 0.3)",
-                    color: "#059669",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    cursor: "pointer",
+                  className={styles.menuItem}
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                    setIsImportMenuOpen(false);
                   }}
-                  title="Puxar arte do Nextcloud diretamente para esta publicação"
                 >
-                  <CloudDownload size={13} className={isSyncingNextcloud ? "spin" : ""} />
-                  <span>{isSyncingNextcloud ? "Puxando..." : "Puxar Arte (Nextcloud)"}</span>
+                  <FolderOpen size={13} />
+                  <span>Do computador</span>
+                </button>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    onSyncNextcloud(selectedItem?.id);
+                    setIsImportMenuOpen(false);
+                  }}
+                  disabled={isSyncingNextcloud}
+                >
+                  <CloudDownload size={13} />
+                  <span>{isSyncingNextcloud ? "Puxando artes..." : "Do Nextcloud"}</span>
                 </button>
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Split: Copy na Esquerda & Mockup Instagram na Direita */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(380px, 1fr) minmax(320px, 400px)",
-                gap: "24px",
-                alignItems: "start",
-              }}
+          {/* Menu Secundário ••• */}
+          <div style={{ position: "relative" }}>
+            <button
+              ref={menuBtnRef}
+              type="button"
+              className={styles.toolBtn}
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              title="Mais ações"
             >
-              {/* CopyViewer do Designer */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <DesignerCopyViewer item={selectedItem} />
-              </div>
+              <MoreHorizontal size={14} />
+            </button>
 
-              {/* Mockup Instagram */}
-              <div
-                style={{
-                  background: "var(--surface, #ffffff)",
-                  border: "1px solid var(--border, #e2e8f0)",
-                  borderRadius: "14px",
-                  padding: "16px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      color: "var(--muted, #64748b)",
-                    }}
-                  >
-                    Simulação no Instagram
-                  </span>
-                  {Boolean(selectedItem.imageUrl || (selectedItem as any).image_url) && (
-                    <span
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 700,
-                        color: "#059669",
-                        background: "rgba(16, 185, 129, 0.12)",
-                        padding: "2px 8px",
-                        borderRadius: "999px",
+            {isMenuOpen && (
+              <div className={styles.menuDropdown}>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={handleCopyFullBriefing}
+                >
+                  <Copy size={13} />
+                  <span>Copiar briefing completo</span>
+                </button>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    handleMarkReady();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <Check size={13} />
+                  <span>{isReady ? "Voltar para produção" : "Marcar como pronta"}</span>
+                </button>
+                {activeDateFilter && (
+                  <>
+                    <div className={styles.menuDivider} />
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      onClick={() => {
+                        setActiveDateFilter(null);
+                        setIsMenuOpen(false);
                       }}
                     >
-                      ✓ Arte Vinculada
+                      <span>Limpar filtro de data</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Toggle do Inspector / Preview */}
+          <button
+            type="button"
+            className={`${styles.toolBtn} ${isInspectorOpen ? styles.active : ""}`}
+            onClick={() => setIsInspectorOpen((prev) => !prev)}
+            title={isInspectorOpen ? "Ocultar Preview" : "Exibir Preview (Inspector)"}
+          >
+            {isInspectorOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Input oculto para carregar arquivo */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+
+      {/* ========================================================
+          2. ESTRUTURA PRINCIPAL (3 PAINÉIS / SPLIT VIEW)
+          ======================================================== */}
+      <div className={styles.panelsContainer}>
+        {/* ------------------------------------------------------
+            PAINEL 1: SOURCE LIST (Lista compacta Finder/Mail)
+            ------------------------------------------------------ */}
+        <aside className={styles.sourceListPanel}>
+          <div className={styles.sourceListHeader}>
+            <span className={styles.panelSectionTitle}>Publicações</span>
+            {activeDateFilter && (
+              <span
+                className={styles.filterInfoBadge}
+                onClick={() => setActiveDateFilter(null)}
+                title="Clique para ver todas as peças do mês"
+              >
+                {activeDateFilter} ✕
+              </span>
+            )}
+          </div>
+
+          <div className={styles.sourceListScroll}>
+            {visibleItems.map((item) => {
+              const isSelected = selectedItem?.id === item.id;
+
+              return (
+                <div
+                  key={item.id}
+                  className={`${styles.sourceRow} ${isSelected ? styles.selected : ""}`}
+                  onClick={() => onSelectItem(item)}
+                >
+                  <div className={styles.statusIconCol}>
+                    {renderStatusDot(item)}
+                  </div>
+
+                  <div className={styles.rowMainContent}>
+                    <div className={styles.rowTopLine}>
+                      <span className={styles.rowDate}>{formatDateAbrev(item.date)}</span>
+                      <span className={styles.rowFormat}>{item.type}</span>
+                    </div>
+
+                    <span className={styles.rowTitle}>
+                      {item.title || item.head || "Publicação"}
                     </span>
-                  )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* ------------------------------------------------------
+            PAINEL 2: ÁREA DE TRABALHO (CONTENT PRINCIPAL)
+            ------------------------------------------------------ */}
+        <main className={styles.contentPanel}>
+          {selectedItem ? (
+            <>
+              {/* Header da Peça Selecionada com Navegação Rápida */}
+              <div className={styles.contentHeader}>
+                <div className={styles.pieceHeaderLeft}>
+                  <h1 className={styles.pieceTitle}>
+                    {selectedItem.title || selectedItem.head || "Arte da Publicação"}
+                  </h1>
+                  <span className={styles.pieceMeta}>
+                    {selectedItem.date} · {selectedItem.type}
+                    {selectedItem.profile ? ` · @${selectedItem.profile}` : ""}
+                  </span>
                 </div>
 
-                <InstagramMockup post={selectedItem} brand={calendar.brand} />
+                {/* Controles de Navegação: ← anterior 1 de 13 próxima → */}
+                <div className={styles.navControls}>
+                  <button
+                    type="button"
+                    className={styles.navStepBtn}
+                    onClick={() => navigatePiece(-1)}
+                    disabled={currentIndex <= 0}
+                    title="Peça anterior (Atalho: ↑ ou K)"
+                  >
+                    <ChevronLeft size={13} />
+                    <span>Anterior</span>
+                  </button>
+
+                  <span className={styles.navIndexLabel}>
+                    {currentIndex + 1} de {visibleItems.length}
+                  </span>
+
+                  <button
+                    type="button"
+                    className={styles.navStepBtn}
+                    onClick={() => navigatePiece(1)}
+                    disabled={currentIndex >= visibleItems.length - 1}
+                    title="Próxima peça (Atalho: ↓ ou J)"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
               </div>
+
+              <div className={styles.contentBody}>
+                {/* ------------------------------------------------
+                    ESTADO B: ARTE JÁ EXISTE (A ARTE É A PROTAGONISTA)
+                    ------------------------------------------------ */}
+                {hasArt ? (
+                  <section className={styles.artHeroSection}>
+                    <div className={styles.artPreviewFrame}>
+                      <img
+                        src={currentArtUrl}
+                        alt={selectedItem.title || "Arte"}
+                        className={styles.artHeroImg}
+                      />
+                    </div>
+
+                    <div className={styles.artMetaRow}>
+                      <div className={styles.artDetails}>
+                        <span className={styles.artFileName}>
+                          {currentArtUrl.split("/").pop() || "arte-anexada.png"}
+                        </span>
+                        <span className={styles.artDimensions}>
+                          {selectedItem.type === "Story" ? "1080 × 1920" : "1080 × 1350"}
+                        </span>
+                      </div>
+
+                      <div className={styles.artActionBtns}>
+                        <button
+                          type="button"
+                          className={styles.artSecondaryBtn}
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Substituir arte por outro arquivo"
+                        >
+                          Substituir
+                        </button>
+
+                        <a
+                          href={currentArtUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.artSecondaryBtn}
+                          title="Abrir arte original em alta resolução"
+                        >
+                          <ExternalLink size={12} />
+                          <span>Abrir original</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          className={`${styles.markReadyBtn} ${isReady ? styles.isReady : ""}`}
+                          onClick={handleMarkReady}
+                        >
+                          {isReady ? (
+                            <>
+                              <CheckCircle2 size={13} />
+                              <span>✓ Concluída</span>
+                            </>
+                          ) : (
+                            <>
+                              <Check size={13} />
+                              <span>Marcar como pronta</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                ) : (
+                  /* ------------------------------------------------
+                     ESTADO A: AINDA NÃO EXISTE ARTE (DROPZONE & UPLOAD)
+                     ------------------------------------------------ */
+                  <section className={styles.artDropSection}>
+                    <h3 className={styles.sectionHeading}>Arte</h3>
+
+                    <div
+                      className={`${styles.dropzone} ${isDragOver ? styles.dragOver : ""}`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragOver(true);
+                      }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragOver(false);
+                        const file = e.dataTransfer.files?.[0];
+                        if (file && onUpdateItem) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            onUpdateItem({
+                              ...selectedItem,
+                              imageUrl: reader.result as string,
+                              status: "Produção",
+                            });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <div className={styles.dropIconCircle}>
+                        <Upload size={20} />
+                      </div>
+
+                      <span className={styles.dropTextPrimary}>
+                        Arraste a arte aqui
+                      </span>
+
+                      <div className={styles.dropActionsRow} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          className={styles.chooseFileBtn}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          Escolher arquivo
+                        </button>
+
+                        <button
+                          type="button"
+                          className={styles.nextcloudBtn}
+                          onClick={() => onSyncNextcloud(selectedItem.id)}
+                          disabled={isSyncingNextcloud}
+                        >
+                          <CloudDownload size={13} />
+                          <span>Importar do Nextcloud</span>
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* ------------------------------------------------
+                    BRIEFING & COPY DIRETO NO CANVAS (SEM CARDS ANINHADOS)
+                    ------------------------------------------------ */}
+                <section className={styles.briefingDirectSection}>
+                  <div className={styles.briefingHeaderRow}>
+                    <h3 className={styles.sectionHeading}>Copy e briefing</h3>
+                    <button
+                      type="button"
+                      className={styles.copyHoverBtn}
+                      style={{ opacity: 1 }}
+                      onClick={handleCopyFullBriefing}
+                      title="Copiar todo o briefing"
+                    >
+                      <Copy size={12} />
+                      <span>Copiar tudo</span>
+                    </button>
+                  </div>
+
+                  {/* Head */}
+                  {selectedItem.head && (
+                    <div className={styles.copyEntryGroup}>
+                      <div className={styles.copyLabelRow}>
+                        <span className={styles.copyFieldLabel}>Head</span>
+                        <button
+                          type="button"
+                          className={`${styles.copyHoverBtn} ${copiedField === "head" ? styles.copied : ""}`}
+                          onClick={() => handleCopyText(selectedItem.head || "", "head")}
+                        >
+                          {copiedField === "head" ? <Check size={12} /> : <Copy size={12} />}
+                          <span>{copiedField === "head" ? "Copiado" : "Copiar"}</span>
+                        </button>
+                      </div>
+                      <div className={`${styles.copyTextDisplay} ${styles.copyHeadText}`}>
+                        {selectedItem.head}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Subhead */}
+                  {selectedItem.subhead && (
+                    <div className={styles.copyEntryGroup}>
+                      <div className={styles.copyLabelRow}>
+                        <span className={styles.copyFieldLabel}>Subhead</span>
+                        <button
+                          type="button"
+                          className={`${styles.copyHoverBtn} ${copiedField === "subhead" ? styles.copied : ""}`}
+                          onClick={() => handleCopyText(selectedItem.subhead || "", "subhead")}
+                        >
+                          {copiedField === "subhead" ? <Check size={12} /> : <Copy size={12} />}
+                          <span>{copiedField === "subhead" ? "Copiado" : "Copiar"}</span>
+                        </button>
+                      </div>
+                      <div className={`${styles.copyTextDisplay} ${styles.copySubheadText}`}>
+                        {selectedItem.subhead}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Legenda */}
+                  {selectedItem.caption && (
+                    <div className={styles.copyEntryGroup}>
+                      <div className={styles.copyLabelRow}>
+                        <span className={styles.copyFieldLabel}>Legenda</span>
+                        <button
+                          type="button"
+                          className={`${styles.copyHoverBtn} ${copiedField === "caption" ? styles.copied : ""}`}
+                          onClick={() => handleCopyText(selectedItem.caption || "", "caption")}
+                        >
+                          {copiedField === "caption" ? <Check size={12} /> : <Copy size={12} />}
+                          <span>{copiedField === "caption" ? "Copiado" : "Copiar"}</span>
+                        </button>
+                      </div>
+                      <div className={styles.copyTextDisplay}>
+                        {selectedItem.caption}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  {selectedItem.cta && (
+                    <div className={styles.copyEntryGroup}>
+                      <div className={styles.copyLabelRow}>
+                        <span className={styles.copyFieldLabel}>Call to Action</span>
+                        <button
+                          type="button"
+                          className={`${styles.copyHoverBtn} ${copiedField === "cta" ? styles.copied : ""}`}
+                          onClick={() => handleCopyText(selectedItem.cta || "", "cta")}
+                        >
+                          {copiedField === "cta" ? <Check size={12} /> : <Copy size={12} />}
+                          <span>{copiedField === "cta" ? "Copiado" : "Copiar"}</span>
+                        </button>
+                      </div>
+                      <div className={styles.copyTextDisplay}>
+                        {selectedItem.cta}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Diretriz Visual da Social Media */}
+                  {selectedItem.visual && (
+                    <div className={styles.copyEntryGroup}>
+                      <div className={styles.copyLabelRow}>
+                        <span className={styles.copyFieldLabel}>Objetivo / Diretriz Visual</span>
+                      </div>
+                      <div className={styles.copyVisualBriefingText}>
+                        {selectedItem.visual}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              </div>
+            </>
+          ) : (
+            <div style={{ padding: "48px 24px", textAlign: "center", color: "#64748b" }}>
+              Selecione uma publicação na lista ao lado.
             </div>
-          </div>
+          )}
+        </main>
+
+        {/* ------------------------------------------------------
+            PAINEL 3: INSPECTOR / PREVIEW (DIREITA RECOLHÍVEL)
+            ------------------------------------------------------ */}
+        {isInspectorOpen && selectedItem && (
+          <aside className={styles.inspectorPanel}>
+            <div className={styles.inspectorHeader}>
+              <span className={styles.inspectorTitle}>Preview</span>
+              <button
+                type="button"
+                className={styles.collapseBtn}
+                onClick={() => setIsInspectorOpen(false)}
+                title="Recolher Inspector"
+              >
+                <PanelRightClose size={14} />
+              </button>
+            </div>
+
+            <div className={styles.inspectorBody}>
+              <InstagramMockup
+                post={selectedItem}
+                brand={calendar.brand}
+              />
+            </div>
+          </aside>
         )}
       </div>
+
+      {/* Botão flutuante para reabrir o Inspector quando estiver fechado */}
+      {!isInspectorOpen && (
+        <button
+          type="button"
+          className={styles.reopenInspectorBtn}
+          onClick={() => setIsInspectorOpen(true)}
+          title="Exibir Preview da publicação"
+        >
+          <Eye size={12} />
+          <span>Preview</span>
+        </button>
+      )}
+
+      {/* Toast Feedback Temporário para ações globais */}
+      {syncFeedback && (
+        <div className={styles.toastFeedback}>
+          <span>{syncFeedback}</span>
+        </div>
+      )}
     </div>
   );
 }

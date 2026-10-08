@@ -287,17 +287,11 @@ export function StudioHeader({
           <button
             type="button"
             className={`viewModeBtn ${viewMode === "calendar" ? "active" : ""}`}
-            onClick={() => {
-              if (roleWorkspace === "designer" && onOpenCalendarDrawer) {
-                onOpenCalendarDrawer();
-              } else {
-                onViewModeChange("calendar");
-              }
-            }}
-            title={roleWorkspace === "designer" ? "Abrir Gaveta do Calendário (Drawer)" : "Grade de Calendário Mensal"}
+            onClick={() => onViewModeChange("calendar")}
+            title="Grade de Calendário Mensal"
           >
             <CalendarDays size={13} />
-            <span>{roleWorkspace === "designer" ? "Calendário (Drawer)" : "Calendário"}</span>
+            <span>Calendário</span>
           </button>
           <button
             type="button"
