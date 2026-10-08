@@ -1,0 +1,126 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.18s ease-out;
+}
+
+.drawer {
+  width: min(960px, 92vw);
+  max-width: 960px;
+  height: 100vh;
+  background: var(--surface, #ffffff);
+  border-left: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--surface-soft, #f8f9fc);
+  border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  gap: 12px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendarIconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 93, 61, 0.12);
+  color: var(--accent, #ef5d3d);
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawerTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink, #1e293b);
+  letter-spacing: 0.02em;
+}
+
+.drawerSub {
+  font-size: 0.76rem;
+  color: var(--muted, #64748b);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--surface-soft, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.closeBtn:hover {
+  background: var(--surface, rgba(0, 0, 0, 0.08));
+  color: var(--ink, #0f172a);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .drawer {
+    max-width: 100vw;
+  }
+}

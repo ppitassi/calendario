@@ -58,6 +58,7 @@ export interface StudioHeaderProps {
   onRemoveNotification: (id: string) => void;
   onUnapprove?: () => void;
   onOpenSettings?: () => void;
+  onOpenCalendarDrawer?: () => void;
 }
 
 /** Cabeçalho completo do Studio com identidade, navegação e ferramentas. */
@@ -84,6 +85,7 @@ export function StudioHeader({
   onRemoveNotification: _onRemoveNotification,
   onUnapprove,
   onOpenSettings,
+  onOpenCalendarDrawer,
 }: StudioHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -285,11 +287,17 @@ export function StudioHeader({
           <button
             type="button"
             className={`viewModeBtn ${viewMode === "calendar" ? "active" : ""}`}
-            onClick={() => onViewModeChange("calendar")}
-            title="Grade de Calendário Mensal"
+            onClick={() => {
+              if (roleWorkspace === "designer" && onOpenCalendarDrawer) {
+                onOpenCalendarDrawer();
+              } else {
+                onViewModeChange("calendar");
+              }
+            }}
+            title={roleWorkspace === "designer" ? "Abrir Gaveta do Calendário (Drawer)" : "Grade de Calendário Mensal"}
           >
             <CalendarDays size={13} />
-            <span>Calendário</span>
+            <span>{roleWorkspace === "designer" ? "Calendário (Drawer)" : "Calendário"}</span>
           </button>
           <button
             type="button"

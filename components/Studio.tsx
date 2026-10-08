@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import { Plus, AlertCircle, Undo2, ArrowLeft, Loader2, Check, CloudDownload } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { MonthlyCalendarGrid } from "./calendar/MonthlyCalendarGrid";
+import { MonthlyCalendarDrawer } from "./calendar/MonthlyCalendarDrawer";
 import { Editor } from "./Editor";
 import { Preview } from "./Preview";
 import { Presentation } from "./Presentation";
@@ -15,6 +16,7 @@ import { ExtrasView } from "./extras/ExtrasView";
 import { StudioHeader } from "./StudioHeader";
 import { ShareModal } from "./ShareModal";
 import { DesignerCopyViewer } from "./tasks/DesignerCopyViewer";
+import { DesignerWorkspace } from "./tasks/DesignerWorkspace";
 import { InstagramMockup } from "./presentation/InstagramMockup";
 import { useStudio } from "./hooks/useStudio";
 import { useWorkspaceLayout } from "./hooks/useWorkspaceLayout";
@@ -111,6 +113,8 @@ export function Studio({
   const [roleWorkspace, setRoleWorkspace] = useState<"social_media" | "designer">(
     currentUser?.role === "designer" ? "designer" : "social_media"
   );
+  // Para o Designer, o calendário funciona como Drawer deslizante sob demanda
+  const [isCalendarDrawerOpen, setIsCalendarDrawerOpen] = useState(false);
   const [isSyncingNextcloud, setIsSyncingNextcloud] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
@@ -234,6 +238,7 @@ export function Studio({
         onRemoveNotification={removeNotification}
         onUnapprove={handleUnapproveCalendar}
         onOpenSettings={onOpenSettings}
+        onOpenCalendarDrawer={() => setIsCalendarDrawerOpen(true)}
       />
 
       {Boolean(calendar.client_feedback || calendar.clientFeedback) && (
@@ -287,8 +292,22 @@ export function Studio({
       <div className="appBody" ref={workspaceRef}>
         {viewMode === "calendar" ? (
           <div className="workspaceContainer">
-            {!selected ? (
-              /* Sem publicação selecionada: calendário mensal ocupa toda a área útil */
+            {roleWorkspace === "designer" ? (
+              /* Modo Designer: Foco criativo direto no canvas com lista de publicações, copy viewer e mockup Instagram. O Calendário abre como gaveta sob demanda */
+              <DesignerWorkspace
+                calendar={calendar}
+                month={month}
+                items={monthItems}
+                selectedItem={selected}
+                onSelectItem={(item) => setSelectedId(item.id)}
+                onClearSelection={() => setSelectedId(null)}
+                onOpenCalendarDrawer={() => setIsCalendarDrawerOpen(true)}
+                onSyncNextcloud={handleSyncNextcloud}
+                isSyncingNextcloud={isSyncingNextcloud}
+                syncFeedback={syncFeedback}
+              />
+            ) : !selected ? (
+              /* Modo Social Media sem publicação selecionada: calendário mensal ocupa toda a área útil */
               <MonthlyCalendarGrid
                 month={month}
                 items={monthItems}
@@ -379,32 +398,6 @@ export function Studio({
                       <span>Fechar editor</span>
                     </button>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {/* Botão de Puxar Arte do Nextcloud no Modo Designer */}
-                      {roleWorkspace === "designer" && (
-                        <button
-                          type="button"
-                          onClick={() => handleSyncNextcloud(selected.id)}
-                          disabled={isSyncingNextcloud}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            background: "rgba(16, 185, 129, 0.12)",
-                            border: "1px solid rgba(16, 185, 129, 0.28)",
-                            color: "#059669",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                          title="Puxar arte do Nextcloud diretamente para esta publicação"
-                        >
-                          <CloudDownload size={12} className={isSyncingNextcloud ? "spin" : ""} />
-                          <span>{isSyncingNextcloud ? "Puxando..." : "Puxar do Nextcloud"}</span>
-                        </button>
-                      )}
-
                       {saveStatus && saveStatus !== "idle" && (
                         <span
                           style={{
@@ -442,72 +435,27 @@ export function Studio({
                         </span>
                       )}
                       <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted, #73798a)" }}>
-                        {roleWorkspace === "designer" ? "Workspace do Designer" : "Modo Split (Social Media)"}
+                        Modo Split (Social Media)
                       </span>
                     </div>
                   </div>
 
-                  {syncFeedback && (
-                    <div
-                      style={{
-                        padding: "8px 16px",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        background: syncFeedback.startsWith("Erro") ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
-                        color: syncFeedback.startsWith("Erro") ? "#dc2626" : "#059669",
-                        borderBottom: "1px solid rgba(0,0,0,0.06)",
-                      }}
-                    >
-                      {syncFeedback}
-                    </div>
-                  )}
-
-                  {roleWorkspace === "designer" ? (
-                    /* Visualização de Designer: Split com CopyViewer e Mockup Instagram */
-                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "20px" }}>
-                      <DesignerCopyViewer item={selected} />
-                      <div
-                        style={{
-                          background: "var(--surface-soft, #f8f9fc)",
-                          border: "1px solid var(--border, #e3e5ed)",
-                          borderRadius: "12px",
-                          padding: "16px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "12px",
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
-                            Simulação do Instagram
-                          </span>
-                          {Boolean(selected.imageUrl || (selected as any).image_url) && (
-                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#059669", background: "rgba(16,185,129,0.12)", padding: "2px 6px", borderRadius: "999px" }}>
-                              ✓ Arte Vinculada
-                            </span>
-                          )}
-                        </div>
-                        <InstagramMockup post={selected} brand={calendar.brand} />
-                      </div>
-                    </div>
-                  ) : (
-                    /* Visualização de Social Media: Editor Completo */
-                    <Editor
-                      key={selected.id}
-                      item={selected}
-                      onChange={updateItem}
-                      onDelete={(id) => {
-                        removeItem(id);
-                        setSelectedId(null);
-                      }}
-                      availableProfiles={availableProfiles}
-                      onCreateProfile={handleCreateProfile}
-                      onDeleteProfile={handleDeleteProfile}
-                      brand={calendar.brand}
-                      allItems={items}
-                      allCalendarItems={items}
-                    />
-                  )}
+                  {/* Visualização de Social Media: Editor Completo */}
+                  <Editor
+                    key={selected.id}
+                    item={selected}
+                    onChange={updateItem}
+                    onDelete={(id) => {
+                      removeItem(id);
+                      setSelectedId(null);
+                    }}
+                    availableProfiles={availableProfiles}
+                    onCreateProfile={handleCreateProfile}
+                    onDeleteProfile={handleDeleteProfile}
+                    brand={calendar.brand}
+                    allItems={items}
+                    allCalendarItems={items}
+                  />
                 </div>
               </div>
             ) : (
@@ -606,74 +554,22 @@ export function Studio({
                     justifyContent: "center",
                   }}
                 >
-                  <div style={{ width: "100%", maxWidth: roleWorkspace === "designer" ? "min(1200px, 96vw)" : "var(--copy-max, 48rem)" }}>
-                    {roleWorkspace === "designer" ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                          <button
-                            type="button"
-                            onClick={() => handleSyncNextcloud(selected.id)}
-                            disabled={isSyncingNextcloud}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              padding: "6px 12px",
-                              borderRadius: "8px",
-                              background: "rgba(16, 185, 129, 0.12)",
-                              border: "1px solid rgba(16, 185, 129, 0.28)",
-                              color: "#059669",
-                              fontSize: "12px",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            <CloudDownload size={13} className={isSyncingNextcloud ? "spin" : ""} />
-                            <span>{isSyncingNextcloud ? "Puxando artes..." : "Puxar Artes do Nextcloud"}</span>
-                          </button>
-                        </div>
-                        <DesignerCopyViewer item={selected} />
-                        <div
-                          style={{
-                            background: "var(--surface-soft, #f8f9fc)",
-                            border: "1px solid var(--border, #e3e5ed)",
-                            borderRadius: "12px",
-                            padding: "16px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "12px",
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted, #73798a)" }}>
-                              Simulação do Instagram
-                            </span>
-                            {Boolean(selected.imageUrl || (selected as any).image_url) && (
-                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#059669", background: "rgba(16,185,129,0.12)", padding: "2px 6px", borderRadius: "999px" }}>
-                                ✓ Arte Vinculada
-                              </span>
-                            )}
-                          </div>
-                          <InstagramMockup post={selected} brand={calendar.brand} />
-                        </div>
-                      </div>
-                    ) : (
-                      <Editor
-                        key={selected.id}
-                        item={selected}
-                        onChange={updateItem}
-                        onDelete={(id) => {
-                          removeItem(id);
-                          setSelectedId(null);
-                        }}
-                        availableProfiles={availableProfiles}
-                        onCreateProfile={handleCreateProfile}
-                        onDeleteProfile={handleDeleteProfile}
-                        brand={calendar.brand}
-                        allItems={items}
-                        allCalendarItems={items}
-                      />
-                    )}
+                  <div style={{ width: "100%", maxWidth: "var(--copy-max, 48rem)" }}>
+                    <Editor
+                      key={selected.id}
+                      item={selected}
+                      onChange={updateItem}
+                      onDelete={(id) => {
+                        removeItem(id);
+                        setSelectedId(null);
+                      }}
+                      availableProfiles={availableProfiles}
+                      onCreateProfile={handleCreateProfile}
+                      onDeleteProfile={handleDeleteProfile}
+                      brand={calendar.brand}
+                      allItems={items}
+                      allCalendarItems={items}
+                    />
                   </div>
                 </div>
               </div>
@@ -712,6 +608,32 @@ export function Studio({
         onGenerateNewToken={handleGenerateNewToken}
         currentUser={currentUser}
         onUnapprove={handleUnapproveCalendar}
+      />
+
+      {/* Gaveta do Calendário sob demanda para o Designer */}
+      <MonthlyCalendarDrawer
+        isOpen={isCalendarDrawerOpen}
+        onClose={() => setIsCalendarDrawerOpen(false)}
+        brandName={calendar.brand}
+        month={month}
+        items={monthItems}
+        selectedId={selectedId}
+        postingDays={postingDays}
+        weekdayFormats={weekdayFormats}
+        onMonthChange={handleMonthChange}
+        onSelect={(item) => {
+          setSelectedId(item.id);
+          setIsCalendarDrawerOpen(false);
+        }}
+        onCreate={(date, type, profile) => createOn(date, type, profile)}
+        onCreateFromReference={(d, t) => createFromReference(d, t)}
+        onCreateBatch={(dates, type) => createBatchItems(dates, type)}
+        onMovePost={handleMovePost}
+        onMoveDayPosts={handleMoveDayPosts}
+        onReorderPosts={handleReorderPosts}
+        onUpdatePostingDays={handleUpdatePostingDays}
+        onUpdateWeekdayFormat={handleUpdateWeekdayFormat}
+        availableProfiles={availableProfiles}
       />
     </main>
   );
