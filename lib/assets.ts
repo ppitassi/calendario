@@ -29,6 +29,7 @@ function mapAsset(r: any): Asset {
     workUnitId: r.work_unit_id || undefined,
     taskId: r.task_id || undefined,
     postId: r.post_id || undefined,
+    publicationId: r.publication_id || r.post_id || undefined,
     previewAssetId: r.preview_asset_id || undefined,
     uploadedById: r.uploaded_by_id || undefined,
     detachedAt: r.detached_at || undefined,
@@ -52,6 +53,7 @@ export async function createAsset(input: {
   workUnitId?: string | null;
   taskId?: string | null;
   postId?: string | null;
+  publicationId?: string | null;
   previewAssetId?: string | null;
   uploadedById?: string | null;
 }): Promise<Asset> {
@@ -60,18 +62,18 @@ export async function createAsset(input: {
   await getDb()
     .prepare(
       `INSERT INTO assets (id, provider, nextcloud_file_id, nextcloud_path, filename, mime_type, size_bytes, etag,
-         work_unit_id, task_id, post_id, preview_asset_id, uploaded_by_id, created_at)
-       VALUES (?, 'nextcloud', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         work_unit_id, task_id, post_id, publication_id, preview_asset_id, uploaded_by_id, created_at)
+       VALUES (?, 'nextcloud', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       id, input.nextcloudFileId, input.nextcloudPath, input.filename, input.mimeType || null,
       input.sizeBytes ?? null, input.etag || null, input.workUnitId || null, input.taskId || null,
-      input.postId || null, input.previewAssetId || null, input.uploadedById || null, now
+      input.postId || null, input.publicationId || input.postId || null, input.previewAssetId || null, input.uploadedById || null, now
     );
   return (await getAsset(id))!;
 }
 
-async function setLink(assetId: string, column: "work_unit_id" | "task_id" | "post_id", value: string) {
+async function setLink(assetId: string, column: "work_unit_id" | "task_id" | "post_id" | "publication_id", value: string) {
   await getDb()
     .prepare(`UPDATE assets SET ${column} = ?, detached_at = NULL WHERE id = ?`)
     .run(value, assetId);
@@ -79,6 +81,7 @@ async function setLink(assetId: string, column: "work_unit_id" | "task_id" | "po
 export const attachAssetToWorkUnit = (assetId: string, workUnitId: string) => setLink(assetId, "work_unit_id", workUnitId);
 export const attachAssetToTask = (assetId: string, taskId: string) => setLink(assetId, "task_id", taskId);
 export const attachAssetToPost = (assetId: string, postId: string) => setLink(assetId, "post_id", postId);
+export const attachAssetToPublication = (assetId: string, publicationId: string) => setLink(assetId, "publication_id", publicationId);
 
 /** Desvincula sem apagar nada: o arquivo permanece no Nextcloud e a linha fica como histórico. */
 export async function detachAsset(assetId: string): Promise<void> {
@@ -100,7 +103,7 @@ export async function resolvePlaybackAsset(asset: Asset): Promise<Asset> {
 export async function assertCanViewAsset(user: SafeUser, asset: Asset): Promise<void> {
   if (user.role === "admin" || user.role === "social_media") return;
   if (asset.uploadedById === user.id) return;
-  if (asset.postId) return; // posts do calendário são visíveis à equipe
+  if (asset.publicationId || asset.postId) return; // publicações do calendário são visíveis à equipe
 
   const db = getDb();
   if (asset.taskId) {

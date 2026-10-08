@@ -543,6 +543,23 @@ const PG_MIGRATIONS: MigrationStep[] = [
       `);
     },
   },
+  {
+    version: "008_assets_publication_relationship",
+    name: "Vínculo direto de assets a publicações do calendário (publication_id / calendar_items)",
+    run: async (pool) => {
+      await pool.query(`
+        ALTER TABLE assets ADD COLUMN IF NOT EXISTS publication_id TEXT REFERENCES calendar_items(id) ON DELETE CASCADE;
+        CREATE INDEX IF NOT EXISTS idx_assets_publication ON assets(publication_id);
+
+        -- Backfill: Se houver assets com post_id que apontam para calendar_items, preenche publication_id
+        UPDATE assets
+        SET publication_id = post_id
+        WHERE publication_id IS NULL
+          AND post_id IS NOT NULL
+          AND EXISTS (SELECT 1 FROM calendar_items WHERE calendar_items.id = assets.post_id);
+      `);
+    },
+  },
 ];
 
 /**
@@ -911,6 +928,8 @@ export function initSqliteSchema(db: any) {
     { table: "tasks", col: "deleted_at", def: "TEXT" },
     { table: "tasks", col: "description", def: "TEXT" },
     { table: "tasks", col: "position", def: "INTEGER DEFAULT 0" },
+
+    { table: "assets", col: "publication_id", def: "TEXT REFERENCES calendar_items(id)" },
 
     { table: "users", col: "password_reset_pending", def: "INTEGER DEFAULT 0" },
   ];

@@ -75,6 +75,7 @@ export function NextcloudFileBrowserModal({
   // Importação
   const [isImporting, setIsImporting] = useState<boolean>(false);
   const [importStatusText, setImportStatusText] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // Sidebar source list ativa
   const [activeSidebarKey, setActiveSidebarKey] = useState<string>("nextcloud");
@@ -153,6 +154,7 @@ export function NextcloudFileBrowserModal({
       setSelectedFile(null);
       setErrorMsg(null);
       setImportStatusText(null);
+      setImportError(null);
       loadDirectory();
     }
   }, [isOpen, clientId]);
@@ -211,6 +213,7 @@ export function NextcloudFileBrowserModal({
     if (!fileToImport || !selectedItem) return;
 
     setIsImporting(true);
+    setImportError(null);
     setImportStatusText(`Importando ${fileToImport.name}…`);
 
     try {
@@ -225,7 +228,8 @@ export function NextcloudFileBrowserModal({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Erro ao associar arte.");
+        console.error("[Nextcloud Import Error]", data.error);
+        throw new Error("Não foi possível importar a arte. Tente novamente.");
       }
 
       const result = await dataResult(res);
@@ -239,7 +243,8 @@ export function NextcloudFileBrowserModal({
         onClose();
       }, 500);
     } catch (err: any) {
-      alert("Erro ao importar: " + err.message);
+      console.error("[Nextcloud Import Exception]", err);
+      setImportError(err.message || "Não foi possível importar a arte. Tente novamente.");
       setIsImporting(false);
       setImportStatusText(null);
     }
@@ -635,7 +640,12 @@ export function NextcloudFileBrowserModal({
             ========================================================= */}
         <footer className={styles.windowFooter}>
           <div className={styles.footerSelectionInfo}>
-            {importStatusText ? (
+            {importError ? (
+              <span style={{ color: "#ef4444", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <AlertCircle size={14} />
+                <span>{importError}</span>
+              </span>
+            ) : importStatusText ? (
               <span style={{ color: "#38bdf8" }}>{importStatusText}</span>
             ) : selectedFile ? (
               <>

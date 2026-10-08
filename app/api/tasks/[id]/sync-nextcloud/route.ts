@@ -127,6 +127,15 @@ export async function POST(
 
       let assetId = existingAsset?.id;
 
+      // Busca task associada caso subtaskId seja id de item de calendário
+      let validTaskForSubtask: string | null = null;
+      if (subtaskId) {
+        const foundTask = (await db
+          .prepare("SELECT id FROM tasks WHERE (id = ? OR source_item_id = ?) AND deleted_at IS NULL LIMIT 1")
+          .get(subtaskId, subtaskId)) as { id: string } | undefined;
+        validTaskForSubtask = foundTask?.id || null;
+      }
+
       if (!assetId) {
         const created = await createAsset({
           nextcloudFileId: node.remoteFileId,
@@ -136,7 +145,9 @@ export async function POST(
           sizeBytes: node.size,
           etag: node.etag,
           workUnitId: workUnitOrTaskId,
-          taskId: subtaskId || undefined,
+          taskId: validTaskForSubtask,
+          postId: subtaskId || undefined,
+          publicationId: subtaskId || undefined,
           uploadedById: user.id,
         });
         assetId = created.id;
@@ -147,7 +158,7 @@ export async function POST(
 
       // Se temos uma subtask específica selecionada pelo designer
       if (subtaskId) {
-        // Associa especificamente a esta subtask
+        // Associa especificamente a esta publicação
         await db
           .prepare(
             `UPDATE calendar_items
@@ -157,8 +168,8 @@ export async function POST(
           .run(assetViewUrl, new Date().toISOString(), subtaskId);
 
         await db
-          .prepare("UPDATE assets SET task_id = ?, post_id = ? WHERE id = ?")
-          .run(subtaskId, subtaskId, assetId);
+          .prepare("UPDATE assets SET post_id = ?, publication_id = ?, task_id = COALESCE(?, task_id) WHERE id = ?")
+          .run(subtaskId, subtaskId, validTaskForSubtask, assetId);
 
         attachedCount++;
         matchedFiles.push(node.name);
@@ -183,6 +194,11 @@ export async function POST(
 
       // Se casou com um item que ainda não tem imagem ou para atualizar
       if (matchedItem) {
+        const foundTask = (await db
+          .prepare("SELECT id FROM tasks WHERE (id = ? OR source_item_id = ?) AND deleted_at IS NULL LIMIT 1")
+          .get(matchedItem.id, matchedItem.id)) as { id: string } | undefined;
+        const validTaskForMatched = foundTask?.id || null;
+
         await db
           .prepare(
             `UPDATE calendar_items
@@ -192,8 +208,8 @@ export async function POST(
           .run(assetViewUrl, new Date().toISOString(), matchedItem.id);
 
         await db
-          .prepare("UPDATE assets SET post_id = ?, task_id = ? WHERE id = ?")
-          .run(matchedItem.id, matchedItem.id, assetId);
+          .prepare("UPDATE assets SET post_id = ?, publication_id = ?, task_id = COALESCE(?, task_id) WHERE id = ?")
+          .run(matchedItem.id, matchedItem.id, validTaskForMatched, assetId);
 
         attachedCount++;
         matchedFiles.push(node.name);

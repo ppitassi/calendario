@@ -42,7 +42,35 @@ export async function POST(request: Request) {
 
     const db = getDb();
 
-    // 1. Verifica se já existe um asset registrado para este remoteFileId
+    // 1. Valida existência da publicação (calendar_items)
+    const pub = (await db
+      .prepare("SELECT id, calendar_id, status FROM calendar_items WHERE id = ? AND deleted_at IS NULL")
+      .get(itemId)) as { id: string; calendar_id: string; status: string } | undefined;
+
+    if (!pub) {
+      return NextResponse.json(
+        { error: "Publicação não encontrada no calendário." },
+        { status: 404 }
+      );
+    }
+
+    // 2. Verifica se existe uma task canônica associada a esta publicação
+    // (tasks com source_item_id = pub.id)
+    const associatedTask = (await db
+      .prepare("SELECT id, work_unit_id FROM tasks WHERE source_item_id = ? AND deleted_at IS NULL LIMIT 1")
+      .get(itemId)) as { id: string; work_unit_id: string } | undefined;
+
+    const validTaskId = associatedTask?.id || null;
+    const effectiveWorkUnitId = associatedTask?.work_unit_id || calendarId || pub.calendar_id || null;
+
+    console.log("[Nextcloud Import] Associando asset:", {
+      publicationId: itemId,
+      taskId: validTaskId,
+      workUnitId: effectiveWorkUnitId,
+      filename: node.name,
+    });
+
+    // 3. Verifica se já existe um asset registrado para este remoteFileId
     let existingAsset = (await db
       .prepare("SELECT id FROM assets WHERE nextcloud_file_id = ? AND detached_at IS NULL")
       .get(node.remoteFileId)) as { id: string } | undefined;
@@ -57,16 +85,27 @@ export async function POST(request: Request) {
         mimeType: node.mimeType,
         sizeBytes: node.size,
         etag: node.etag,
-        workUnitId: calendarId || undefined,
-        taskId: itemId,
+        workUnitId: effectiveWorkUnitId,
+        taskId: validTaskId,
+        postId: itemId,
+        publicationId: itemId,
         uploadedById: user.id,
       });
       assetId = created.id;
+    } else {
+      // Atualiza os vínculos do asset existente
+      await db
+        .prepare(
+          `UPDATE assets
+           SET post_id = ?, publication_id = ?, task_id = COALESCE(?, task_id), detached_at = NULL
+           WHERE id = ?`
+        )
+        .run(itemId, itemId, validTaskId, assetId);
     }
 
     const assetViewUrl = `/api/assets/${assetId}/view`;
 
-    // 2. Atualiza a publicação vinculada
+    // 4. Atualiza a publicação vinculada
     await db
       .prepare(
         `UPDATE calendar_items
@@ -75,12 +114,7 @@ export async function POST(request: Request) {
       )
       .run(assetViewUrl, new Date().toISOString(), itemId);
 
-    // 3. Atualiza referência em assets
-    await db
-      .prepare("UPDATE assets SET task_id = ?, post_id = ? WHERE id = ?")
-      .run(itemId, itemId, assetId);
-
-    // 4. Registra histórico/atividade
+    // 5. Registra histórico/atividade
     try {
       await db
         .prepare(

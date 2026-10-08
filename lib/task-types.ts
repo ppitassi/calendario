@@ -280,6 +280,7 @@ export interface Asset {
   workUnitId?: string;
   taskId?: string;
   postId?: string;
+  publicationId?: string;
   previewAssetId?: string;
   uploadedById?: string;
   detachedAt?: string;
