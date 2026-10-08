@@ -154,18 +154,25 @@ export async function POST(request: Request) {
       size: node.size,
     });
   } catch (error: any) {
-    console.error("[NEXTCLOUD IMPORT FAILED]", {
-      message: error?.message,
-      detail: error?.detail,
-      constraint: error?.constraint,
-      table: error?.table,
-      column: error?.column,
+    const errorPayload = {
+      message: error?.message || "Erro desconhecido",
+      detail: error?.detail || null,
+      constraint: error?.constraint || null,
+      table: error?.table || null,
+      column: error?.column || null,
+      code: error?.code || null,
       publicationId: (request as any)?._debugPublicationId || null,
       resolvedTaskId: (request as any)?._debugTaskId || null,
-      stack: error?.stack,
-    });
+      stack: error?.stack || null,
+    };
+
+    console.error("[NEXTCLOUD IMPORT FAILED]", errorPayload);
+
     return NextResponse.json(
-      { error: error.message || "Erro ao importar arquivo do Nextcloud." },
+      {
+        error: error.message || "Erro ao importar arquivo do Nextcloud.",
+        diagnostics: errorPayload,
+      },
       { status: 500 }
     );
   }

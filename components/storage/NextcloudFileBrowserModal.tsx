@@ -21,6 +21,7 @@ import {
   Check,
   Loader2,
   AlertCircle,
+  Copy,
 } from "lucide-react";
 import styles from "./NextcloudFileBrowserModal.module.css";
 import type { ContentItem } from "@/lib/types";
@@ -76,6 +77,8 @@ export function NextcloudFileBrowserModal({
   const [isImporting, setIsImporting] = useState<boolean>(false);
   const [importStatusText, setImportStatusText] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [importErrorLog, setImportErrorLog] = useState<string | null>(null);
+  const [hasCopiedLog, setHasCopiedLog] = useState<boolean>(false);
 
   // Sidebar source list ativa
   const [activeSidebarKey, setActiveSidebarKey] = useState<string>("nextcloud");
@@ -214,6 +217,8 @@ export function NextcloudFileBrowserModal({
 
     setIsImporting(true);
     setImportError(null);
+    setImportErrorLog(null);
+    setHasCopiedLog(false);
     setImportStatusText(`Importando ${fileToImport.name}…`);
 
     try {
@@ -228,8 +233,21 @@ export function NextcloudFileBrowserModal({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        console.error("[Nextcloud Import Error]", data.error);
-        throw new Error("Não foi possível importar a arte. Tente novamente.");
+        const rawLog = JSON.stringify(
+          {
+            status: res.status,
+            error: data.error || "Erro desconhecido",
+            diagnostics: data.diagnostics || null,
+            file: { name: fileToImport.name, path: fileToImport.path, size: fileToImport.size },
+            selectedItem: { id: selectedItem.id, title: selectedItem.title },
+            timestamp: new Date().toISOString(),
+          },
+          null,
+          2
+        );
+        console.error("[Nextcloud Import Error]", data.error, data.diagnostics);
+        setImportErrorLog(rawLog);
+        throw new Error(data.error || "Falha na importação.");
       }
 
       const result = await dataResult(res);
@@ -244,7 +262,22 @@ export function NextcloudFileBrowserModal({
       }, 500);
     } catch (err: any) {
       console.error("[Nextcloud Import Exception]", err);
-      setImportError(err.message || "Não foi possível importar a arte. Tente novamente.");
+      const displayMsg = err.message || "Não foi possível importar a arte.";
+      setImportError(displayMsg);
+      if (!importErrorLog) {
+        setImportErrorLog(
+          JSON.stringify(
+            {
+              error: displayMsg,
+              file: { name: fileToImport.name, path: fileToImport.path },
+              selectedItem: { id: selectedItem.id },
+              timestamp: new Date().toISOString(),
+            },
+            null,
+            2
+          )
+        );
+      }
       setIsImporting(false);
       setImportStatusText(null);
     }
@@ -641,10 +674,36 @@ export function NextcloudFileBrowserModal({
         <footer className={styles.windowFooter}>
           <div className={styles.footerSelectionInfo}>
             {importError ? (
-              <span style={{ color: "#ef4444", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                <AlertCircle size={14} />
-                <span>{importError}</span>
-              </span>
+              <div className={styles.errorRow}>
+                <AlertCircle size={14} color="#ef4444" style={{ flexShrink: 0 }} />
+                <span className={styles.errorText} title={importError}>
+                  {importError}
+                </span>
+                {importErrorLog && (
+                  <button
+                    type="button"
+                    className={`${styles.copyLogBtn} ${hasCopiedLog ? styles.copyLogBtnCopied : ""}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(importErrorLog);
+                      setHasCopiedLog(true);
+                      setTimeout(() => setHasCopiedLog(false), 2500);
+                    }}
+                    title="Copiar log técnico completo do erro"
+                  >
+                    {hasCopiedLog ? (
+                      <>
+                        <Check size={11} />
+                        <span>Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={11} />
+                        <span>Copiar Log</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             ) : importStatusText ? (
               <span style={{ color: "#38bdf8" }}>{importStatusText}</span>
             ) : selectedFile ? (
