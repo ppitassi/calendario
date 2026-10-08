@@ -63,7 +63,7 @@
 /* Moldura que encapsula o mockup */
 .phoneFrame {
   width: 100%;
-  max-width: 22rem;
+  max-width: 26rem;
   margin-inline: auto;
   position: relative;
 }

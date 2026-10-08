@@ -542,73 +542,10 @@ export function DesignerWorkspace({
 
               <div className={styles.contentBody}>
                 {/* ------------------------------------------------
-                    ESTADO B: ARTE JÁ EXISTE (A ARTE É A PROTAGONISTA)
+                    ESTADO: AINDA NÃO EXISTE ARTE (DROPZONE & UPLOAD)
+                    Quando a arte já existe, ela fica no PREVIEW/INSPECTOR à direita.
                     ------------------------------------------------ */}
-                {hasArt ? (
-                  <section className={styles.artHeroSection}>
-                    <div className={styles.artPreviewFrame}>
-                      <img
-                        src={currentArtUrl}
-                        alt={selectedItem.title || "Arte"}
-                        className={styles.artHeroImg}
-                      />
-                    </div>
-
-                    <div className={styles.artMetaRow}>
-                      <div className={styles.artDetails}>
-                        <span className={styles.artFileName}>
-                          {currentArtUrl.split("/").pop() || "arte-anexada.png"}
-                        </span>
-                        <span className={styles.artDimensions}>
-                          {selectedItem.type === "Story" ? "1080 × 1920" : "1080 × 1350"}
-                        </span>
-                      </div>
-
-                      <div className={styles.artActionBtns}>
-                        <button
-                          type="button"
-                          className={styles.artSecondaryBtn}
-                          onClick={() => fileInputRef.current?.click()}
-                          title="Substituir arte por outro arquivo"
-                        >
-                          Substituir
-                        </button>
-
-                        <a
-                          href={currentArtUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.artSecondaryBtn}
-                          title="Abrir arte original em alta resolução"
-                        >
-                          <ExternalLink size={12} />
-                          <span>Abrir original</span>
-                        </a>
-
-                        <button
-                          type="button"
-                          className={`${styles.markReadyBtn} ${isReady ? styles.isReady : ""}`}
-                          onClick={handleMarkReady}
-                        >
-                          {isReady ? (
-                            <>
-                              <CheckCircle2 size={13} />
-                              <span>✓ Concluída</span>
-                            </>
-                          ) : (
-                            <>
-                              <Check size={13} />
-                              <span>Marcar como pronta</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-                ) : (
-                  /* ------------------------------------------------
-                     ESTADO A: AINDA NÃO EXISTE ARTE (DROPZONE & UPLOAD)
-                     ------------------------------------------------ */
+                {!hasArt && (
                   <section className={styles.artDropSection}>
                     <h3 className={styles.sectionHeading}>Arte</h3>
 
@@ -808,6 +745,61 @@ export function DesignerWorkspace({
                 post={selectedItem}
                 brand={calendar.brand}
               />
+
+              {/* Informações e ações da arte associada à publicação */}
+              {hasArt && (
+                <div className={styles.inspectorArtActionsSection}>
+                  <div className={styles.inspectorArtMetaLine}>
+                    <span className={styles.inspectorArtFileName} title={currentArtUrl.split("/").pop() || "arte-anexada.png"}>
+                      {currentArtUrl.split("/").pop() || "arte-anexada.png"}
+                    </span>
+                    <span className={styles.inspectorArtDimensions}>
+                      {selectedItem.type === "Story" ? "1080 × 1920" : "1080 × 1350"}
+                    </span>
+                  </div>
+
+                  <div className={styles.inspectorArtButtonsRow}>
+                    <button
+                      type="button"
+                      className={styles.inspectorArtBtn}
+                      onClick={() => setIsFileBrowserOpen(true)}
+                      title="Substituir arte por outro arquivo do Nextcloud ou dispositivo"
+                    >
+                      <CloudDownload size={13} />
+                      <span>Substituir</span>
+                    </button>
+
+                    <a
+                      href={currentArtUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.inspectorArtBtn}
+                      title="Abrir arte original em alta resolução"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Abrir original</span>
+                    </a>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`${styles.inspectorMarkReadyBtn} ${isReady ? styles.isReady : ""}`}
+                    onClick={handleMarkReady}
+                  >
+                    {isReady ? (
+                      <>
+                        <CheckCircle2 size={14} />
+                        <span>✓ Concluída</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check size={14} />
+                        <span>Marcar como pronta</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </aside>
         )}

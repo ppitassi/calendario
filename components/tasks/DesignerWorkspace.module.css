@@ -184,9 +184,9 @@
 
 /* PAINEL 1: SOURCE LIST (ESQUERDA) */
 .sourceListPanel {
-  width: 280px;
-  min-width: 240px;
-  max-width: 340px;
+  width: 270px;
+  min-width: 260px;
+  max-width: 290px;
   background: var(--surface, #141720);
   border-right: 1px solid var(--border, rgba(255, 255, 255, 0.06));
   display: flex;
@@ -615,8 +615,6 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06));
 }
 
 .briefingHeaderRow {
@@ -709,9 +707,9 @@
    PAINEL 3: INSPECTOR / PREVIEW (DIREITA)
    ======================================================== */
 .inspectorPanel {
-  width: 320px;
-  min-width: 300px;
-  max-width: 340px;
+  width: 450px;
+  min-width: 420px;
+  max-width: 480px;
   background: var(--surface, #141720);
   border-left: 1px solid var(--border, rgba(255, 255, 255, 0.06));
   display: flex;
@@ -725,7 +723,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
 }
 
@@ -766,10 +764,103 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 14px;
+  padding: 16px 14px 24px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 16px;
+}
+
+/* Informações e Ações da Arte no Inspector */
+.inspectorArtActionsSection {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.inspectorArtMetaLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inspectorArtFileName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspectorArtDimensions {
+  font-size: 0.72rem;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+}
+
+.inspectorArtButtonsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.inspectorArtBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: var(--surface, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  color: #cbd5e1;
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.inspectorArtBtn:hover {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.12));
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.inspectorMarkReadyBtn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: #059669;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inspectorMarkReadyBtn:hover {
+  background: #10b981;
+}
+
+.inspectorMarkReadyBtn.isReady {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
 }
 
 /* Botão Flutuante de Reabrir Inspector */
