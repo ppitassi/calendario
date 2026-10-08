@@ -665,16 +665,18 @@ export function DesignerWorkspace({
             </div>
 
             <div className={styles.inspectorBody}>
-              <InstagramMockup
-                post={selectedItem}
-                brand={calendar.brand}
-                activeTab={activeMediaTab}
-                onTabChange={(tab) => setActiveMediaTab(tab)}
-                onImportMedia={(slot) => {
-                  setFileBrowserTargetSlot(slot);
-                  setIsFileBrowserOpen(true);
-                }}
-              />
+              <div className={styles.previewViewport}>
+                <InstagramMockup
+                  post={selectedItem}
+                  brand={calendar.brand}
+                  activeTab={activeMediaTab}
+                  onTabChange={(tab) => setActiveMediaTab(tab)}
+                  onImportMedia={(slot) => {
+                    setFileBrowserTargetSlot(slot);
+                    setIsFileBrowserOpen(true);
+                  }}
+                />
+              </div>
 
               {/* Informações e ações da arte associada ao slot ativo */}
               {hasSlotMedia && (

@@ -111,6 +111,8 @@ export function InstagramMockup({
     }
   };
 
+  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
+
   return (
     <div className={cn(styles.wrapper, className)}>
       {/* SE FOR "FEED E STORY": barra de navegação com abas para passar pro lado */}
@@ -144,7 +146,7 @@ export function InstagramMockup({
         </div>
       )}
 
-      <div className={styles.phoneFrame}>
+      <div className={cn(styles.phoneFrame, currentRenderMode === "story" ? styles.phoneFrameStory : styles.phoneFrameFeed)}>
         {/* ===================== 1. MODO STORY ===================== */}
         {currentRenderMode === "story" && (
           <div className={styles.storyContainer}>
@@ -366,10 +368,19 @@ export function InstagramMockup({
 
             <div className={styles.feedCopy}>
               {post.caption && (
-                <p className={styles.feedCaptionText}>
+                <p className={cn(styles.feedCaptionText, !isCaptionExpanded && styles.captionClamped)}>
                   <strong>{profileName}</strong>
                   {post.caption}
                 </p>
+              )}
+              {post.caption && post.caption.length > 90 && (
+                <button
+                  type="button"
+                  className={styles.expandCaptionBtn}
+                  onClick={() => setIsCaptionExpanded(!isCaptionExpanded)}
+                >
+                  {isCaptionExpanded ? "menos" : "... mais"}
+                </button>
               )}
               {post.cta && <em className={styles.feedCta}>{post.cta}</em>}
               {post.hashtags && <code className={styles.feedHashtags}>{post.hashtags}</code>}
@@ -447,10 +458,19 @@ export function InstagramMockup({
 
             <div className={styles.feedCopy}>
               {post.caption && (
-                <p className={styles.feedCaptionText}>
+                <p className={cn(styles.feedCaptionText, !isCaptionExpanded && styles.captionClamped)}>
                   <strong>{profileName}</strong>
                   {post.caption}
                 </p>
+              )}
+              {post.caption && post.caption.length > 90 && (
+                <button
+                  type="button"
+                  className={styles.expandCaptionBtn}
+                  onClick={() => setIsCaptionExpanded(!isCaptionExpanded)}
+                >
+                  {isCaptionExpanded ? "menos" : "... mais"}
+                </button>
               )}
               {post.cta && <em className={styles.feedCta}>{post.cta}</em>}
               {post.hashtags && <code className={styles.feedHashtags}>{post.hashtags}</code>}
