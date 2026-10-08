@@ -58,6 +58,10 @@ export function DesignerWorkspace({
 
   // Nextcloud File Browser Modal State (Finder macOS)
   const [isFileBrowserOpen, setIsFileBrowserOpen] = useState(false);
+  const [fileBrowserTargetSlot, setFileBrowserTargetSlot] = useState<"feed" | "story">("feed");
+
+  // Aba de mídia ativa no Preview: 'feed' ou 'story'
+  const [activeMediaTab, setActiveMediaTab] = useState<"feed" | "story">("feed");
 
   // Inspector recolhível
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
@@ -66,13 +70,10 @@ export function DesignerWorkspace({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Menu de Importar
-  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
-  const importBtnRef = useRef<HTMLButtonElement>(null);
-
-  // Drag & drop local
+  // Drag & drop e upload local
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingUploadSlot, setPendingUploadSlot] = useState<"feed" | "story">("feed");
 
   // Feedback de cópia discreto por campo
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -129,17 +130,10 @@ export function DesignerWorkspace({
       ) {
         setIsMenuOpen(false);
       }
-      if (
-        isImportMenuOpen &&
-        importBtnRef.current &&
-        !importBtnRef.current.contains(e.target as Node)
-      ) {
-        setIsImportMenuOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isMenuOpen, isImportMenuOpen]);
+  }, [isMenuOpen]);
 
   // Índice da peça atual
   const currentIndex = selectedItem
@@ -182,7 +176,7 @@ export function DesignerWorkspace({
     setIsMenuOpen(false);
   };
 
-  // Upload de arte a partir de arquivo local
+  // Upload de arte a partir de arquivo local (respeitando o slot ativo: feed ou story)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedItem || !onUpdateItem) return;
@@ -197,9 +191,11 @@ export function DesignerWorkspace({
       });
       const data = await res.json();
       if (data.url) {
+        const isStoryUpload = pendingUploadSlot === "story";
         const updated: ContentItem = {
           ...selectedItem,
-          imageUrl: data.url,
+          imageUrl: isStoryUpload ? selectedItem.imageUrl : data.url,
+          storyUrl: isStoryUpload ? data.url : selectedItem.storyUrl,
           status: "Produção",
         };
         onUpdateItem(updated);
@@ -211,9 +207,37 @@ export function DesignerWorkspace({
     }
   };
 
+  // Requisitos de mídia por formato
+  const normItemType = (selectedItem?.type || "Feed").toLowerCase();
+  const requiresFeedAndStory = normItemType === "feed e story" || (!["feed", "story", "stories", "carrossel", "carousel", "reels", "reel"].includes(normItemType));
+  const requiresStoryOnly = normItemType === "story" || normItemType === "stories";
+  const requiresFeedOnly = !requiresFeedAndStory && !requiresStoryOnly;
+
+  const hasFeedMedia = Boolean(selectedItem?.imageUrl || (selectedItem as any)?.image_url);
+  const hasStoryMedia = Boolean(selectedItem?.storyUrl || (selectedItem as any)?.story_url);
+
+  // Validação de preenchimento obrigatório para marcar como pronta
+  const isMissingFeed = (requiresFeedOnly || requiresFeedAndStory) && !hasFeedMedia;
+  const isMissingStory = (requiresStoryOnly || requiresFeedAndStory) && !hasStoryMedia;
+  const canMarkReady = !isMissingFeed && !isMissingStory;
+
+  const missingReasonText = isMissingFeed && isMissingStory
+    ? "Faltam as artes de Feed e Story."
+    : isMissingStory
+    ? "Falta a arte de Story."
+    : isMissingFeed
+    ? "Falta a arte de Feed."
+    : null;
+
+  // Informações do slot atualmente em visualização
+  const isViewingStory = activeMediaTab === "story" && (requiresFeedAndStory || requiresStoryOnly);
+  const currentSlotUrl = isViewingStory ? (selectedItem?.storyUrl || (selectedItem as any)?.story_url || "") : (selectedItem?.imageUrl || (selectedItem as any)?.image_url || "");
+  const hasSlotMedia = Boolean(currentSlotUrl);
+  const currentSlotDimensions = isViewingStory ? "1080 × 1920" : selectedItem?.type === "Story" ? "1080 × 1920" : "1080 × 1350";
+
   // Marcar como Pronta e avançar para próxima
   const handleMarkReady = () => {
-    if (!selectedItem || !onUpdateItem) return;
+    if (!selectedItem || !onUpdateItem || !canMarkReady) return;
     const isAlreadyReady = selectedItem.status === "Aprovado";
     const nextStatus: ContentStatus = isAlreadyReady ? "Produção" : "Aprovado";
 
@@ -233,7 +257,12 @@ export function DesignerWorkspace({
 
   // Status visual Apple Style
   const renderStatusDot = (item: ContentItem) => {
-    const hasArt = Boolean(item.imageUrl || (item as any).image_url);
+    const rawType = (item.type || "Feed").toLowerCase();
+    const isDual = rawType === "feed e story";
+    const itemHasFeed = Boolean(item.imageUrl || (item as any)?.image_url);
+    const itemHasStory = Boolean(item.storyUrl || (item as any)?.story_url);
+    const itemHasArt = isDual ? (itemHasFeed && itemHasStory) : (rawType === "story" ? itemHasStory : itemHasFeed);
+
     const rawStatus = (item.status as unknown as string);
     const isReady = item.status === "Aprovado" || rawStatus === "Pronto";
     const hasChanges = rawStatus === "Alteração" || rawStatus === "Ajuste";
@@ -245,7 +274,7 @@ export function DesignerWorkspace({
     if (isReady) {
       return <span className={styles.statusDot} style={{ color: "#10b981" }} title="Pronta">✓</span>;
     }
-    if (hasArt) {
+    if (itemHasArt) {
       return <span className={styles.statusDot} style={{ color: "#38bdf8" }} title="Arte anexada">●</span>;
     }
     if (inProgress) {
@@ -265,8 +294,6 @@ export function DesignerWorkspace({
     return `${day} ${monthsShort[monthIdx] || ""}`;
   };
 
-  const hasArt = Boolean(selectedItem?.imageUrl || (selectedItem as any)?.image_url);
-  const currentArtUrl = selectedItem?.imageUrl || (selectedItem as any)?.image_url || "";
   const isReady = selectedItem?.status === "Aprovado" || (selectedItem?.status as unknown as string) === "Pronto";
 
   return (
@@ -325,47 +352,6 @@ export function DesignerWorkspace({
                 setIsCalendarOpen(false);
               }}
             />
-          </div>
-
-          {/* Menu Importar (Computador / Nextcloud) */}
-          <div style={{ position: "relative" }}>
-            <button
-              ref={importBtnRef}
-              type="button"
-              className={`${styles.toolBtn} ${isImportMenuOpen ? styles.active : ""}`}
-              onClick={() => setIsImportMenuOpen((prev) => !prev)}
-              title="Importar arte do computador ou Nextcloud"
-            >
-              <Upload size={14} />
-              <span>Importar</span>
-            </button>
-
-            {isImportMenuOpen && (
-              <div className={styles.menuDropdown}>
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                    setIsImportMenuOpen(false);
-                  }}
-                >
-                  <FolderOpen size={13} />
-                  <span>Do computador</span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => {
-                    setIsFileBrowserOpen(true);
-                    setIsImportMenuOpen(false);
-                  }}
-                >
-                  <CloudDownload size={13} />
-                  <span>Do Nextcloud</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Menu Secundário ••• */}
@@ -542,70 +528,8 @@ export function DesignerWorkspace({
 
               <div className={styles.contentBody}>
                 {/* ------------------------------------------------
-                    ESTADO: AINDA NÃO EXISTE ARTE (DROPZONE & UPLOAD)
-                    Quando a arte já existe, ela fica no PREVIEW/INSPECTOR à direita.
-                    ------------------------------------------------ */}
-                {!hasArt && (
-                  <section className={styles.artDropSection}>
-                    <h3 className={styles.sectionHeading}>Arte</h3>
-
-                    <div
-                      className={`${styles.dropzone} ${isDragOver ? styles.dragOver : ""}`}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDragOver(true);
-                      }}
-                      onDragLeave={() => setIsDragOver(false)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDragOver(false);
-                        const file = e.dataTransfer.files?.[0];
-                        if (file && onUpdateItem) {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            onUpdateItem({
-                              ...selectedItem,
-                              imageUrl: reader.result as string,
-                              status: "Produção",
-                            });
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <div className={styles.dropIconCircle}>
-                        <Upload size={20} />
-                      </div>
-
-                      <span className={styles.dropTextPrimary}>
-                        Arraste a arte aqui
-                      </span>
-
-                      <div className={styles.dropActionsRow} onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          className={styles.chooseFileBtn}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          Escolher arquivo
-                        </button>
-
-                        <button
-                          type="button"
-                          className={styles.nextcloudBtn}
-                          onClick={() => setIsFileBrowserOpen(true)}
-                        >
-                          <CloudDownload size={13} />
-                          <span>Importar do Nextcloud</span>
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-                )}
-
-                {/* ------------------------------------------------
                     BRIEFING & COPY DIRETO NO CANVAS (SEM CARDS ANINHADOS)
+                    A mídia agora é gerenciada com precisão no Preview à direita.
                     ------------------------------------------------ */}
                 <section className={styles.briefingDirectSection}>
                   <div className={styles.briefingHeaderRow}>
@@ -744,17 +668,23 @@ export function DesignerWorkspace({
               <InstagramMockup
                 post={selectedItem}
                 brand={calendar.brand}
+                activeTab={activeMediaTab}
+                onTabChange={(tab) => setActiveMediaTab(tab)}
+                onImportMedia={(slot) => {
+                  setFileBrowserTargetSlot(slot);
+                  setIsFileBrowserOpen(true);
+                }}
               />
 
-              {/* Informações e ações da arte associada à publicação */}
-              {hasArt && (
+              {/* Informações e ações da arte associada ao slot ativo */}
+              {hasSlotMedia && (
                 <div className={styles.inspectorArtActionsSection}>
                   <div className={styles.inspectorArtMetaLine}>
-                    <span className={styles.inspectorArtFileName} title={currentArtUrl.split("/").pop() || "arte-anexada.png"}>
-                      {currentArtUrl.split("/").pop() || "arte-anexada.png"}
+                    <span className={styles.inspectorArtFileName} title={currentSlotUrl.split("/").pop() || "arte-anexada.png"}>
+                      {currentSlotUrl.split("/").pop() || "arte-anexada.png"}
                     </span>
                     <span className={styles.inspectorArtDimensions}>
-                      {selectedItem.type === "Story" ? "1080 × 1920" : "1080 × 1350"}
+                      {currentSlotDimensions}
                     </span>
                   </div>
 
@@ -762,22 +692,38 @@ export function DesignerWorkspace({
                     <button
                       type="button"
                       className={styles.inspectorArtBtn}
-                      onClick={() => setIsFileBrowserOpen(true)}
-                      title="Substituir arte por outro arquivo do Nextcloud ou dispositivo"
+                      onClick={() => {
+                        setFileBrowserTargetSlot(isViewingStory ? "story" : "feed");
+                        setIsFileBrowserOpen(true);
+                      }}
+                      title="Substituir arte por outro arquivo do Nextcloud"
                     >
                       <CloudDownload size={13} />
                       <span>Substituir</span>
                     </button>
 
+                    <button
+                      type="button"
+                      className={styles.inspectorArtBtn}
+                      onClick={() => {
+                        setPendingUploadSlot(isViewingStory ? "story" : "feed");
+                        fileInputRef.current?.click();
+                      }}
+                      title="Enviar arquivo do computador"
+                    >
+                      <FolderOpen size={13} />
+                      <span>Computador</span>
+                    </button>
+
                     <a
-                      href={currentArtUrl}
+                      href={currentSlotUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.inspectorArtBtn}
                       title="Abrir arte original em alta resolução"
                     >
                       <ExternalLink size={13} />
-                      <span>Abrir original</span>
+                      <span>Original</span>
                     </a>
                   </div>
 
@@ -785,6 +731,8 @@ export function DesignerWorkspace({
                     type="button"
                     className={`${styles.inspectorMarkReadyBtn} ${isReady ? styles.isReady : ""}`}
                     onClick={handleMarkReady}
+                    disabled={!canMarkReady && !isReady}
+                    title={missingReasonText || "Marcar publicação como concluída"}
                   >
                     {isReady ? (
                       <>
@@ -798,12 +746,27 @@ export function DesignerWorkspace({
                       </>
                     )}
                   </button>
+
+                  {!canMarkReady && !isReady && missingReasonText && (
+                    <span className={styles.inspectorMissingHint}>
+                      {missingReasonText}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
           </aside>
         )}
       </div>
+
+      {/* Input oculto para upload de arquivo local */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
 
       {/* Botão flutuante para reabrir o Inspector quando estiver fechado */}
       {!isInspectorOpen && (
@@ -825,18 +788,21 @@ export function DesignerWorkspace({
         </div>
       )}
 
-      {/* Navegador de Arquivos Nextcloud (Finder Modal) */}
+      {/* Navegador de Arquivos Nextcloud (Finder Modal contextual por slot) */}
       <NextcloudFileBrowserModal
         isOpen={isFileBrowserOpen}
         onClose={() => setIsFileBrowserOpen(false)}
         clientId={calendar.client_id || (calendar as any).clientId}
         clientName={calendar.brand}
         selectedItem={selectedItem}
-        onImportSuccess={({ imageUrl }) => {
+        targetType={fileBrowserTargetSlot}
+        onImportSuccess={({ imageUrl, slot }) => {
           if (selectedItem && onUpdateItem) {
+            const isStoryImport = (slot || fileBrowserTargetSlot) === "story";
             onUpdateItem({
               ...selectedItem,
-              imageUrl,
+              imageUrl: isStoryImport ? selectedItem.imageUrl : imageUrl,
+              storyUrl: isStoryImport ? imageUrl : selectedItem.storyUrl,
               status: "Produção",
             });
           }

@@ -21,7 +21,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { path, itemId, calendarId } = body;
+    const { path, itemId, calendarId, targetType, variant } = body;
+    const mediaSlot: "feed" | "story" = (targetType === "story" || variant === "story") ? "story" : "feed";
 
     if (!path || !itemId) {
       return NextResponse.json(
@@ -139,14 +140,24 @@ export async function POST(request: Request) {
 
     const assetViewUrl = `/api/assets/${assetId}/view`;
 
-    // 4. Atualiza a publicação vinculada
-    await db
-      .prepare(
-        `UPDATE calendar_items
-         SET image_url = ?, status = CASE WHEN status = 'Ideia' THEN 'Produção' ELSE status END, updated_at = ?
-         WHERE id = ?`
-      )
-      .run(assetViewUrl, new Date().toISOString(), itemId);
+    // 4. Atualiza a publicação vinculada (Feed: image_url | Story: story_url)
+    if (mediaSlot === "story") {
+      await db
+        .prepare(
+          `UPDATE calendar_items
+           SET story_url = ?, status = CASE WHEN status = 'Ideia' THEN 'Produção' ELSE status END, updated_at = ?
+           WHERE id = ?`
+        )
+        .run(assetViewUrl, new Date().toISOString(), itemId);
+    } else {
+      await db
+        .prepare(
+          `UPDATE calendar_items
+           SET image_url = ?, status = CASE WHEN status = 'Ideia' THEN 'Produção' ELSE status END, updated_at = ?
+           WHERE id = ?`
+        )
+        .run(assetViewUrl, new Date().toISOString(), itemId);
+    }
 
     // 5. Registra histórico/atividade
     try {
@@ -160,7 +171,7 @@ export async function POST(request: Request) {
           "calendar_item",
           itemId,
           user.id,
-          JSON.stringify({ assetId, filename: node.name, source: "nextcloud_file_picker" }),
+          JSON.stringify({ assetId, filename: node.name, slot: mediaSlot, source: "nextcloud_file_picker" }),
           new Date().toISOString()
         );
     } catch {}
@@ -168,7 +179,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       assetId,
+      slot: mediaSlot,
       imageUrl: assetViewUrl,
+      storyUrl: mediaSlot === "story" ? assetViewUrl : undefined,
       filename: node.name,
       size: node.size,
     });

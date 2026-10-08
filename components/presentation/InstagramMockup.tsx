@@ -21,10 +21,10 @@ import {
   Music2,
   Share2,
   Smile,
-  Image as ImageIcon,
   Layers,
   Smartphone,
   Video,
+  CloudDownload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ContentItem } from "@/lib/types";
@@ -34,6 +34,9 @@ interface InstagramMockupProps {
   post: ContentItem;
   brand?: string;
   className?: string;
+  activeTab?: "feed" | "story";
+  onTabChange?: (tab: "feed" | "story") => void;
+  onImportMedia?: (slot: "feed" | "story") => void;
   onImageClick?: (url: string) => void;
 }
 
@@ -41,6 +44,9 @@ export function InstagramMockup({
   post,
   brand = "Marca",
   className,
+  activeTab,
+  onTabChange,
+  onImportMedia,
   onImageClick,
 }: InstagramMockupProps) {
   const normType = (post.type || "Feed e Story").toLowerCase();
@@ -50,15 +56,21 @@ export function InstagramMockup({
   const isCarousel = normType === "carrossel" || normType === "carousel";
 
   // Se for "Feed e Story", permite passar pro lado (feed <-> story)
-  const [dualViewMode, setDualViewMode] = useState<"feed" | "story">("feed");
+  const [internalDualViewMode, setInternalDualViewMode] = useState<"feed" | "story">("feed");
+  const dualViewMode = activeTab || internalDualViewMode;
+  const setDualViewMode = (newMode: "feed" | "story") => {
+    setInternalDualViewMode(newMode);
+    onTabChange?.(newMode);
+  };
+
   const [slideIndex, setSlideIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
-    setDualViewMode("feed");
+    if (!activeTab) setInternalDualViewMode("feed");
     setImgError(false);
     setSlideIndex(0);
-  }, [post.id, post.type]);
+  }, [post.id, post.type, activeTab]);
 
   // Determina qual layout renderizar
   const currentRenderMode = isFeedAndStory
@@ -101,29 +113,33 @@ export function InstagramMockup({
 
   return (
     <div className={cn(styles.wrapper, className)}>
-      {/* SE FOR "FEED E STORY": barra de navegação com setinhas para passar pro lado */}
+      {/* SE FOR "FEED E STORY": barra de navegação com abas para passar pro lado */}
       {isFeedAndStory && (
         <div className={styles.dualToggleBar}>
           <button
             type="button"
-            className={styles.dualArrowBtn}
-            onClick={() => setDualViewMode((prev) => (prev === "feed" ? "story" : "feed"))}
-            title="Alternar entre Feed e Story"
+            className={cn(styles.dualTabBtn, dualViewMode === "feed" && styles.dualActiveTab)}
+            onClick={() => setDualViewMode("feed")}
+            title="Exibir arte do Feed"
           >
-            <ChevronLeft size={14} />
+            <span>Feed</span>
+            <span className={styles.tabStatusDot}>
+              {feedImage ? "✓" : "○"}
+            </span>
           </button>
-          <div className={styles.dualIndicator}>
-            <span className={dualViewMode === "feed" ? styles.dualActiveLabel : ""}>Feed</span>
-            <span className={styles.dualDivider}>•</span>
-            <span className={dualViewMode === "story" ? styles.dualActiveLabel : ""}>Story</span>
-          </div>
+
+          <span className={styles.dualDivider}>|</span>
+
           <button
             type="button"
-            className={styles.dualArrowBtn}
-            onClick={() => setDualViewMode((prev) => (prev === "feed" ? "story" : "feed"))}
-            title="Alternar entre Feed e Story"
+            className={cn(styles.dualTabBtn, dualViewMode === "story" && styles.dualActiveTab)}
+            onClick={() => setDualViewMode("story")}
+            title="Exibir arte do Story"
           >
-            <ChevronRight size={14} />
+            <span>Story</span>
+            <span className={styles.tabStatusDot}>
+              {storyImage ? "✓" : "○"}
+            </span>
           </button>
         </div>
       )}
@@ -161,9 +177,22 @@ export function InstagramMockup({
                 />
               ) : (
                 <div className={styles.emptyStoryMedia}>
-                  <Smartphone size={36} />
-                  <strong>Arte Story 9:16</strong>
-                  <small>Sem mídia anexada para este post</small>
+                  <Smartphone size={32} opacity={0.6} />
+                  <strong>Nenhuma arte de Story</strong>
+                  <small>1080 × 1920</small>
+                  {onImportMedia && (
+                    <button
+                      type="button"
+                      className={styles.emptySlotBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onImportMedia("story");
+                      }}
+                    >
+                      <CloudDownload size={14} />
+                      <span>Puxar do Nextcloud</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -386,9 +415,21 @@ export function InstagramMockup({
                 />
               ) : (
                 <div className={styles.emptyFeedMedia}>
-                  <ImageIcon size={32} />
-                  <span>{imgError ? "Falha ao exibir imagem" : "Nenhuma mídia enviada"}</span>
-                  <small>{imgError ? "Verifique o link da imagem" : "Anexe a arte no editor"}</small>
+                  <span>{imgError ? "Falha ao exibir imagem" : "Nenhuma arte de Feed"}</span>
+                  <small>1080 × 1350</small>
+                  {onImportMedia && (
+                    <button
+                      type="button"
+                      className={styles.emptySlotBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onImportMedia("feed");
+                      }}
+                    >
+                      <CloudDownload size={14} />
+                      <span>Puxar do Nextcloud</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>

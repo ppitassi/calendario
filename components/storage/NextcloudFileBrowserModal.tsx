@@ -47,7 +47,8 @@ interface NextcloudFileBrowserModalProps {
   clientId?: string;
   clientName?: string;
   selectedItem?: ContentItem | null;
-  onImportSuccess: (importedData: { imageUrl: string; filename: string }) => void;
+  targetType?: "feed" | "story";
+  onImportSuccess: (importedData: { imageUrl: string; filename: string; slot?: "feed" | "story" }) => void;
 }
 
 export function NextcloudFileBrowserModal({
@@ -56,6 +57,7 @@ export function NextcloudFileBrowserModal({
   clientId,
   clientName,
   selectedItem,
+  targetType = "feed",
   onImportSuccess,
 }: NextcloudFileBrowserModalProps) {
   // Estado de navegação e histórico (estilo Finder ‹ ›)
@@ -228,6 +230,7 @@ export function NextcloudFileBrowserModal({
         body: JSON.stringify({
           path: fileToImport.path,
           itemId: selectedItem.id,
+          targetType,
         }),
       });
 
@@ -240,6 +243,7 @@ export function NextcloudFileBrowserModal({
             diagnostics: data.diagnostics || null,
             file: { name: fileToImport.name, path: fileToImport.path, size: fileToImport.size },
             selectedItem: { id: selectedItem.id, title: selectedItem.title },
+            targetType,
             timestamp: new Date().toISOString(),
           },
           null,
@@ -257,6 +261,7 @@ export function NextcloudFileBrowserModal({
         onImportSuccess({
           imageUrl: result.imageUrl,
           filename: fileToImport.name,
+          slot: targetType,
         });
         onClose();
       }, 500);
@@ -340,7 +345,9 @@ export function NextcloudFileBrowserModal({
             ========================================================= */}
         <header className={styles.windowTitleBar}>
           <div className={styles.titleGroup}>
-            <span className={styles.windowTitle}>Importar do Nextcloud</span>
+            <span className={styles.windowTitle}>
+              {targetType === "story" ? "Importar arte para Story" : "Importar arte para Feed"}
+            </span>
             {selectedItem && (
               <span className={styles.postContextBadge}>
                 {selectedItem.title || "Publicação"} · {selectedItem.type}

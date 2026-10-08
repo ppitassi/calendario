@@ -853,6 +853,20 @@
   transition: all 0.15s ease;
 }
 
+.inspectorMarkReadyBtn:disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: #64748b;
+  cursor: not-allowed;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inspectorMissingHint {
+  font-size: 0.72rem;
+  color: #f59e0b;
+  text-align: center;
+  display: block;
+}
+
 .inspectorMarkReadyBtn:hover {
   background: #10b981;
 }
