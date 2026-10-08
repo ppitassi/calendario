@@ -64,7 +64,26 @@ export async function POST(request: Request) {
 
     const validTaskId = associatedTask?.id || null;
     (request as any)._debugTaskId = validTaskId;
-    const effectiveWorkUnitId = associatedTask?.work_unit_id || calendarId || pub.calendar_id || null;
+
+    // work_unit_id só pode ser gravado se existir na tabela work_units.
+    // calendar_id NUNCA deve ser gravado diretamente em work_unit_id!
+    let effectiveWorkUnitId: string | null = null;
+    if (associatedTask?.work_unit_id) {
+      const wuExists = (await db
+        .prepare("SELECT id FROM work_units WHERE id = ? LIMIT 1")
+        .get(associatedTask.work_unit_id)) as { id: string } | undefined;
+      if (wuExists) {
+        effectiveWorkUnitId = wuExists.id;
+      }
+    } else {
+      // Verifica se existe uma work_unit vinculada a este calendário (source_id = pub.calendar_id)
+      const calendarWu = (await db
+        .prepare("SELECT id FROM work_units WHERE source_id = ? AND type = 'calendar' LIMIT 1")
+        .get(pub.calendar_id)) as { id: string } | undefined;
+      if (calendarWu) {
+        effectiveWorkUnitId = calendarWu.id;
+      }
+    }
 
     console.log("[ASSET IMPORT DEBUG]", {
       publicationId: pub.id,
