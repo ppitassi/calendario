@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--overlay);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
@@ -13,12 +13,12 @@
   width: 100%;
   max-width: 580px;
   height: 100%;
-  background: #111317;
-  color: #f8fafc;
+  background: var(--surface-panel);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
-  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.5);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-popover);
+  border-left: 1px solid var(--border-subtle);
   animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -28,8 +28,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: #15181f;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-subtle);
 }
 
 .headerTitleGroup {
@@ -45,22 +45,22 @@
   width: 36px;
   height: 36px;
   border-radius: 9px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
 }
 
 .title {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--text-primary);
 }
 
 .subtitle {
   margin: 2px 0 0;
   font-size: 0.78rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .closeBtn {
@@ -70,16 +70,16 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .body {
@@ -100,7 +100,7 @@
 .label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -108,7 +108,7 @@
 .labelHint {
   font-size: 0.72rem;
   font-weight: 400;
-  color: #64748b;
+  color: var(--text-tertiary);
   text-transform: none;
 }
 
@@ -118,9 +118,9 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #181b22;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f8fafc;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
   font-size: 0.88rem;
   outline: none;
   transition: border-color 0.15s ease;
@@ -129,8 +129,8 @@
 .input:focus,
 .select:focus,
 .textarea:focus {
-  border-color: #3b82f6;
-  background: #1c202a;
+  border-color: var(--accent);
+  background: var(--surface-elevated);
 }
 
 .textarea {
@@ -147,8 +147,8 @@
 
 .modeSwitcher {
   display: flex;
-  background: #181b22;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 3px;
   gap: 3px;
@@ -160,7 +160,7 @@
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -172,13 +172,13 @@
 }
 
 .modeBtn:hover {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .modeBtn.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  background: var(--surface-elevated);
+  color: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 .sectionHeader {
@@ -187,14 +187,14 @@
   justify-content: space-between;
   margin-top: 6px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .sectionTitle {
   margin: 0;
   font-size: 0.88rem;
   font-weight: 700;
-  color: #e2e8f0;
+  color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 
@@ -205,8 +205,8 @@
 }
 
 .deliveryCard {
-  background: #161920;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 14px;
   display: flex;
@@ -217,7 +217,7 @@
 }
 
 .deliveryCard:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-default);
 }
 
 .deliveryHeaderRow {
@@ -230,8 +230,8 @@
 .deliveryIndexBadge {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.1);
+  color: var(--info);
+  background: rgba(40, 120, 255, 0.1);
   padding: 2px 7px;
   border-radius: 4px;
 }
@@ -239,7 +239,7 @@
 .removeBtn {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -250,8 +250,8 @@
 }
 
 .removeBtn:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  background: rgba(217, 45, 76, 0.1);
 }
 
 .deliveryFieldsRow {
@@ -273,9 +273,9 @@
   gap: 6px;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
+  background: var(--surface-subtle);
+  border: 1px dashed var(--border-default);
+  color: var(--text-secondary);
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
@@ -283,9 +283,9 @@
 }
 
 .addDeliveryBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: #38bdf8;
-  color: #38bdf8;
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .clientOwnerBadge {
@@ -293,18 +293,18 @@
   align-items: center;
   gap: 6px;
   font-size: 0.76rem;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.08);
+  color: var(--info);
+  background: rgba(40, 120, 255, 0.08);
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(40, 120, 255, 0.2);
   margin-top: 4px;
 }
 
 .footer {
   padding: 16px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: #15181f;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-subtle);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -314,9 +314,9 @@
 .cancelBtn {
   padding: 9px 18px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -324,8 +324,8 @@
 }
 
 .cancelBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .submitBtn {
@@ -334,9 +334,9 @@
   gap: 8px;
   padding: 9px 20px;
   border-radius: 8px;
-  background: #2563eb;
-  border: 1px solid #3b82f6;
-  color: #ffffff;
+  background: var(--accent);
+  border: none;
+  color: var(--text-inverse);
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
@@ -344,7 +344,7 @@
 }
 
 .submitBtn:hover {
-  background: #1d4ed8;
+  background: var(--accent-hover);
 }
 
 .submitBtn:disabled {
@@ -353,9 +353,9 @@
 }
 
 .errorBanner {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
+  background: rgba(217, 45, 76, 0.1);
+  border: 1px solid rgba(217, 45, 76, 0.28);
+  color: var(--danger);
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 0.82rem;

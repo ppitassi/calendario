@@ -5,24 +5,55 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 html, body {
   margin: 0;
   min-width: 320px;
   min-height: 100%;
-  background: var(--canvas);
-  color: var(--ink);
+  background: var(--surface-canvas);
+  color: var(--text-primary);
   font-family: var(--font-body), system-ui, sans-serif;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.02em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background 0.3s ease, color 0.3s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .toolbar,
+  .workspace-sidebar,
+  .workspace-panel {
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease;
+  }
 }
 
 h1, h2, h3, .brandTitle {
   font-family: var(--font-display), var(--font-body), sans-serif;
   letter-spacing: 0.035em;
+  color: var(--text-primary);
 }
 
 button, input, textarea, select {
@@ -37,6 +68,113 @@ button {
 svg {
   width: 18px;
   height: 18px;
+}
+
+/* PRIMITIVOS DE UI REUTILIZÁVEIS */
+.app-canvas {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+}
+
+.workspace-sidebar {
+  background: var(--surface-sidebar);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.workspace-panel {
+  background: var(--surface-panel);
+}
+
+.toolbar {
+  background: var(--surface-toolbar);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.metadata {
+  color: var(--text-secondary);
+}
+
+.micro-label {
+  color: var(--text-tertiary);
+}
+
+.divider {
+  background: var(--border-subtle);
+}
+
+/* BOTÕES PRIMITIVOS */
+.button-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+  font-weight: 600;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.button-primary:hover {
+  background: var(--accent-hover);
+}
+
+.button-secondary {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  font-weight: 500;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.button-secondary:hover {
+  background: var(--surface-hover);
+}
+
+.button-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.button-ghost:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* FORM CONTROLS */
+.input {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: 3px solid var(--accent-soft);
+}
+
+/* POPOVER E MODAIS */
+.popover,
+.modal {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-popover);
+}
+
+.modal-backdrop {
+  background: var(--overlay);
 }
 
 /* Shell global da aplicação */
