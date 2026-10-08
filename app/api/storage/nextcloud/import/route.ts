@@ -42,6 +42,8 @@ export async function POST(request: Request) {
 
     const db = getDb();
 
+    (request as any)._debugPublicationId = itemId;
+
     // 1. Valida existência da publicação (calendar_items)
     const pub = (await db
       .prepare("SELECT id, calendar_id, status FROM calendar_items WHERE id = ? AND deleted_at IS NULL")
@@ -61,13 +63,16 @@ export async function POST(request: Request) {
       .get(itemId)) as { id: string; work_unit_id: string } | undefined;
 
     const validTaskId = associatedTask?.id || null;
+    (request as any)._debugTaskId = validTaskId;
     const effectiveWorkUnitId = associatedTask?.work_unit_id || calendarId || pub.calendar_id || null;
 
-    console.log("[Nextcloud Import] Associando asset:", {
-      publicationId: itemId,
+    console.log("[ASSET IMPORT DEBUG]", {
+      publicationId: pub.id,
       taskId: validTaskId,
-      workUnitId: effectiveWorkUnitId,
-      filename: node.name,
+      postId: pub.id,
+      fileName: node.name,
+      route: "/api/storage/nextcloud/import",
+      hasCanonicalTask: Boolean(validTaskId),
     });
 
     // 3. Verifica se já existe um asset registrado para este remoteFileId
@@ -78,7 +83,7 @@ export async function POST(request: Request) {
     let assetId = existingAsset?.id;
 
     if (!assetId) {
-      const created = await createAsset({
+      const assetInsertData = {
         nextcloudFileId: node.remoteFileId,
         nextcloudPath: node.path,
         filename: node.name,
@@ -90,9 +95,19 @@ export async function POST(request: Request) {
         postId: itemId,
         publicationId: itemId,
         uploadedById: user.id,
-      });
+      };
+
+      console.log("[ASSET INSERT DATA]", assetInsertData);
+
+      const created = await createAsset(assetInsertData);
       assetId = created.id;
     } else {
+      console.log("[ASSET UPDATE LINK]", {
+        assetId,
+        publicationId: itemId,
+        taskId: validTaskId,
+      });
+
       // Atualiza os vínculos do asset existente
       await db
         .prepare(
@@ -139,7 +154,16 @@ export async function POST(request: Request) {
       size: node.size,
     });
   } catch (error: any) {
-    console.error("POST /api/storage/nextcloud/import error:", error);
+    console.error("[NEXTCLOUD IMPORT FAILED]", {
+      message: error?.message,
+      detail: error?.detail,
+      constraint: error?.constraint,
+      table: error?.table,
+      column: error?.column,
+      publicationId: (request as any)?._debugPublicationId || null,
+      resolvedTaskId: (request as any)?._debugTaskId || null,
+      stack: error?.stack,
+    });
     return NextResponse.json(
       { error: error.message || "Erro ao importar arquivo do Nextcloud." },
       { status: 500 }
