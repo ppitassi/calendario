@@ -31,6 +31,7 @@ export type StorageNode = {
   mimeType?: string;
   size?: number;
   etag?: string;
+  lastModified?: string;
 };
 
 export type StorageAsset = Asset;

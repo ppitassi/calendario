@@ -21,6 +21,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { MiniCalendarPopover } from "../calendar/MiniCalendarPopover";
+import { NextcloudFileBrowserModal } from "../storage/NextcloudFileBrowserModal";
 import { InstagramMockup } from "../presentation/InstagramMockup";
 import { monthLabel } from "@/lib/date";
 import type { ContentItem, ContentStatus, CalendarRecord } from "@/lib/types";
@@ -54,6 +55,9 @@ export function DesignerWorkspace({
   // Mini Calendar Popover State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Nextcloud File Browser Modal State (Finder macOS)
+  const [isFileBrowserOpen, setIsFileBrowserOpen] = useState(false);
 
   // Inspector recolhível
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
@@ -353,13 +357,12 @@ export function DesignerWorkspace({
                   type="button"
                   className={styles.menuItem}
                   onClick={() => {
-                    onSyncNextcloud(selectedItem?.id);
+                    setIsFileBrowserOpen(true);
                     setIsImportMenuOpen(false);
                   }}
-                  disabled={isSyncingNextcloud}
                 >
                   <CloudDownload size={13} />
-                  <span>{isSyncingNextcloud ? "Puxando artes..." : "Do Nextcloud"}</span>
+                  <span>Do Nextcloud</span>
                 </button>
               </div>
             )}
@@ -654,8 +657,7 @@ export function DesignerWorkspace({
                         <button
                           type="button"
                           className={styles.nextcloudBtn}
-                          onClick={() => onSyncNextcloud(selectedItem.id)}
-                          disabled={isSyncingNextcloud}
+                          onClick={() => setIsFileBrowserOpen(true)}
                         >
                           <CloudDownload size={13} />
                           <span>Importar do Nextcloud</span>
@@ -830,6 +832,24 @@ export function DesignerWorkspace({
           <span>{syncFeedback}</span>
         </div>
       )}
+
+      {/* Navegador de Arquivos Nextcloud (Finder Modal) */}
+      <NextcloudFileBrowserModal
+        isOpen={isFileBrowserOpen}
+        onClose={() => setIsFileBrowserOpen(false)}
+        clientId={calendar.client_id || (calendar as any).clientId}
+        clientName={calendar.brand}
+        selectedItem={selectedItem}
+        onImportSuccess={({ imageUrl }) => {
+          if (selectedItem && onUpdateItem) {
+            onUpdateItem({
+              ...selectedItem,
+              imageUrl,
+              status: "Produção",
+            });
+          }
+        }}
+      />
     </div>
   );
 }

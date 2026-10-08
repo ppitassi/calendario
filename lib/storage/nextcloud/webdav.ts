@@ -6,7 +6,7 @@ import { getNextcloudClient, normalizePath } from "./client";
 const PROPFIND_BODY = `<?xml version="1.0"?>
 <d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
   <d:prop>
-    <oc:fileid/><d:getcontentlength/><d:getcontenttype/><d:getetag/><d:resourcetype/>
+    <oc:fileid/><d:getcontentlength/><d:getcontenttype/><d:getetag/><d:resourcetype/><d:getlastmodified/>
   </d:prop>
 </d:propfind>`;
 
@@ -37,6 +37,7 @@ export function parseMultistatus(xml: string, username: string): StorageNode[] {
     const fileId = tag(block, "fileid");
     if (!fileId) continue;
     const len = tag(block, "getcontentlength");
+    const lastMod = tag(block, "getlastmodified");
     nodes.push({
       remoteFileId: fileId,
       path,
@@ -45,6 +46,7 @@ export function parseMultistatus(xml: string, username: string): StorageNode[] {
       mimeType: tag(block, "getcontenttype"),
       size: len ? Number(len) : undefined,
       etag: tag(block, "getetag") ? decodeXml(tag(block, "getetag")!).replace(/"/g, "") : undefined,
+      lastModified: lastMod,
     });
   }
   return nodes;
