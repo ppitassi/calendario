@@ -128,63 +128,65 @@ export function EditorContentTab({
 
       <div
         style={{
-          display: "flex",
+          display: "inline-flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "10px",
-          padding: "10px 14px",
-          background: item.isExtra ? "rgba(239, 93, 61, 0.08)" : "var(--surface-soft, #f8fafc)",
-          border: `1px solid ${item.isExtra ? "rgba(239, 93, 61, 0.3)" : "var(--border, #e2e8f0)"}`,
-          borderRadius: "10px",
-          marginBottom: "14px",
-          transition: "all 0.2s ease",
+          gap: "8px",
+          marginBottom: "16px",
         }}
       >
-        <label
+        <button
+          type="button"
+          onClick={() => {
+            const next = !item.isExtra;
+            field("isExtra", next);
+            if (next && !item.extraFormat) {
+              field("extraFormat", "Banner");
+            }
+          }}
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "8px",
+            gap: "6px",
+            padding: "5px 11px",
+            borderRadius: "999px",
             fontSize: "12px",
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: "pointer",
-            color: item.isExtra ? "var(--accent, #ef5d3d)" : "var(--ink, #1e293b)",
+            border: `1px solid ${item.isExtra ? "var(--accent-border, rgba(242, 13, 70, 0.28))" : "var(--border-subtle, #e3e5e9)"}`,
+            background: item.isExtra ? "var(--accent-soft, rgba(242, 13, 70, 0.08))" : "transparent",
+            color: item.isExtra ? "var(--accent, #f20d46)" : "var(--text-secondary, #5f6470)",
+            transition: "all 0.15s ease",
             userSelect: "none",
           }}
         >
-          <input
-            type="checkbox"
-            checked={Boolean(item.isExtra)}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              field("isExtra", checked);
-              if (checked && !item.extraFormat) {
-                field("extraFormat", "Banner");
-              }
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              background: item.isExtra ? "var(--accent, #f20d46)" : "var(--border-strong, #bfc3cb)",
+              transition: "background-color 0.15s ease",
             }}
-            style={{ width: "16px", height: "16px", accentColor: "var(--accent, #ef5d3d)", cursor: "pointer" }}
           />
-          <Sparkles size={14} />
-          <span>Arte Extra / Demanda Avulsa</span>
-        </label>
+          <Sparkles size={13} style={{ opacity: item.isExtra ? 1 : 0.7 }} />
+          <span>Demanda avulsa</span>
+        </button>
 
         {item.isExtra && (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted, #64748b)" }}>
-              Formato:
-            </span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <select
               value={item.extraFormat || "Banner"}
               onChange={(e) => field("extraFormat", e.target.value)}
               style={{
                 fontSize: "11px",
-                fontWeight: 700,
-                padding: "3px 8px",
+                fontWeight: 600,
+                padding: "4px 8px",
                 borderRadius: "6px",
-                border: "1px solid var(--border)",
-                background: "var(--surface)",
+                border: "1px solid var(--border-subtle, #e3e5e9)",
+                background: "var(--surface-elevated, #ffffff)",
+                color: "var(--text-primary, #17181c)",
                 cursor: "pointer",
+                outline: "none",
               }}
             >
               {EXTRA_FORMAT_OPTIONS.map((fmt) => (
