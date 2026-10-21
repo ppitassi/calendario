@@ -40,6 +40,10 @@
   margin-left: 0;
 }
 
+@media print {
+  .layoutContainer { display:block; height:auto; overflow:visible; }
+}
+
 /* Overlay que bloqueia a área principal enquanto um calendário é garantido. */
 .loadingOverlay {
   display: flex;

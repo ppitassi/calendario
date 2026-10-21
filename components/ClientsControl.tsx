@@ -29,6 +29,7 @@ interface ClientsControlProps {
   onReloadClients: () => Promise<void>;
   currentUser: SafeUser;
   onOpenCreateDemand?: () => void;
+  onOpenHub?: (client: Client) => void;
 }
 
 /** Filtra o catálogo, calcula KPIs mensais e administra o cadastro local de clientes. */
@@ -39,6 +40,7 @@ export function ClientsControl({
   onReloadClients,
   currentUser,
   onOpenCreateDemand,
+  onOpenHub,
 }: ClientsControlProps) {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -368,6 +370,7 @@ export function ClientsControl({
                 </div>
 
                 <div className={styles.rowActions}>
+                  {onOpenHub && <button type="button" className={styles.actionBtnPlan} onClick={() => onOpenHub(client)}>Ficha & Portal</button>}
                   <button
                     type="button"
                     className={styles.actionBtnPlan}

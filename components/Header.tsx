@@ -117,6 +117,9 @@ export function Header({
       return activeClient ? `${activeClient.name} — Calendário` : "Calendário";
     }
     if (activeScreen === "clients") return "Clientes";
+    if (activeScreen === "client_hub") return "Ficha & Portal";
+    if (activeScreen === "agency") return "Painel da Agência";
+    if (activeScreen === "opportunities") return "Oportunidades de Conteúdo";
     if (activeScreen === "tasks") return "Tarefas";
     if (activeScreen === "presentations" || activeScreen === "presentation") return "Apresentações";
     if (activeScreen === "admin_users") return "Gestão de Usuários";
