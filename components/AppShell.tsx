@@ -10,6 +10,9 @@ import { Menu, Calendar } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { ClientsControl } from "./ClientsControl";
+import { ClientHub } from "./client-hub/ClientHub";
+import { AgencyDashboard } from "./client-hub/AgencyDashboard";
+import { ContentOpportunities } from "./client-hub/ContentOpportunities";
 import { HomeScreen } from "./home/HomeScreen";
 import { Studio } from "./Studio";
 import { Presentation } from "./Presentation";
@@ -42,7 +45,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         if (stored === "planner" && storedCalId) {
           return "planner";
         }
-        if (stored && ["home", "clients", "admin_users", "presentations", "tasks"].includes(stored)) {
+        if (stored && ["home", "clients", "client_hub", "admin_users", "presentations", "tasks", "agency", "opportunities"].includes(stored)) {
           return stored;
         }
       } catch {}
@@ -54,7 +57,24 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
     return "home";
   });
   const [clients, setClients] = useState<Client[]>([]);
+  const [hubClient, setHubClient] = useState<Client | null>(null);
+  const [clientsLoaded, setClientsLoaded] = useState(false);
+  const [hubDirty, setHubDirty] = useState(false);
+  const [taskRevision, setTaskRevision] = useState(0);
   const [activeClient, setActiveClient] = useState<Client | null>(null);
+  useEffect(() => {
+    if (activeScreen !== "client_hub" || hubClient || !clientsLoaded) return;
+    let storedId: string | null = null;
+    try { storedId = localStorage.getItem("cp:hub-client-id"); } catch {}
+    const match = clients.find(client => client.id === storedId);
+    if (match) setHubClient(match);
+    else setActiveScreen("clients");
+  }, [activeScreen, hubClient, clients, clientsLoaded]);
+  useEffect(() => {
+    if (hubClient) {
+      try { localStorage.setItem("cp:hub-client-id", hubClient.id); } catch {}
+    }
+  }, [hubClient]);
   const [activeMonth, setActiveMonth] = useState<Date>(() => {
     // O mês salvo evita que um recarregamento devolva o operador ao mês atual.
     if (typeof window !== "undefined") {
@@ -207,6 +227,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
       const data = await res.json();
       if (Array.isArray(data.clients)) {
         setClients(data.clients);
+        setClientsLoaded(true);
         const storedClientId = typeof window !== "undefined" ? localStorage.getItem("cp:active-client-id") : null;
         if (!activeClient && storedClientId) {
           const match = data.clients.find((c: Client) => c.id === storedClientId);
@@ -295,6 +316,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
     screen: string,
     viewMode?: "calendar" | "extras" | "kanban" | "list"
   ) => {
+    if (hubDirty && !window.confirm("Existem alterações não salvas na ficha. Sair e descartá-las?")) return;
     if (viewMode) {
       setStudioViewMode(viewMode);
     }
@@ -417,6 +439,19 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         )}
 
         {/* UI: catálogo de clientes com indicadores mensais */}
+        {!ensuringCalendar && activeScreen === "client_hub" && hubClient && (
+          <ClientHub key={hubClient.id} client={hubClient} currentUser={currentUser} team={teamMembers}
+            onDirtyChange={setHubDirty}
+            onBack={() => setActiveScreen("clients")} onOpenPlanner={() => handleOpenPlanner(hubClient)} />
+        )}
+        {!ensuringCalendar && activeScreen === "agency" && (
+          <AgencyDashboard key={taskRevision} currentUser={currentUser} clients={clients} team={teamMembers}
+            onCreateTask={() => setIsCreateDemandOpen(true)}
+            onOpenClient={client => { setHubClient(client); setActiveScreen("client_hub"); }} />
+        )}
+        {!ensuringCalendar && activeScreen === "opportunities" && (
+          <ContentOpportunities clients={clients} currentUser={currentUser} />
+        )}
         {!ensuringCalendar && (
           activeScreen === "clients" ||
           (activeScreen === "planner" && !activeCalendarId) ||
@@ -429,6 +464,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
             onOpenPlanner={handleOpenPlanner}
             onOpenPresentation={handleOpenPresentation}
             onReloadClients={loadClients}
+            onOpenHub={client => { setHubClient(client); setActiveScreen("client_hub"); }}
             currentUser={currentUser}
             onOpenCreateDemand={() => setIsCreateDemandOpen(true)}
           />
@@ -542,6 +578,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         teamMembers={teamMembers}
         onSuccess={async () => {
           setIsCreateDemandOpen(false);
+          setTaskRevision(value => value + 1);
           await loadClients();
         }}
       />

@@ -67,6 +67,7 @@ export function CreateDemandDrawer({
   const [executorId, setExecutorId] = useState(""); // "" = Herdar do cliente
   const [priority, setPriority] = useState<Priority>("normal");
   const [dueDate, setDueDate] = useState("");
+  const [planning, setPlanning] = useState({ requesterId: "", specialty: "", category: "", effort: 1, serviceMode: "Remoto", dueTime: "" });
   const [mode, setMode] = useState<"single" | "compound">("single");
 
   // Repeater de entregas
@@ -196,6 +197,7 @@ export function CreateDemandDrawer({
         priority,
         dueDate: dueDate || null,
         deliveries: activeDeliveries,
+        planning,
       };
 
       const res = await fetch("/api/demands", {
@@ -218,6 +220,7 @@ export function CreateDemandDrawer({
       setDescription("");
       setExecutorId("");
       setDueDate("");
+      setPlanning({ requesterId: "", specialty: "", category: "", effort: 1, serviceMode: "Remoto", dueTime: "" });
       setDeliveries([
         {
           type: "feed_story",
@@ -316,6 +319,37 @@ export function CreateDemandDrawer({
             />
           </div>
 
+          {/* Planejamento operacional inspirado no fluxo de atendimento da agência. */}
+          <div className={styles.formField}>
+            <label className={styles.label} htmlFor="demand-requester">Solicitante</label>
+            <select id="demand-requester" className={styles.input} value={planning.requesterId} onChange={e => setPlanning({ ...planning, requesterId: e.target.value })}>
+              <option value="">Usuário que está criando</option>{teamMembers.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
+            </select>
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.label} htmlFor="demand-specialty">Especialidade</label>
+            <input id="demand-specialty" className={styles.input} maxLength={200} value={planning.specialty} onChange={e => setPlanning({ ...planning, specialty: e.target.value })} placeholder="Design, redação, audiovisual…" />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.label} htmlFor="demand-category">Categoria</label>
+            <input id="demand-category" className={styles.input} maxLength={200} value={planning.category} onChange={e => setPlanning({ ...planning, category: e.target.value })} placeholder="Edição de foto, campanha, produção…" />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.label} htmlFor="demand-effort">Nível de esforço por entrega</label>
+            <select id="demand-effort" className={styles.input} value={planning.effort} onChange={e => setPlanning({ ...planning, effort: Number(e.target.value) })}>
+              {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value} ponto{value > 1 ? "s" : ""}</option>)}
+            </select>
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.label} htmlFor="demand-mode">Formato de atendimento</label>
+            <select id="demand-mode" className={styles.input} value={planning.serviceMode} onChange={e => setPlanning({ ...planning, serviceMode: e.target.value })}>
+              <option>Remoto</option><option>Presencial</option><option>Híbrido</option>
+            </select>
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.label} htmlFor="demand-time">Horário limite (opcional)</label>
+            <input id="demand-time" type="time" className={styles.input} value={planning.dueTime} onChange={e => setPlanning({ ...planning, dueTime: e.target.value })} />
+          </div>
           {/* 4. Responsável e Prioridade */}
           <div className={styles.twoCol}>
             <div className={styles.formField}>

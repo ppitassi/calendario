@@ -189,6 +189,21 @@ export async function createExtraDemand(
   const db = getDb();
 
   // 3. Busca cliente e seu ownerId
+  // Limites mantêm a expansão de tarefas finita e os campos de planejamento consistentes.
+  if (input.deliveries.length > 50 || input.deliveries.some(d => !Number.isInteger(d.quantity) || d.quantity < 1 || d.quantity > 100)
+    || input.deliveries.reduce((sum, d) => sum + d.quantity, 0) > 200) {
+    throw new Error("Informe até 200 entregas com quantidades inteiras positivas.");
+  }
+  const planning = input.planning;
+  if (planning && (!Number.isInteger(planning.effort) || planning.effort < 1 || planning.effort > 5
+    || !["Remoto", "Presencial", "Híbrido"].includes(planning.serviceMode)
+    || (planning.dueTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(planning.dueTime))
+    || [planning.specialty, planning.category, planning.requesterId].some(v => typeof v !== "string" || v.length > 200))) {
+    throw new Error("Dados de planejamento inválidos.");
+  }
+  if (planning?.requesterId && !await db.prepare("SELECT id FROM users WHERE id = ? AND status = 'approved'").get(planning.requesterId)) {
+    throw new Error("Solicitante não encontrado.");
+  }
   const clientRow = (await db
     .prepare("SELECT id, name, owner_id FROM clients WHERE id = ?")
     .get(input.clientId)) as { id: string; name: string; owner_id?: string } | undefined;
@@ -248,6 +263,7 @@ export async function createExtraDemand(
     );
 
     // 6.2 Bulk insert das Tasks
+    if (planning) await tx.prepare("UPDATE work_units SET planning = ? WHERE id = ?").run(JSON.stringify({ ...planning, requesterId: planning.requesterId || currentUser.id }), workUnitId);
     for (const t of expandedTasks) {
       const taskId = crypto.randomUUID();
       const taskDueDate = t.dueDate || null;

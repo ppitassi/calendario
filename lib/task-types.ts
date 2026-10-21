@@ -167,6 +167,7 @@ export type WorkQueueItem = WorkQueueUnitItem | WorkQueueTaskItem;
 
 export interface WorkUnitDetails {
   unit: WorkQueueUnitItem;
+  planning?: CreateExtraDemandInput["planning"] & { requesterName?: string };
   tasks: WorkUnitTask[];
   events?: ActivityEvent[];
 }
@@ -209,6 +210,7 @@ export interface DeliveryDefinition {
 }
 
 export interface CreateExtraDemandInput {
+  planning?: { requesterId: string; specialty: string; category: string; effort: number; serviceMode: string; dueTime: string };
   clientId: string;
   title: string;
   description?: string;

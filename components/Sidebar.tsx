@@ -82,6 +82,14 @@ export function Sidebar({
   // Lista linear: Início (Home) -> Tarefas -> Clientes -> Demandas Extras -> Apresentação -> (Admin)
   const primaryNavItems = [
     {
+      id: "agency", label: "Painel da Agência", icon: CheckSquare,
+      isActive: activeScreen === "agency", onClick: () => handleMobileNavigate("agency"),
+    },
+    {
+      id: "opportunities", label: "Oportunidades de Conteúdo", icon: CalendarDays,
+      isActive: activeScreen === "opportunities", onClick: () => handleMobileNavigate("opportunities"),
+    },
+    {
       id: "home",
       label: "Início",
       icon: Users,
@@ -99,7 +107,7 @@ export function Sidebar({
       id: "clients",
       label: "Controle de Clientes",
       icon: Users,
-      isActive: activeScreen === "clients",
+      isActive: activeScreen === "clients" || activeScreen === "client_hub",
       onClick: () => handleMobileNavigate("clients"),
     },
     {

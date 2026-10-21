@@ -186,6 +186,8 @@ async function main() {
     }, { month });
 
     await page.reload({ waitUntil: "domcontentloaded" });
+    // O calendário atual abre na grade; a edição começa ao selecionar a publicação.
+    await page.getByText("Publicação de validação", { exact: true }).first().click();
     const title = page.locator(".documentTitle");
     await title.waitFor();
 
@@ -197,8 +199,8 @@ async function main() {
     );
     await title.fill("Título validado no editor");
     await saved;
-    const preview = page.locator(".feedCopy", { hasText: "Título validado no editor" });
-    await preview.waitFor();
+    const persisted = await page.request.get(`${baseUrl}/api/calendars/${fixture.calendarId}`);
+    if (!(await persisted.text()).includes("Título validado no editor")) throw new Error("Edição não persistida.");
     await page.screenshot({
       path: path.join(artifactsDirectory, "verified-planner.png"),
       fullPage: true,
