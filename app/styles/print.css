@@ -122,3 +122,25 @@
     print-color-adjust: exact !important;
   }
 }
+
+/* Documentos do cliente usam a mesma impressão, isolando o contexto aberto. */
+@media print {
+  body:has(dialog[data-client-resources][open]) *:not(:has(dialog[data-client-resources][open])):not(dialog[data-client-resources]):not(dialog[data-client-resources] *) {
+    display: none !important;
+  }
+  body:has(dialog[data-client-resources][open]) *:has(dialog[data-client-resources][open]),
+  dialog[data-client-resources][open],
+  dialog[data-client-resources][open] > div {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}

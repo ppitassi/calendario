@@ -1,132 +1,127 @@
-# Portal do cliente e operação da agência
+# Onboarding, marca e follow-up integrados
 
-O módulo usa o cadastro de clientes, a sessão, o banco e a fila de tarefas do
-Calendário. Frontend e APIs continuam no mesmo processo Next.js.
+O fluxo usa os clientes, calendários, publicações, demandas, responsáveis,
+permissões e banco existentes. Frontend e APIs continuam no mesmo Next.js.
+Não há painel, ranking ou fila paralela. As sugestões de conteúdo permanecem
+no fluxo de referências do calendário.
 
-## Fluxo de uso
+## Onde usar
 
-1. Abra **Clientes → Ficha & Portal**. Crie o link de briefing na visão geral.
-2. Copie o link ou escolha **Preencher com o cliente**. O cliente pode responder
-   sem login; o executivo também pode preencher junto com ele.
-3. O envio preenche **Kickoff & onboarding**, registra uma cópia das respostas
-   e encerra o formulário. A equipe revisa escopo, cronograma, responsabilidades
-   e aprovações. Um novo envio exige **Reabrir com novo link**.
-4. Em **Entregas & follow-up**, cadastre materiais e relatórios por período.
-   Cada relatório contém resumo, métricas sociais, mídia exterior, aprendizados
-   e próximos passos. Os materiais usam links para seus arquivos existentes.
-5. Em **Manual da marca**, preencha apresentação, cores, tipografia, tom de voz,
-   regras e links para logos, aplicações e arquivos. Códigos HEX de seis dígitos
-   geram amostras visuais da paleta.
-6. Marque **Exibir no portal do cliente** em cada conteúdo desejado e salve.
-   Ative o portal na visão geral e compartilhe o link. As seções públicas são
-   onboarding, entregas/follow-up, manual e calendários já compartilhados.
-7. Em **Relacionamento**, agende follow-ups com responsáveis, datas, objetivo,
-   link de reunião, mensagem e resultado. Anotações dessa área são internas.
-   WhatsApp e e-mail abrem a mensagem para revisão e envio pelo operador.
+- **Controle de Clientes → Editar → Onboarding, marca e resultados**: documento
+  de onboarding, manual, relatórios e links de acesso do cliente.
+- **Calendário → Briefing e onboarding / Consultar marca / Entregas e resultados**:
+  abre o contexto do cliente mantendo o editor, sua seleção e o mês ativos.
+  A consulta da marca abre a prévia; Admin e Social Media podem alternar para edição.
+- **Tarefas → Detalhes**: consulta o mesmo manual. Uma revisão de resultados
+  criada pelo relatório também mostra o relatório vinculado nessa aba.
 
-O botão **Imprimir / salvar PDF** exporta a seção atual pelo navegador.
-Alterações na ficha precisam de **Salvar ficha**. A interface sinaliza mudanças
-pendentes e avisa antes de sair. Revisões concorrentes recebem conflito, sem
-substituir silenciosamente o conteúdo de outra sessão.
+## Briefing → onboarding → planejamento
 
-## Painel e planejamento
+1. Em **Links do cliente**, crie o link do briefing. O cliente responde sem
+   login ou o executivo usa **Preencher com o cliente**.
+2. O envio preenche o onboarding, arquiva as respostas e encerra o formulário.
+   E-mail, WhatsApp e acessos ficam internos. Não registre senhas.
+3. Revise e salve os campos. **Aplicar briefing ao planejamento** copia segmento,
+   público, tom de voz e objetivos para o cadastro (objetivos entram na diretriz
+   estratégica). A operação é transacional e verifica a revisão do documento.
+4. Novos calendários herdam o cadastro. Rascunhos não compartilhados atualizam
+   apenas campos vazios ou iguais ao valor anterior do cliente. Valores próprios,
+   calendários compartilhados e calendários fora de rascunho são preservados.
+   A edição normal do cadastro segue a mesma regra de sincronização.
+5. A aplicação no calendário atual atualiza seu contexto sem recarregar as peças.
+   Aguarde o salvamento do editor antes de abrir os recursos do cliente.
 
-**Painel da Agência** consolida tarefas dos calendários e demandas, prazos,
-pendências de aprovação, follow-ups e ranking de entregas. Designers veem seu
-próprio trabalho no painel. Tarefas originadas de publicações não são contadas
-duas vezes. O ranking mensal usa o último evento de conclusão; registros antigos
-sem evento aparecem apenas em **Todo o período**. A atribuição é ao responsável
-atual. Pontos de esforço em aberto não representam percentual de capacidade.
+O nome da marca, os perfis e a cadência continuam no cadastro existente.
+Escopo, cronograma, responsáveis e workflow permanecem no documento de kickoff;
+não criam tarefas automaticamente. Os dados do cadastro preenchem o documento
+inicial, evitando digitar novamente o que já existe.
 
-**Nova tarefa** reutiliza a criação de demandas, com solicitante, especialidade,
-categoria, esforço por entrega, formato de atendimento e horário limite. Esses
-dados ficam disponíveis na aba **Detalhes** da demanda. Quantidade gera tarefas
-reais, com os responsáveis e prazos do fluxo existente. Demandas exigem cliente.
+## Produção → entregas → follow-up
 
-**Oportunidades de Conteúdo** consulta o calendário de referências existente e
-aceita tema manual. Oferece modelos revisáveis de Reel, carrossel, Stories e
-Live, com etapa do funil, gancho, estrutura e chamada. A seleção cria uma demanda
-intitulada **Campanha: [tema]**, com uma tarefa por ideia na fila existente.
-Os modelos não usam geração por IA. Tipo de produção de Live é vídeo e de
-carrossel/Stories é Feed/Story; o formato detalhado permanece no briefing.
+**Entregas e resultados** consulta publicações com status **Aprovado** em
+calendários completos, e tarefas com status **completed**. Não inclui
+pré-calendários, itens excluídos, trabalho em produção nem a própria tarefa de
+revisão. Tarefas derivadas de publicações não duplicam a contagem.
 
-## Dados e métricas
+Crie um relatório: o mês ativo preenche o período e seleciona as entregas
+correspondentes ao calendário e demandas concluídas do cliente. Ajuste a
+seleção, registre resumo, aprendizados, próximos passos e analytics.
+Os relatórios guardam referências, não cópias dos títulos/situações das peças.
+A API valida cliente, situação e período. Reabrir ou excluir uma entrega a
+retira do relatório público; novas entregas exigem seleção e salvamento.
 
-- **Redes sociais:** lançamento manual de valores obtidos nas plataformas,
-  com rede/perfil, nome e unidade da métrica, fonte e período do relatório.
-  Não há conexão automática com Meta, Instagram ou outras APIs nesta entrega.
-- **Busdoor/outdoor:** fluxo diário por unidade × dias × unidades × fator de
-  exposição entre 0 e 1. Fonte e premissas são obrigatórias. O resultado é uma
-  estimativa bruta de oportunidades de exposição, sujeita a repetições; não é
-  alcance único nem visualização comprovada. Dias não podem exceder o período.
-- Não há números fictícios no produto. Estados vazios permanecem vazios.
-- Os exemplos das capturas automatizadas são dados sintéticos de teste.
+A data de uma publicação é a data programada no calendário. Para tarefas,
+a data é a do último evento de conclusão; registros antigos sem evento usam
+`updated_at`. Aprovação não é uma confirmação de postagem na rede social.
+Links **Ver no calendário** usam apenas apresentações já compartilhadas.
+Materiais externos podem ser acrescentados separadamente por URL.
 
-## Acesso e publicação
+**Agendar revisão na fila de tarefas** abre o formulário de demanda existente,
+com cliente, título e resumo preenchidos e formato **Revisão de resultados**.
+Defina responsável e prazo. A demanda e sua tarefa aparecem na fila normal;
+o vínculo `planning.followUpReportId` permite consultar o relatório atualizado
+em Detalhes. O servidor verifica que ele pertence ao cliente selecionado.
+Não há envio automático de mensagens nem agendamento em serviços externos.
 
-Admin e Social Media editam e publicam. Designer consulta a ficha e recebe
-`403` nas tentativas de alteração, inclusive por requisição direta. O executivo
-usa um dos perfis de edição já existentes; não foi criado um novo papel.
+## Manual da marca
 
-Portal e briefing têm tokens independentes de 256 bits. Quem possui o link tem
-acesso à respectiva página. O portal começa desativado. **Substituir links**
-revoga os dois links anteriores; **Desativar portal** bloqueia a leitura do
-portal; **Encerrar formulário** bloqueia novos envios do briefing.
+O mesmo documento é usado no cadastro, no editor, nas demandas e no portal:
+apresentação, paleta, tipografia, regras, tom de voz e links para logos/arquivos.
+Códigos HEX de seis dígitos geram amostras visuais. Designer consulta; Admin e
+Social Media editam. A publicação externa é uma opção separada da consulta interna.
 
-A API pública envia apenas conteúdos marcados para publicação. E-mail, telefone,
-acessos, anotações internas, follow-ups internos, rascunhos e tokens de edição
-não são enviados. O formulário público não permite consultar respostas antigas.
-Um novo briefing retira o onboarding da publicação até a equipe revisá-lo.
-Páginas usam noindex/no-referrer e respostas de API usam no-store.
+## Métricas no follow-up
 
-Links existentes de aprovação de calendário mantêm seu ciclo próprio: revogar
-o portal não revoga uma apresentação que já foi compartilhada pelo calendário.
-O portal não adiciona gestão financeira, funil comercial ou envio automático de
-mensagens; o painel apresenta apenas dados operacionais existentes.
+- Redes sociais: lançamento dos valores obtidos nas plataformas, com rede/perfil,
+  métrica/unidade, fonte e período. Não há sincronização automática com Meta ou
+  outras APIs; resultados nunca são inventados.
+- Busdoor/outdoor: fluxo diário por unidade × dias × unidades × fator entre 0 e 1.
+  Fonte e premissas são obrigatórias. O valor representa oportunidades brutas
+  de exposição, com repetições, não pessoas únicas nem visualizações comprovadas.
+  Dias de veiculação não podem exceder o período do relatório.
 
-## Persistência e instalação
+## Compartilhamento e segurança
+
+Marque **Exibir no portal do cliente**, salve e ative o portal em **Links do
+cliente**. Ele reúne onboarding publicado, relatórios/entregas, manual e
+calendários já compartilhados. A prévia pode ser impressa/salva como PDF.
+
+Portal e briefing têm tokens independentes de 256 bits. Quem possui o link
+pode consultar a respectiva página. Substituir links revoga os anteriores;
+desativar o portal bloqueia sua leitura. Reabrir briefing emite novo token.
+Um novo envio retira o onboarding da publicação até nova revisão.
+
+A API pública projeta somente os conteúdos publicados. Contatos, acessos,
+notas internas, rascunhos e tokens de edição não são enviados. Designer recebe
+403 nas tentativas de alteração do documento, compartilhamento ou aplicação
+do briefing, inclusive em requisições diretas. Alterações concorrentes retornam
+409. URLs aceitam apenas HTTP/HTTPS; corpos e listas têm limites.
+
+Os links de aprovação existentes têm ciclo próprio: desativar o portal não
+revoga uma apresentação compartilhada anteriormente pelo calendário.
+
+## Instalação e verificação
 
 As migrações aditivas `009_client_hubs` e `010_work_planning` criam
 `client_hubs`, `client_briefing_submissions` e `work_units.planning`.
-PostgreSQL usa o inicializador versionado existente; SQLite aplica o DDL
-idempotente na inicialização. Não é necessário outro serviço HTTP.
+A integração usa essas estruturas sem apagar dados anteriores. PostgreSQL
+usa migrações versionadas; SQLite aplica DDL idempotente na inicialização.
 
-Faça o backup habitual do banco antes de atualizar o servidor. Use as mesmas
-variáveis de banco e armazenamento já configuradas e execute `npm ci` e
-`npm run build`. A inicialização de runtime também verifica as migrações.
-Os testes não devem apontar para o banco de produção.
+Use as configurações existentes de banco/armazenamento, faça o backup habitual
+e execute `npm ci` e `npm run build`. Não é necessário outro servidor HTTP.
 
-## Verificação local
+Em banco local descartável, com `STUDIO_TEST_BASE_URL`, `STUDIO_TEST_USERNAME`
+e `STUDIO_TEST_PASSWORD` configurados:
 
-Use dois terminais, com diretórios e credenciais descartáveis:
-
-```powershell
-$env:STUDIO_DATA_DIR = 'C:\temp\calendario-hub-test\data'
-$env:STUDIO_UPLOAD_DIR = 'C:\temp\calendario-hub-test\uploads'
-$env:STUDIO_ADMIN_USERNAME = 'hub-test'
-$env:STUDIO_ADMIN_PASSWORD = '<senha-de-teste-com-12-ou-mais-caracteres>'
-node node_modules/next/dist/bin/next dev --port 3011
-```
-
-Remova as variáveis PostgreSQL nesse ambiente caso queira usar o SQLite
-descartável; `DATABASE_URL` ou `POSTGRES_URL` têm precedência sobre esses diretórios.
-
-```powershell
-$env:STUDIO_TEST_BASE_URL = 'http://localhost:3011'
-$env:STUDIO_TEST_USERNAME = 'hub-test'
-$env:STUDIO_TEST_PASSWORD = '<a-mesma-senha-de-teste>'
+```sh
+npm run typecheck
 npm run test:client-hub
 npm run test:browser
-npm run typecheck
+npm run build
 ```
 
-`test:client-hub` cobre formulário público, documento preenchido, edição pela UI,
-reabertura, duas submissões concorrentes, conflitos de edição, publicação,
-validações, permissões, revogação, planejamento da demanda, ranking, campanha e
-larguras 390/768/1440. Salva capturas e `verification.json` em
-`artifacts/client-hub` (ignorado pelo Git). Requer Chromium instalado; use
-`STUDIO_BROWSER_EXECUTABLE_PATH` se a localização não for detectada.
-
-`test:browser` verifica o calendário existente: seleção na grade, edição,
-persistência e apresentação. Pare o servidor de desenvolvimento antes de
-executar o build, para não compartilhar o cache `.next` entre os dois processos.
+O teste de integração cobre formulário público, aplicação e herança do briefing,
+preservação de calendários personalizados/aprovados/compartilhados, entregas
+reais, revogação de aprovação, seleção inválida, privacidade, permissões,
+concorrência, manutenção da seleção no editor, revisão na fila existente e
+larguras de 390, 768 e 1440 pixels. As capturas usam dados sintéticos.

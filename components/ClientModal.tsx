@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { ClientHub } from "./client-hub/ClientHub";
 import { X } from "lucide-react";
-import type { Client } from "../lib/types";
+import type { Client, SafeUser } from "../lib/types";
 import styles from "./ClientsControl.module.css";
 
 export interface ClientModalProps {
+  currentUser: SafeUser;
   isOpen: boolean;
   editingClient: Client | null;
   onClose: () => void;
@@ -13,11 +15,17 @@ export interface ClientModalProps {
 }
 
 export function ClientModal({
+  currentUser,
   isOpen,
   editingClient,
   onClose,
   onSaved,
 }: ClientModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => { const node = dialogRef.current; if (isOpen) node?.showModal(); return () => node?.close(); }, [isOpen]);
+  const [tab, setTab] = useState("profile");
+  const [resourcesDirty, setResourcesDirty] = useState(false);
+  const close = () => { if (!resourcesDirty || window.confirm("Descartar alterações não salvas?")) onClose(); };
   const [newName, setNewName] = useState("");
   const [newSegment, setNewSegment] = useState("");
   const [newTone, setNewTone] = useState("");
@@ -31,6 +39,7 @@ export function ClientModal({
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
+    setTab("profile");
     if (editingClient) {
       setNewName(editingClient.name);
       setNewSegment(editingClient.segment || "");
@@ -117,20 +126,29 @@ export function ClientModal({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <dialog data-client-resources ref={dialogRef} className={styles.clientDialog} style={{ width: tab === "resources" ? "min(1100px, 96vw)" : "min(480px, 96vw)" }} aria-label={editingClient ? `Cliente ${editingClient.name}` : "Novo cliente"} onCancel={event => { event.preventDefault(); close(); }}>
+      <div className={styles.modal} style={{ maxWidth: "100%" }} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2>{editingClient ? "Editar Cliente" : "Novo Cliente"}</h2>
           <button
             type="button"
             className={styles.modalClose}
-            onClick={onClose}
+            aria-label="Fechar cadastro"
+            onClick={close}
           >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSaveClient}>
+        {editingClient && <nav aria-label="Cadastro do cliente" style={{ display: "flex", gap: 8, padding: 16 }}>
+          <button type="button" className={styles.modalCancelBtn} onClick={() => { if (!resourcesDirty || window.confirm("Descartar alterações não salvas?")) { setResourcesDirty(false); setTab("profile"); } }}>Dados do cliente</button>
+          <button type="button" className={styles.modalCancelBtn} onClick={() => setTab("resources")}>Onboarding, marca e resultados</button>
+        </nav>}
+        {tab === "resources" && editingClient ? <ClientHub client={editingClient} currentUser={currentUser} onDirtyChange={setResourcesDirty} onApplied={async () => {
+          const res = await fetch(`/api/clients/${editingClient.id}/hub`);
+          if (res.ok) { const { document } = await res.json(); setNewSegment(document.onboarding.segment); setNewTone(document.onboarding.tone); setNewAudience(document.onboarding.audience); setNewStrategy(document.onboarding.objectives); }
+          await onSaved();
+        }} /> : <form onSubmit={handleSaveClient}>
           <div className={styles.modalBody}>
             <div className={styles.formField}>
               <label>Nome do Cliente / Marca *</label>
@@ -251,7 +269,7 @@ export function ClientModal({
             <button
               type="button"
               className={styles.modalCancelBtn}
-              onClick={onClose}
+              onClick={close}
               disabled={creating || uploadingLogo}
             >
               Cancelar
@@ -264,8 +282,8 @@ export function ClientModal({
               {creating ? "Salvando..." : "Salvar Cliente"}
             </button>
           </div>
-        </form>
+        </form>}
       </div>
-    </div>
+    </dialog>
   );
 }

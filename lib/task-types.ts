@@ -210,7 +210,7 @@ export interface DeliveryDefinition {
 }
 
 export interface CreateExtraDemandInput {
-  planning?: { requesterId: string; specialty: string; category: string; effort: number; serviceMode: string; dueTime: string };
+  planning?: { followUpReportId?: string; requesterId: string; specialty: string; category: string; effort: number; serviceMode: string; dueTime: string };
   clientId: string;
   title: string;
   description?: string;

@@ -32,6 +32,11 @@ interface TeamMemberOption {
 }
 
 interface CreateDemandDrawerProps {
+  embedded?: boolean;
+  followUpReportId?: string;
+  initialType?: string;
+  initialTitle?: string;
+  initialDescription?: string;
   isOpen: boolean;
   onClose: () => void;
   clients: ClientOption[];
@@ -41,6 +46,7 @@ interface CreateDemandDrawerProps {
 }
 
 const DELIVERY_TYPE_OPTIONS = [
+  { value: "follow_up", label: "Revisão de resultados / Follow-up" },
   { value: "feed_story", label: "Feed / Story" },
   { value: "reel", label: "Reel / Vídeo" },
   { value: "banner", label: "Banner" },
@@ -51,6 +57,11 @@ const DELIVERY_TYPE_OPTIONS = [
 ];
 
 export function CreateDemandDrawer({
+  followUpReportId,
+  initialType = "feed_story",
+  embedded = false,
+  initialTitle = "",
+  initialDescription = "",
   isOpen,
   onClose,
   clients,
@@ -62,8 +73,8 @@ export function CreateDemandDrawer({
   const [clientContext, setClientContext] = useState<ClientAssignmentContext | null>(null);
   const [loadingContext, setLoadingContext] = useState(false);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
   const [executorId, setExecutorId] = useState(""); // "" = Herdar do cliente
   const [priority, setPriority] = useState<Priority>("normal");
   const [dueDate, setDueDate] = useState("");
@@ -73,7 +84,7 @@ export function CreateDemandDrawer({
   // Repeater de entregas
   const [deliveries, setDeliveries] = useState<DeliveryDefinition[]>([
     {
-      type: "feed_story",
+      type: initialType,
       quantity: 1,
       title: "",
       assigneeId: "",
@@ -174,7 +185,7 @@ export function CreateDemandDrawer({
               {
                 type: deliveries[0]?.type || "feed_story",
                 quantity: Math.max(1, Number(deliveries[0]?.quantity || 1)),
-                title: deliveries[0]?.title || undefined,
+                title: deliveries[0]?.title || (initialType === "follow_up" ? title.trim() : undefined),
                 assigneeId: deliveries[0]?.assigneeId || null,
                 dueDate: deliveries[0]?.dueDate || null,
                 description: deliveries[0]?.description || undefined,
@@ -197,7 +208,7 @@ export function CreateDemandDrawer({
         priority,
         dueDate: dueDate || null,
         deliveries: activeDeliveries,
-        planning,
+        planning: { ...planning, ...(followUpReportId ? { followUpReportId } : {}) },
       };
 
       const res = await fetch("/api/demands", {
@@ -240,8 +251,8 @@ export function CreateDemandDrawer({
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+    <div className={embedded ? undefined : styles.overlay} onClick={embedded ? undefined : onClose}>
+      <div className={styles.drawer} style={embedded ? { width: "100%", height: "auto", maxHeight: "none", boxShadow: "none" } : undefined} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <header className={styles.header}>
           <div className={styles.headerTitleGroup}>
@@ -251,7 +262,7 @@ export function CreateDemandDrawer({
             <div>
               <h2 className={styles.title}>Nova Demanda</h2>
               <p className={styles.subtitle}>
-                Criação global de Work Unit e entregas canônicas
+                Defina o responsável, o prazo e as entregas do cliente
               </p>
             </div>
           </div>

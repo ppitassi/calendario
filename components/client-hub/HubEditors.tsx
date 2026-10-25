@@ -1,6 +1,5 @@
 "use client";
-import { useState } from "react";
-import { onboardingFields, estimatedImpacts, type HubDocument, type Report, type FollowUp } from "@/lib/client-hub-types";
+import { onboardingFields, estimatedImpacts, type HubDocument, type Report, type WorkDelivery } from "@/lib/client-hub-types";
 import { Field, SelectField, PublishCheck, civilToday, shortDate } from "./HubFields";
 import styles from "./Hub.module.css";
 type EditorProps = { document: HubDocument; onChange: (document: HubDocument) => void };
@@ -20,7 +19,7 @@ export function OnboardingEditor({ document, onChange }: EditorProps) {
   </section>;
 }
 /** Edição de um relatório com período e origem obrigatórios para cada medição. */
-function ReportEditor({ report, onChange, onRemove }: { report: Report; onChange: (report: Report) => void; onRemove: () => void }) {
+function ReportEditor({ report, onChange, onRemove, workDeliveries, onSchedule }: { report: Report; onChange: (report: Report) => void; onRemove: () => void; workDeliveries: WorkDelivery[]; onSchedule: (report: Report) => void }) {
   const patch = (value: Partial<Report>) => onChange({ ...report, ...value });
   return <section className={styles.card}>
     <div className={styles.row}><h2>Relatório de follow-up</h2><button className={styles.danger} type="button" onClick={onRemove}>Remover relatório</button></div>
@@ -32,6 +31,14 @@ function ReportEditor({ report, onChange, onRemove }: { report: Report; onChange
       <Field label="Aprendizados" multiline value={report.learnings} onChange={learnings => patch({ learnings })} />
     </div>
     <Field label="Próximos passos, responsáveis e prazos" multiline value={report.nextSteps} onChange={nextSteps => patch({ nextSteps })} />
+    <h3 style={{ marginTop: 24 }}>Entregas do calendário e das tarefas</h3>
+    <p className={styles.muted}>Selecione as publicações aprovadas e tarefas concluídas deste período. Os dados permanecem vinculados ao trabalho original.</p>
+    {workDeliveries.filter(item => item.date >= report.start && item.date <= report.end).map(item => <label className={styles.check} key={item.key}>
+      <input type="checkbox" checked={report.deliveryKeys?.includes(item.key) || false} onChange={e => patch({ deliveryKeys: e.target.checked ? [...(report.deliveryKeys || []), item.key] : report.deliveryKeys?.filter(key => key !== item.key) })} />
+      {item.title} · {shortDate(item.date)} · {item.origin === "calendar" ? "Calendário" : "Tarefa"}
+    </label>)}
+    {(report.deliveryKeys || []).filter(key => !workDeliveries.some(item => item.key === key && item.date >= report.start && item.date <= report.end)).map(key => <div className={styles.error} key={key}>Entrega indisponível ou fora do período. <button type="button" onClick={() => patch({ deliveryKeys: report.deliveryKeys?.filter(k => k !== key) })}>Remover referência</button></div>)}
+    <button className={styles.button} type="button" onClick={() => onSchedule(report)}>Agendar revisão na fila de tarefas</button>
     <h3 style={{ marginTop: 24 }}>Analytics de redes sociais</h3>
     <p className={styles.muted}>Registre os dados exportados das plataformas. A fonte identifica o relatório ou ferramenta de origem.</p>
     {report.social.map((metric, index) => <div className={styles.subcard} key={metric.id}>
@@ -65,9 +72,13 @@ function ReportEditor({ report, onChange, onRemove }: { report: Report; onChange
   </section>;
 }
 /** Entregas e resultados compartilham a mesma seção do portal. */
-export function DeliveriesEditor({ document, onChange }: EditorProps) {
+export function DeliveriesEditor({ document, onChange, workDeliveries = [], calendarId, month, onSchedule }: EditorProps & { workDeliveries?: WorkDelivery[]; calendarId?: string; month?: string; onSchedule: (report: Report) => void }) {
+  const period = month || civilToday().slice(0, 7);
+  const start = `${period}-01`;
+  const end = `${period}-${new Date(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0).getDate()}`;
   return <div className={styles.stack}>
-    <section className={styles.card}><h2>Materiais entregues</h2>
+    <section className={styles.card}><h2>Entregas vinculadas ao trabalho</h2><p className={styles.muted}>{workDeliveries.filter(item => !calendarId || item.calendarId === calendarId || item.origin === "task").length} publicações aprovadas e tarefas concluídas disponíveis. Crie um relatório para selecionar o período, as entregas e seus resultados.</p></section>
+    <details className={styles.card}><summary>Materiais externos ao calendário (opcional)</summary>
       {document.deliveries.map(item => <div className={styles.subcard} key={item.id}>
         <div className={styles.grid}>{(["title", "date", "url", "description"] as const).map(key => <Field key={key}
           label={{ title: "Título da entrega", date: "Data da entrega", url: "Link do material", description: "Descrição da entrega" }[key]}
@@ -76,12 +87,12 @@ export function DeliveriesEditor({ document, onChange }: EditorProps) {
         <PublishCheck checked={item.published} onChange={published => onChange({ ...document, deliveries: document.deliveries.map(r => r.id === item.id ? { ...r, published } : r) })} />
         <button className={styles.button} type="button" onClick={() => onChange({ ...document, deliveries: document.deliveries.filter(r => r.id !== item.id) })}>Remover entrega</button>
       </div>)}
-      <button className={styles.button} type="button" onClick={() => onChange({ ...document, deliveries: [...document.deliveries, { id: id(), title: "", date: civilToday(), url: "", description: "", published: false }] })}>+ Entrega</button>
-    </section>
-    {document.reports.map(report => <ReportEditor key={report.id} report={report}
+      <button className={styles.button} type="button" onClick={() => onChange({ ...document, deliveries: [...document.deliveries, { id: id(), title: "", date: civilToday(), url: "", description: "", published: false }] })}>+ Material externo</button>
+    </details>
+    {document.reports.map(report => <ReportEditor key={report.id} report={report} workDeliveries={workDeliveries} onSchedule={onSchedule}
       onChange={value => onChange({ ...document, reports: document.reports.map(r => r.id === report.id ? value : r) })}
       onRemove={() => onChange({ ...document, reports: document.reports.filter(r => r.id !== report.id) })} />)}
-    <button className={styles.button} type="button" onClick={() => onChange({ ...document, reports: [...document.reports, { id: id(), title: "", start: civilToday(), end: civilToday(), summary: "", learnings: "", nextSteps: "", published: false, social: [], outdoor: [] }] })}>+ Relatório de follow-up</button>
+    <button className={styles.button} type="button" onClick={() => onChange({ ...document, reports: [...document.reports, { id: id(), title: `Resultados de ${period}`, start, end, deliveryKeys: workDeliveries.filter(item => item.date >= start && item.date <= end && (!calendarId || item.calendarId === calendarId || item.origin === "task")).map(item => item.key), summary: "", learnings: "", nextSteps: "", published: false, social: [], outdoor: [] }] })}>+ Relatório de follow-up</button>
   </div>;
 }
 /** Manual padronizado com campos reutilizados na página digital publicada. */
@@ -105,44 +116,4 @@ export function BrandEditor({ document, onChange }: EditorProps) {
     <button className={styles.button} type="button" onClick={() => patch({ assets: [...brand.assets, { id: id(), kind: "Logo", title: "", url: "", description: "" }] })}>+ Arquivo da marca</button>
     <PublishCheck checked={brand.published} onChange={published => patch({ published })} />
   </section>;
-}
-/** Follow-ups são internos; contatos externos só são abertos por ação humana. */
-export function RelationshipEditor({ document, onChange, team, userName }: EditorProps & { team: { id: string; name: string }[]; userName: string }) {
-  const [update, setUpdate] = useState("");
-  const [copied, setCopied] = useState("");
-  const newFollowUp = (): FollowUp => ({ id: id(), title: "Follow-up estratégico", start: civilToday(), due: civilToday(), owner: team[0]?.id || "", participant: "", objective: "", meetingUrl: "", message: "Olá! Vamos conversar sobre os resultados das últimas entregas e alinhar os próximos passos?", status: "scheduled", outcome: "" });
-  return <div className={styles.stack}>
-    <section className={styles.card}><h2>Follow-up estratégico</h2><p className={styles.muted}>Defina objetivo, prazo, responsável e registre o resultado de cada conversa.</p>
-      {document.followUps.map(item => {
-        const set = (value: Partial<FollowUp>) => onChange({ ...document, followUps: document.followUps.map(r => r.id === item.id ? { ...r, ...value } : r) });
-        const message = [item.message, item.meetingUrl].filter(Boolean).join("\n\n");
-        return <div className={styles.subcard} key={item.id}><div className={styles.grid}>
-          <Field label="Título do follow-up" required value={item.title} onChange={title => set({ title })} />
-          <SelectField label="Status do follow-up" value={item.status} onChange={status => set({ status: status as FollowUp["status"] })}><option value="scheduled">Agendado</option><option value="completed">Concluído</option></SelectField>
-          <Field label="Fazer a partir de" required type="date" value={item.start} onChange={start => set({ start })} />
-          <Field label="Fazer até" required type="date" value={item.due} onChange={due => set({ due })} />
-          <SelectField label="Quem faz" value={item.owner} onChange={owner => set({ owner })}><option value="">Selecione</option>{team.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</SelectField>
-          <SelectField label="Segunda pessoa (opcional)" value={item.participant} onChange={participant => set({ participant })}><option value="">Ninguém</option>{team.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</SelectField>
-          <Field label="Objetivo do contato" multiline value={item.objective} onChange={objective => set({ objective })} />
-          <Field label="Link de agendamento / reunião" type="url" value={item.meetingUrl} onChange={meetingUrl => set({ meetingUrl })} />
-          <Field label="Mensagem para o cliente" multiline value={item.message} onChange={message => set({ message })} />
-          <Field label="Resultado e próximos passos da conversa" multiline value={item.outcome} onChange={outcome => set({ outcome })} />
-        </div>
-          <div className={styles.actions} style={{ marginTop: 14 }}>
-            <button type="button" className={styles.button} onClick={async () => { try { await navigator.clipboard.writeText(message); setCopied("Mensagem copiada."); } catch { setCopied("Não foi possível copiar. Selecione o texto da mensagem."); } }}>Copiar mensagem</button>
-            {document.onboarding.phone.replace(/\D/g, "").length >= 10 && <a className={styles.button} target="_blank" rel="noreferrer" href={`https://wa.me/${document.onboarding.phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`}>Abrir WhatsApp</a>}
-            {document.onboarding.email && <a className={styles.button} href={`mailto:${encodeURIComponent(document.onboarding.email)}?subject=${encodeURIComponent(item.title)}&body=${encodeURIComponent(message)}`}>Preparar e-mail</a>}
-            <button type="button" className={styles.danger} onClick={() => onChange({ ...document, followUps: document.followUps.filter(r => r.id !== item.id) })}>Remover follow-up</button>
-          </div>
-        </div>;
-      })}
-      <button type="button" className={styles.primary} onClick={() => onChange({ ...document, followUps: [...document.followUps, newFollowUp()] })}>+ Novo follow-up</button>
-      {copied && <p role="status">{copied}</p>}
-    </section>
-    <section className={styles.card}><h2>Atualizações do relacionamento</h2><p className={styles.muted}>Anotações visíveis apenas para a equipe.</p>
-      <Field label="O que aconteceu?" value={update} maxLength={500} multiline onChange={setUpdate} />
-      <button type="button" className={styles.button} disabled={!update.trim()} onClick={() => { onChange({ ...document, updates: [{ id: id(), date: civilToday(), author: userName, text: update.trim() }, ...document.updates] }); setUpdate(""); }}>Adicionar atualização</button>
-      {document.updates.map(item => <article className={styles.row} key={item.id}><div><span className={styles.muted}>{shortDate(item.date)} · {item.author}</span><p className={styles.text}>{item.text}</p></div></article>)}
-    </section>
-  </div>;
 }

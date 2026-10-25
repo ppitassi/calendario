@@ -21,6 +21,8 @@ import type {
 export function formatDeliveryTypeLabel(type: string): string {
   const t = (type || "").toLowerCase().trim();
   switch (t) {
+    case "follow_up":
+      return "Revisão de resultados";
     case "feed_story":
     case "feed":
       return "Feed / Story";
@@ -200,6 +202,12 @@ export async function createExtraDemand(
     || (planning.dueTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(planning.dueTime))
     || [planning.specialty, planning.category, planning.requesterId].some(v => typeof v !== "string" || v.length > 200))) {
     throw new Error("Dados de planejamento inválidos.");
+  }
+  if (planning?.followUpReportId !== undefined) {
+    if (typeof planning.followUpReportId !== "string" || planning.followUpReportId.length > 500) throw new Error("Relatório inválido.");
+    const hub = await db.prepare("SELECT document FROM client_hubs WHERE client_id = ?").get(input.clientId);
+    const reports = hub ? JSON.parse(hub.document).reports : [];
+    if (!reports.some((report: { id: string }) => report.id === planning.followUpReportId)) throw new Error("Relatório não encontrado neste cliente.");
   }
   if (planning?.requesterId && !await db.prepare("SELECT id FROM users WHERE id = ? AND status = 'approved'").get(planning.requesterId)) {
     throw new Error("Solicitante não encontrado.");

@@ -5,11 +5,14 @@ peças, revisar o resultado e apresentar o planejamento. Também reúne briefing
 onboarding, entregas, follow-up e manual da marca no portal de cada cliente.
 Usa PostgreSQL quando configurado e SQLite como alternativa local.
 
-## Portal do cliente e operação da agência
+## Onboarding e resultados no fluxo do calendário
 
-Em **Clientes → Ficha & Portal**, gere o formulário de briefing, revise o
-onboarding preenchido automaticamente e publique os materiais do cliente.
-O menu também inclui **Painel da Agência** e **Oportunidades de Conteúdo**.
+Em **Controle de Clientes → Editar → Onboarding, marca e resultados**, gere o
+formulário e revise o onboarding. **Aplicar briefing ao planejamento** alimenta
+o cadastro e os rascunhos elegíveis. No calendário, consulte o briefing e o
+manual sem sair do editor; **Entregas e resultados** cria relatórios vinculados
+às publicações aprovadas e tarefas concluídas. A revisão de resultados entra
+na fila de tarefas existente, com vínculo ao relatório.
 Consulte [o guia de uso, dados e validação](docs/client-portal.md).
 
 ## Desenvolvimento local

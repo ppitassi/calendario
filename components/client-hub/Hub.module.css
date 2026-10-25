@@ -54,3 +54,23 @@
 @media(max-width:760px) { .header{flex-direction:column;} .grid{grid-template-columns:1fr;} .metrics{grid-template-columns:repeat(2,minmax(0,1fr));} .root{padding:20px 16px 45px;} .card{padding:18px;} .row{align-items:flex-start;flex-wrap:wrap;} .toolbar{flex-wrap:wrap;} }
 @media print { .root { background:white;color:black;padding:0; } .actions,.tabs,.toolbar,.noPrint {display:none!important;} .card,.hero{break-inside:avoid;background:white;color:black;box-shadow:none;} .grid,.metrics{display:block;} .card{margin-bottom:18px;} .text{overflow:visible;} }
 @media print { .root .header { display:block!important; visibility:visible!important; } .root .header .actions { display:none!important; } }
+
+.embedded { padding:20px; min-height:0; --hub-accent:var(--accent, #e3002f); --hub-bg:var(--color-bg-subtle, #f8fafc); --hub-ink:var(--color-text-primary, #1e293b); --hub-card:var(--color-bg-surface, #fff); --hub-muted:var(--color-text-muted, #64748b); --hub-line:var(--color-border-subtle, #e2e8f0); }
+.embedded .card { border-radius:10px; padding:18px; }
+.contextBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 20px; border-bottom:1px solid var(--color-border-subtle, #e2e8f0); background:var(--color-bg-surface, #fff); font-size:12px; }
+.contextBar button { border:1px solid var(--color-border-subtle, #e2e8f0); border-radius:6px; background:transparent; color:inherit; padding:6px 10px; cursor:pointer; }
+.dialog { width:min(1060px, 96vw); max-height:92dvh; padding:0; border:1px solid var(--color-border-subtle, #e2e8f0); border-radius:12px; color:var(--color-text-primary, #1e293b); background:var(--color-bg-surface, #fff); }
+.dialog::backdrop { background:#0007; }
+.dialogHeader { position:sticky; top:0; background:var(--color-bg-surface, #fff); z-index:10; display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--color-border-subtle, #e2e8f0); }
+.dialogHeader button { padding:6px 12px; cursor:pointer; }
+
+.printHeading { display:none; }
+@media print {
+  .printHeading { display:block; margin:0 0 20px; }
+  .notice,.error { display:none!important; }
+  .dialog { outline:0!important; }
+}
+
+/* A gaveta de tarefas usa flex vertical; os documentos mantêm sua altura natural. */
+.workContext { flex:0 0 auto; min-width:0; display:grid; gap:16px; }
+.workContext .grid { grid-template-columns:1fr; }

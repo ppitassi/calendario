@@ -8,6 +8,7 @@ export function ReportView({ report }: { report: Report }) {
   return <article className={styles.card}>
     <span className={styles.eyebrow}>Follow-up · {shortDate(report.start)} a {shortDate(report.end)}</span>
     <h2>{report.title}</h2><p className={styles.text}>{report.summary}</p>
+    {!!report.linkedDeliveries?.length && <section><h3>Entregas realizadas ({report.linkedDeliveries.length})</h3>{report.linkedDeliveries.map(item => <div className={styles.row} key={item.key}><span>{item.title}{item.url && <> · <a href={item.url} target="_blank" rel="noreferrer">Ver no calendário</a></>}</span><span className={styles.muted}>{shortDate(item.date)} · {item.type}</span></div>)}</section>}
     {report.social.length > 0 && <><h3>Analytics de redes sociais</h3><div className={styles.grid}>
       {report.social.map(metric => <div className={styles.metric} key={metric.id}>
         <span className={styles.muted}>{metric.channel} · {metric.metric}</span>

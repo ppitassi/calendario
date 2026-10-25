@@ -72,6 +72,10 @@ export function validateHub(value: unknown): HubDocument {
     const [start, end] = range(row.start, row.end);
     return {
       id: required(row.id), title: required(row.title), start, end,
+      deliveryKeys: row.deliveryKeys === undefined ? [] : (() => {
+        if (!Array.isArray(row.deliveryKeys) || row.deliveryKeys.length > 500) throw new HubError("Seleção de entregas inválida.");
+        return [...new Set(row.deliveryKeys.map(key => required(key)))];
+      })(),
       summary: text(row.summary), learnings: text(row.learnings), nextSteps: text(row.nextSteps), published: bool(row.published),
       social: list(row.social, metric => ({
         id: required(metric.id), channel: required(metric.channel), metric: required(metric.metric),

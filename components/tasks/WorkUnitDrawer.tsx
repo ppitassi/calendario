@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Eye,
 } from "lucide-react";
+import { BrandContext } from "../client-hub/BrandContext";
 import styles from "./WorkUnitDrawer.module.css";
 import {
   TASK_STATUS_LABELS,
@@ -629,6 +630,7 @@ export function WorkUnitDrawer({
             {/* Tab 1: Details and Ownership */}
             {activeTab === "details" && (
               <div className={styles.content}>
+                <BrandContext clientId={unit.clientId} reportId={details?.planning?.followUpReportId} />
                 {details?.planning?.effort && <section className={styles.ownershipSection} aria-label="Planejamento da demanda">
                   <h3>Planejamento da demanda</h3>
                   <div className={styles.ownershipGrid}>

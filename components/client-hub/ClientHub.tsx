@@ -1,28 +1,33 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ExternalLink, Save, Link as LinkIcon, Printer } from "lucide-react";
+import { ExternalLink, Save, Link as LinkIcon, Printer } from "lucide-react";
 import type { Client, SafeUser } from "@/lib/types";
 import type { HubPayload, HubDocument } from "@/lib/client-hub-types";
 import { HubContent } from "./HubContent";
-import { OnboardingEditor, BrandEditor, DeliveriesEditor, RelationshipEditor } from "./HubEditors";
+import { OnboardingEditor, BrandEditor, DeliveriesEditor } from "./HubEditors";
+import { CreateDemandDrawer } from "../tasks/CreateDemandDrawer";
+import type { Report } from "@/lib/client-hub-types";
 import styles from "./Hub.module.css";
 
 /** Ficha central conectada ao cadastro, calendário e compartilhamento do cliente. */
-export function ClientHub({ client, currentUser, team, onBack, onOpenPlanner, onDirtyChange }: {
-  client: Client; currentUser: SafeUser; team: { id: string; name: string }[];
-  onBack: () => void; onOpenPlanner: () => void;
-  onDirtyChange: (dirty: boolean) => void;
+export function ClientHub({ client, currentUser, onDirtyChange, onApplied, initialSection = "onboarding", calendarId, month }: {
+  client: Pick<Client, "id" | "name" | "segment">; currentUser: SafeUser;
+  onDirtyChange?: (dirty: boolean) => void; onApplied?: () => void | Promise<void>;
+  initialSection?: string; calendarId?: string; month?: string;
 }) {
+  const [followUp, setFollowUp] = useState<Report | null>(null);
+  const [team, setTeam] = useState<{ id: string; name: string; role: string }[]>([]);
+  useEffect(() => { fetch("/api/tasks").then(r => r.json()).then(d => setTeam(d.teamMembers || [])).catch(() => {}); }, []);
   const [payload, setPayload] = useState<HubPayload | null>(null);
-  const [section, setSection] = useState("overview");
-  const [preview, setPreview] = useState(false);
+  const [section, setSection] = useState(initialSection);
+  const [preview, setPreview] = useState(initialSection === "brand");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const canEdit = currentUser.role !== "designer";
   const endpoint = `/api/clients/${encodeURIComponent(client.id)}/hub`;
-  useEffect(() => { onDirtyChange(dirty); return () => onDirtyChange(false); }, [dirty, onDirtyChange]);
+  useEffect(() => { onDirtyChange?.(dirty); return () => onDirtyChange?.(false); }, [dirty, onDirtyChange]);
 
   /** Cancelamento evita misturar respostas quando o usuário troca rapidamente de cliente. */
   useEffect(() => {
@@ -50,43 +55,31 @@ export function ClientHub({ client, currentUser, team, onBack, onOpenPlanner, on
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Não foi possível salvar.");
       setPayload(data); setDirty(false); setNotice(message);
+      if ((body as { action?: string }).action === "apply_briefing") await onApplied?.();
     } catch (err) { setError(err instanceof Error ? err.message : "Falha de conexão."); }
     finally { setBusy(false); }
   }
-  const navigateAway = (next: () => void) => { if (!dirty || window.confirm("Existem alterações não salvas. Deseja sair e descartá-las?")) next(); };
   async function copyLink(path: string) {
     try { await navigator.clipboard.writeText(`${window.location.origin}${path}`); setNotice("Link copiado."); }
     catch { setError("Não foi possível copiar o link. Abra a página e copie o endereço."); }
   }
   const sharing = (action: string) => {
     if (dirty) { setError("Salve as alterações antes de alterar o compartilhamento."); return; }
-    void mutate("POST", { action }, "Compartilhamento atualizado.");
+    void mutate("POST", { action, revision: payload?.revision }, action === "apply_briefing" ? "Briefing aplicado ao cadastro e aos rascunhos elegíveis." : "Compartilhamento atualizado.");
   };
-  if (!payload) return <div className={styles.root}><button className={styles.button} onClick={onBack}>Voltar</button><p role={error ? "alert" : "status"}>{error || "Carregando ficha do cliente…"}</p></div>;
+  if (!payload) return <div className={styles.root}><p role={error ? "alert" : "status"}>{error || "Carregando ficha do cliente…"}</p></div>;
   const doc = payload.document;
-  return <div className={styles.root}><div className={styles.container}>
-    <button type="button" className={styles.button} onClick={() => navigateAway(onBack)}><ArrowLeft size={15} />Todos os clientes</button>
-    <header className={styles.header}>
-      <div><div className={styles.eyebrow}>Relacionamento & experiência do cliente</div><h1>{client.name}</h1><p className={styles.muted}>{client.segment || "Cliente"} · {payload.submittedAt ? "Briefing recebido" : "Onboarding em preparação"}</p></div>
-      <div className={styles.actions}>
-        <button type="button" className={styles.button} onClick={() => navigateAway(onOpenPlanner)}>Abrir calendário</button>
-        {payload.portalEnabled && payload.portalToken && <a href={`/cliente/${payload.portalToken}`} target="_blank" rel="noreferrer" className={styles.button}><ExternalLink size={15} />Ver portal</a>}
-      </div>
-    </header>
+  if (followUp) return <CreateDemandDrawer isOpen embedded initialType="follow_up" followUpReportId={followUp.id} clients={[client]} preselectedClientId={client.id} teamMembers={team}
+    initialTitle={`Follow-up: ${followUp.title}`} initialDescription={`${followUp.start} a ${followUp.end}\n${followUp.summary}\nPróximos passos: ${followUp.nextSteps}`}
+    onClose={() => setFollowUp(null)} onSuccess={() => setNotice("Revisão criada na fila de tarefas do cliente.")} />;
+  return <div className={`${styles.root} ${styles.embedded}`}><div className={styles.container}>
+    <h1 className={styles.printHeading}>{client.name}</h1>
     <nav className={styles.tabs} aria-label="Seções da ficha do cliente">
-      {Object.entries({ overview: "Visão geral", onboarding: "Kickoff & onboarding", deliveries: "Entregas & follow-up", brand: "Manual da marca", relationship: "Relacionamento" }).map(([key, title]) => <button className={styles.tab} type="button" key={key} aria-current={section === key ? "page" : undefined} onClick={() => setSection(key)}>{title}</button>)}
+      {Object.entries({ onboarding: "Kickoff & onboarding", brand: "Manual da marca", deliveries: "Entregas & follow-up", overview: "Links do cliente" }).map(([key, title]) => <button className={styles.tab} type="button" key={key} aria-current={section === key ? "page" : undefined} onClick={() => setSection(key)}>{title}</button>)}
     </nav>
     {error && <div role="alert" className={styles.error}>{error} <button type="button" className={styles.button} onClick={() => { if (window.confirm("Recarregar e descartar alterações locais?")) window.location.reload(); }}>Recarregar</button></div>}
     {notice && <div role="status" className={styles.notice}>{notice}</div>}
     {section === "overview" ? <div className={styles.stack}>
-      <section className={styles.hero}><div className={styles.eyebrow}>Tudo em um só lugar</div><h2>Do primeiro briefing à próxima entrega.</h2>
-        <p>Organize o início do projeto, apresente resultados e mantenha a identidade da marca acessível.</p>
-        <div className={styles.actions}><button className={styles.button} type="button" onClick={() => setSection("onboarding")}>Preparar onboarding</button><button className={styles.button} type="button" onClick={() => setSection("relationship")}>Acompanhar relacionamento</button></div>
-      </section>
-      <div className={styles.metrics}>{[
-        ["Entregas registradas", doc.deliveries.length], ["Relatórios de resultado", doc.reports.length],
-        ["Follow-ups em aberto", doc.followUps.filter(f => f.status === "scheduled").length], ["Arquivos da marca", doc.brand.assets.length],
-      ].map(([label, value]) => <div key={label} className={styles.metric}><span className={styles.muted}>{label}</span><strong>{value}</strong></div>)}</div>
       {canEdit && <div className={styles.grid}>
         <section className={styles.card}><LinkIcon size={22} /><h2 style={{ marginTop: 14 }}>Formulário por link</h2>
           <p className={styles.muted}>O cliente ou o executivo preenche o briefing. O envio gera o documento de onboarding para revisão da equipe.</p>
@@ -113,12 +106,14 @@ export function ClientHub({ client, currentUser, team, onBack, onOpenPlanner, on
           {canEdit && <button className={styles.button} type="button" onClick={() => setPreview(!preview)}>{preview ? "Editar conteúdo" : "Prévia do documento"}</button>}
           {(preview || !canEdit) && <button className={styles.button} type="button" onClick={() => window.print()}><Printer size={15} />Imprimir / salvar PDF</button>}
         </div>}
-        {section === "relationship" ? canEdit
-          ? <RelationshipEditor document={doc} onChange={change} team={team} userName={currentUser.name} />
-          : <section className={styles.card}><h2>Relacionamento</h2>{doc.followUps.map(f => <div className={styles.row} key={f.id}><div><h3>{f.title}</h3><p className={styles.text}>{f.objective}</p><span className={styles.muted}>{f.due} · {f.status === "completed" ? "Concluído" : "Agendado"}</span></div></div>)}</section>
-          : preview || !canEdit ? <HubContent document={doc} section={section} />
+        {section === "onboarding" && canEdit && <section className={styles.subcard} style={{ marginBottom: 16 }}>
+          <p>Após revisar e salvar, aplique segmento, público, tom de voz e objetivos ao cadastro. Os próximos calendários usarão esses dados. Rascunhos com valores herdados serão atualizados; calendários compartilhados ou personalizados serão preservados.</p>
+          <button className={styles.button} type="button" disabled={dirty || busy || !payload.briefingToken} onClick={() => sharing("apply_briefing")}>Aplicar briefing ao planejamento</button>
+        </section>}
+        {preview || !canEdit ? <HubContent document={doc} section={section} />
           : section === "onboarding" ? <OnboardingEditor document={doc} onChange={change} />
-          : section === "deliveries" ? <DeliveriesEditor document={doc} onChange={change} />
+          : section === "deliveries" ? <DeliveriesEditor document={doc} onChange={change} workDeliveries={payload.workDeliveries} calendarId={calendarId} month={month}
+              onSchedule={report => { if (dirty) { setError("Salve o relatório antes de agendar a revisão."); return; } setFollowUp(report); }} />
           : <BrandEditor document={doc} onChange={change} />}
       </fieldset>
       {canEdit && <div className={styles.toolbar}><span className={styles.muted}>{dirty ? "Há alterações para salvar." : "Conteúdo salvo."}</span><button disabled={busy || !dirty} type="submit" className={styles.primary}><Save size={15} />{busy ? "Salvando…" : "Salvar ficha"}</button></div>}

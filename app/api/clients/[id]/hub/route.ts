@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
-import { ensureHub, getHub, saveHub, changeSharing } from "@/lib/client-hub";
+import { ensureHub, getHub, saveHub, changeSharing, applyBriefing } from "@/lib/client-hub";
 import { hubJson, hubFailure, hubBody } from "@/lib/client-hub-http";
 type Context = { params: Promise<{ id: string }> };
 /** Equipe autenticada lê a ficha; designer não recebe links de edição. */
@@ -18,7 +18,8 @@ export async function POST(request: Request, context: Context) {
     if (user.role === "designer") return hubJson({ error: "Seu perfil tem acesso de leitura." }, 403);
     const { id } = await context.params, body = await hubBody(request);
     await ensureHub(id);
-    if (body.action !== "initialize") await changeSharing(id, body.action);
+    if (body.action === "apply_briefing") await applyBriefing(id, body.revision);
+    else if (body.action !== "initialize") await changeSharing(id, body.action);
     return hubJson(await getHub(id, true));
   } catch (error) { return hubFailure(error); }
 }

@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     const db = getDb();
-    const client = (await db.prepare("SELECT name, accent, has_pre_calendar, owner_id, created_by_id FROM clients WHERE id = ?").get(clientId)) as { name: string; accent: string; has_pre_calendar?: number; owner_id?: string; created_by_id?: string } | undefined;
+    const client = (await db.prepare("SELECT name, accent, has_pre_calendar, owner_id, created_by_id, strategy, audience, segment, tone FROM clients WHERE id = ?").get(clientId)) as { name: string; accent: string; strategy?: string; audience?: string; segment?: string; tone?: string; has_pre_calendar?: number; owner_id?: string; created_by_id?: string } | undefined;
     if (!client) {
       return NextResponse.json({ error: "Cliente não encontrado." }, { status: 404 });
     }
@@ -113,9 +113,9 @@ export async function POST(request: Request) {
 
     await db.prepare(`
       INSERT INTO calendars (
-        id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, is_pre_calendar, created_by_id, owner_id, assigned_to_id, executor_id, created_at, updated_at
+        id, client_id, title, month, brand, project, accent, strategy, audience, objective, status, is_pre_calendar, created_by_id, owner_id, assigned_to_id, executor_id, created_at, updated_at, segment, tone
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       clientId,
@@ -124,8 +124,8 @@ export async function POST(request: Request) {
       effectiveBrand,
       effectiveProject,
       effectiveAccent,
-      strategy,
-      audience,
+      body.strategy ?? client.strategy ?? "",
+      body.audience ?? client.audience ?? "",
       objective,
       status,
       client.has_pre_calendar ? 1 : 0,
@@ -134,7 +134,9 @@ export async function POST(request: Request) {
       assignedToId || null,
       assignedToId || null,
       now,
-      now
+      now,
+      client.segment || "",
+      client.tone || ""
     );
 
     // Uma atribuição para outra pessoa gera um aviso direcionado a ela.

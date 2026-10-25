@@ -85,38 +85,157 @@ async function main() {
     assert.equal((await designer.put(endpoint, { data: { revision: hub.revision, document: doc } })).status(), 403);
     assert.equal((await designer.post(endpoint, { data: { action: "enable" } })).status(), 403);
     assert.equal((await (await designer.get(endpoint)).json()).briefingToken, undefined);
+    assert.equal((await designer.post(endpoint, { data: { action: "apply_briefing", revision: hub.revision } })).status(), 403);
+    assert.equal((await designer.put(`/api/clients/${client.id}`, { data: { tone: "Alteração proibida" } })).status(), 403);
     await designer.dispose();
-    // Navegação interna e edição persistente pela interface.
+    // Briefing -> cadastro -> calendários reais. Preserva calendário aprovado e valores próprios.
+    const ensure = async month => {
+      const response = await api.post("/api/calendars/ensure", { data: { clientId: client.id, month } });
+      assert.equal(response.status(), 200, await response.text());
+      return (await response.json()).calendar;
+    };
+    const cal = await ensure("2026-10");
+    const locked = await ensure("2026-09");
+    const customized = await ensure("2026-08");
+    const shared = await ensure("2026-07");
+    await api.post(`/api/calendars/${shared.id}/share-token`, { data: {} });
+    await api.put(`/api/calendars/${locked.id}`, { data: { status: "approved", audience: "Público aprovado" } });
+    await api.put(`/api/calendars/${customized.id}`, { data: { audience: "Público específico" } });
+    hub = await (await api.get(endpoint)).json();
+    hub.document.onboarding.audience = "Novos alunos";
+    hub.document.onboarding.tone = "Clareza e acolhimento";
+    hub.document.onboarding.segment = "Cursos";
+    hub = await (await api.put(endpoint, { data: { revision: hub.revision, document: hub.document } })).json();
+    const applied = await api.post(endpoint, { data: { action: "apply_briefing", revision: hub.revision } });
+    assert.equal(applied.status(), 200, await applied.text());
+    assert.equal((await api.post(endpoint, { data: { action: "apply_briefing", revision: hub.revision } })).status(), 409);
+    const readCal = async id => (await (await api.get(`/api/calendars/${id}`)).json()).calendar;
+    assert.equal((await readCal(cal.id)).audience, "Novos alunos");
+    assert.equal((await readCal(locked.id)).audience, "Público aprovado");
+    assert.equal((await readCal(customized.id)).audience, "Público específico");
+    assert.equal((await readCal(shared.id)).audience, "Alunos e famílias");
+    const nextCalendar = await ensure("2026-11");
+    assert.equal(nextCalendar.audience, "Novos alunos");
+    assert.equal(nextCalendar.strategy, hub.document.onboarding.objectives);
+    const alternateCreate = await api.post("/api/calendars", { data: { clientId: client.id, title: "Calendário alternativo", month: "2026-12" } });
+    assert.equal(alternateCreate.status(), 200, await alternateCreate.text());
+    assert.equal((await alternateCreate.json()).calendar.audience, "Novos alunos");
+    assert.equal((await api.put(`/api/clients/${client.id}`, { data: { tone: "Cadastro revisado" } })).status(), 200);
+    assert.equal((await readCal(cal.id)).tone, "Cadastro revisado");
+    assert.equal((await readCal(locked.id)).tone, "Próximo e claro");
+    const publicationId = `publication-${suffix}`;
+    const draftId = `draft-${suffix}`;
+    const items = [
+      { id: publicationId, date: "2026-10-20", title: "Entrega real do calendário", type: "Feed", status: "Aprovado", channel: "Instagram", caption: "Copy persistida" },
+      { id: draftId, date: "2026-10-21", title: "PRIVATE-UNAPPROVED", type: "Feed", status: "Ideia", channel: "Instagram" },
+    ];
+    const itemSave = await api.put(`/api/calendars/${cal.id}`, { data: { items } });
+    assert.equal(itemSave.status(), 200, await itemSave.text());
+    const demand = await api.post("/api/demands", { data: { clientId: client.id, title: "Produção de outdoor", priority: "normal", executorId: me.id, deliveries: [{ type: "impresso", quantity: 1, title: "Outdoor entregue" }] } });
+    assert.equal(demand.status(), 200, await demand.text());
+    const createdDemand = await demand.json();
+    const completed = await api.patch("/api/tasks", { data: { kind: "task", id: createdDemand.tasks[0].id, status: "completed" } });
+    assert.equal(completed.status(), 200, await completed.text());
+    hub = await (await api.get(endpoint)).json();
+    assert.ok(hub.workDeliveries.some(item => item.key === `calendar:${publicationId}`));
+    assert.ok(hub.workDeliveries.some(item => item.key === `task:${createdDemand.tasks[0].id}`));
+    assert.equal(hub.workDeliveries.some(item => item.key === `calendar:${draftId}`), false);
+    hub.document.reports[0].start = "2020-01-01";
+    hub.document.reports[0].end = "2035-12-31";
+    hub.document.reports[0].deliveryKeys = hub.workDeliveries.map(item => item.key);
+    const forged = structuredClone(hub.document);
+    forged.reports[0].deliveryKeys.push("calendar:another-client-item");
+    assert.equal((await api.put(endpoint, { data: { revision: hub.revision, document: forged } })).status(), 400);
+    hub = await (await api.put(endpoint, { data: { revision: hub.revision, document: hub.document } })).json();
+    let projection = await (await publicApi.get(`/api/client-portal/${hub.portalToken}`)).json();
+    assert.equal(projection.document.reports[0].linkedDeliveries.length, 2);
+    assert.equal(JSON.stringify(projection).includes("PRIVATE-UNAPPROVED"), false);
+    // Reabrir uma peça remove sua exposição, sem manter uma cópia obsoleta no portal.
+    items[0].status = "Revisão";
+    await api.put(`/api/calendars/${cal.id}`, { data: { items } });
+    projection = await (await publicApi.get(`/api/client-portal/${hub.portalToken}`)).json();
+    assert.equal(projection.document.reports[0].linkedDeliveries.length, 1);
+    const reopenedHub = await (await api.get(endpoint)).json();
+    reopenedHub.document.brand.description = "Aprender abre novos horizontes. Manual revisado.";
+    assert.equal((await api.put(endpoint, { data: { revision: reopenedHub.revision, document: reopenedHub.document } })).status(), 200);
+    items[0].status = "Aprovado";
+    await api.put(`/api/calendars/${cal.id}`, { data: { items } });
+
+    // Recursos dentro do cadastro existente.
     await page.goto(baseURL);
-    await page.evaluate(() => localStorage.setItem("cp:active-screen", "clients"));
-    await page.reload();
+    await page.getByTitle("Controle de Clientes", { exact: true }).click();
     const clientRow = page.locator('[class*="clientRow"]').filter({ hasText: client.name });
-    await clientRow.getByRole("button", { name: "Ficha & Portal" }).click();
-    await page.getByRole("heading", { name: client.name, exact: true }).waitFor();
-    await page.getByRole("button", { name: "Kickoff & onboarding", exact: true }).click();
+    await clientRow.getByRole("button", { name: "Editar", exact: true }).click();
+    await page.getByRole("button", { name: "Onboarding, marca e resultados", exact: true }).click();
     await page.getByLabel("Cronograma e marcos", { exact: true }).fill("Kickoff validado e entrega final em novembro.");
     await page.getByRole("button", { name: "Salvar ficha", exact: true }).click();
     await page.getByText("Ficha salva.", { exact: true }).waitFor();
     assert.equal((await (await api.get(endpoint)).json()).document.onboarding.timeline, "Kickoff validado e entrega final em novembro.");
+    await page.screenshot({ path: path.join(out, "onboarding-no-cadastro.png"), fullPage: true });
+
+    // O calendário permanece montado ao consultar a marca e editar o relatório.
+    await page.evaluate(({ id, clientId }) => {
+      localStorage.setItem("cp:active-screen", "planner");
+      localStorage.setItem("cp:active-client-id", clientId);
+      localStorage.setItem("cp:active-calendar-id", id);
+      localStorage.setItem("cp:active-month", "2026-10");
+    }, { id: cal.id, clientId: client.id });
     await page.reload();
-    await page.getByRole("heading", { name: client.name, exact: true }).waitFor();
-    await page.getByRole("button", { name: "Entregas & follow-up", exact: true }).click();
-    await page.getByLabel("Aprendizados", { exact: true }).fill("Conteúdos educativos geraram conversas. Revisado pela equipe.");
+    await page.getByText("Entrega real do calendário", { exact: true }).first().click();
+    await page.locator(".documentTitle").waitFor();
+    await page.getByRole("button", { name: "Consultar marca", exact: true }).click();
+    await page.getByRole("button", { name: "Editar conteúdo", exact: true }).click();
+    await page.getByLabel("Tom de voz e exemplos", { exact: true }).fill("Clara, próxima e encorajadora. Exemplo de produção.");
     await page.getByRole("button", { name: "Salvar ficha", exact: true }).click();
     await page.getByText("Ficha salva.", { exact: true }).waitFor();
-    await page.getByRole("button", { name: "Manual da marca", exact: true }).click();
-    await page.getByLabel("Tom de voz e exemplos", { exact: true }).fill("Clara, próxima e encorajadora. Exemplo: seu próximo passo começa aqui.");
+    await page.getByRole("button", { name: "Prévia do documento", exact: true }).click();
+    await page.screenshot({ path: path.join(out, "marca-no-editor.png"), fullPage: true });
+    await page.emulateMedia({ media: "print" });
+    assert.equal(await page.locator(".documentTitle").isVisible(), false);
+    assert.equal(await page.getByText("Ficha salva.", { exact: true }).isVisible(), false);
+    assert.equal(await page.locator("dialog").evaluate(node => getComputedStyle(node).maxHeight), "none");
+    await page.pdf({ path: path.join(out, "manual-no-editor.pdf"), format: "A4", printBackground: true });
+    await page.emulateMedia({ media: "screen" });
+    await page.getByRole("button", { name: "Voltar ao trabalho", exact: true }).click();
+    assert.equal(await page.locator(".documentTitle").inputValue(), "Entrega real do calendário");
+    await page.getByRole("button", { name: "Entregas e resultados", exact: true }).click();
+    await page.getByLabel("Aprendizados", { exact: true }).fill("Relatório vinculado às entregas reais.");
     await page.getByRole("button", { name: "Salvar ficha", exact: true }).click();
     await page.getByText("Ficha salva.", { exact: true }).waitFor();
-    await page.getByRole("button", { name: "Relacionamento", exact: true }).click();
-    await page.getByLabel("O que aconteceu?", { exact: true }).fill("PRIVATE-UI-UPDATE");
-    await page.getByRole("button", { name: "Adicionar atualização", exact: true }).click();
-    await page.getByRole("button", { name: "Salvar ficha", exact: true }).click();
-    await page.getByText("Ficha salva.", { exact: true }).waitFor();
-    await page.getByRole("button", { name: "Visão geral", exact: true }).click();
-    await page.getByRole("heading", { name: client.name, exact: true }).scrollIntoViewIfNeeded();
-    await page.screenshot({ path: path.join(out, "ficha-cliente-desktop.png"), fullPage: true });
-    // Publicação sem cookies e sem vazamento de notas internas.
+    await page.getByRole("button", { name: "Agendar revisão na fila de tarefas", exact: true }).click();
+    assert.equal(await page.locator('dialog input[type="text"]').first().inputValue(), "Follow-up: Resultados de outubro");
+    const createdFollowUp = page.waitForResponse(response => response.url().endsWith("/api/demands") && response.request().method() === "POST");
+    await page.getByRole("button", { name: /Criar Demanda/i }).click();
+    const followResponse = await createdFollowUp;
+    assert.equal(followResponse.status(), 200, await followResponse.text());
+    const followBody = await followResponse.json();
+    assert.equal(followBody.tasks[0].type, "follow_up");
+    const followDetails = await (await api.get(`/api/tasks/${followBody.workUnit.id}`)).json();
+    assert.equal(followDetails.details.planning.followUpReportId, "report-1");
+    const queue = await (await api.get(`/api/tasks?scope=team&clientId=${client.id}`)).json();
+    assert.ok(JSON.stringify(queue.items).includes("Follow-up: Resultados de outubro"));
+    await page.getByText("Revisão criada na fila de tarefas do cliente.", { exact: true }).waitFor();
+    await page.screenshot({ path: path.join(out, "follow-up-no-calendario.png"), fullPage: true });
+    for (const width of [768, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.equal(await page.evaluate(() => document.querySelector("dialog").scrollWidth > document.querySelector("dialog").clientWidth + 1), false, `dialog overflow ${width}`);
+    }
+    await page.getByRole("button", { name: "Voltar ao trabalho", exact: true }).click();
+    assert.equal(await page.locator(".documentTitle").inputValue(), "Entrega real do calendário");
+
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.getByTitle("Tarefas", { exact: true }).click();
+    await page.locator("select").filter({ has: page.locator(`option[value="${client.id}"]`) }).first().selectOption(client.id);
+    await page.getByText("Follow-up: Resultados de outubro", { exact: true }).first().click();
+    await page.getByRole("button", { name: "Detalhes", exact: true }).click();
+    await page.getByRole("region", { name: "Relatório vinculado ao follow-up" }).getByText("Entrega real do calendário", { exact: true }).waitFor();
+    await page.getByText("Consultar manual da marca", { exact: true }).click();
+    await page.getByText("Clara, próxima e encorajadora. Exemplo de produção.", { exact: true }).waitFor();
+    const reportBox = await page.getByRole("region", { name: "Relatório vinculado ao follow-up" }).boundingBox();
+    const manualBox = await page.getByText("Consultar manual da marca", { exact: true }).boundingBox();
+    assert.ok(reportBox.y + reportBox.height <= manualBox.y, "Relatório e manual não podem se sobrepor na gaveta.");
+    await page.screenshot({ path: path.join(out, "relatorio-na-tarefa.png"), fullPage: true });
+
     const portal = await external.newPage();
     portal.on("pageerror", error => errors.push(error.message));
     for (const width of [1440, 768, 390]) {
@@ -124,38 +243,13 @@ async function main() {
       await portal.goto(`${baseURL}/cliente/${hub.portalToken}`);
       await portal.getByRole("heading", { name: client.name, exact: true }).waitFor();
       await portal.getByRole("button", { name: "Entregas & follow-up", exact: true }).click();
+      await portal.getByText("Entrega real do calendário", { exact: true }).waitFor();
+      await portal.getByText("Outdoor entregue", { exact: true }).waitFor();
       await portal.getByText("12.480", { exact: true }).waitFor();
       await portal.getByText("10.000 oportunidades de exposição", { exact: true }).waitFor();
       assert.equal(await portal.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, `overflow ${width}`);
       await portal.screenshot({ path: path.join(out, `portal-${width}.png`), fullPage: true });
     }
-    await portal.getByRole("button", { name: "Manual da marca", exact: true }).click();
-    await portal.getByRole("link", { name: "Abrir / baixar arquivo ↗", exact: true }).waitFor();
-    await portal.screenshot({ path: path.join(out, "manual-marca-mobile.png"), fullPage: true });
-    // Demandas alimentam o painel; conclusão é contada uma vez pelo evento de auditoria.
-    const demand = await api.post("/api/demands", { data: { clientId: client.id, title: "Entrega operacional", priority: "normal", dueDate: "2026-10-20", executorId: me.id, deliveries: [{ type: "banner", quantity: 2 }], planning: { requesterId: me.id, specialty: "Design", category: "Campanha", effort: 3, serviceMode: "Remoto", dueTime: "18:00" } } });
-    assert.equal(demand.status(), 200, await demand.text());
-    const createdDemand = await demand.json();
-    const details = await (await api.get(`/api/tasks/${createdDemand.workUnit.id}`)).json();
-    assert.equal(details.details.planning.specialty, "Design");
-    assert.equal(details.details.planning.requesterName, me.name);
-    let board = await (await api.get("/api/agency-dashboard?month=all")).json();
-    assert.ok(board.open.some(row => row.title === "Banner 01" && row.effort === 3));
-    assert.ok(board.followUps.some(row => row.id === "follow-1"));
-    const before = board.ranking.find(person => person.id === me.id).completed;
-    await api.patch("/api/tasks", { data: { kind: "task", id: createdDemand.tasks[0].id, status: "completed" } });
-    board = await (await api.get("/api/agency-dashboard?month=all")).json();
-    assert.equal(board.ranking.find(person => person.id === me.id).completed, before + 1);
-    await page.getByRole("button", { name: "Painel da Agência", exact: true }).click();
-    await page.getByRole("heading", { name: "Próximas tarefas", exact: true }).waitFor();
-    await page.screenshot({ path: path.join(out, "painel-agencia.png"), fullPage: true });
-    await page.getByRole("button", { name: "Oportunidades de Conteúdo", exact: true }).click();
-    await page.getByLabel("Empresa", { exact: true }).selectOption(client.id);
-    await page.getByLabel("Tema / data comemorativa", { exact: true }).fill("Campanha de matrículas");
-    await page.getByLabel("Usar em campanha", { exact: true }).first().check();
-    await page.getByRole("button", { name: "Criar campanha na fila", exact: true }).click();
-    await page.getByText(/Campanha criada com 1 tarefa/).waitFor();
-    await page.screenshot({ path: path.join(out, "oportunidades-conteudo.png"), fullPage: true });
     // Concorrência real: apenas uma sessão vence a atualização da mesma revisão.
     hub = await (await api.get(endpoint)).json();
     const competing = await Promise.all([1, 2].map(() => api.put(endpoint, { data: { revision: hub.revision, document: hub.document } })));
@@ -174,8 +268,8 @@ async function main() {
     await api.post(endpoint, { data: { action: "disable" } });
     assert.equal((await publicApi.get(`/api/client-portal/${hub.portalToken}`)).status(), 404);
     assert.deepEqual(errors, []);
-    fs.writeFileSync(path.join(out, "verification.json"), JSON.stringify({ briefing: true, onboarding: true, persistence: true, publishProjection: true, rbac: true, conflicts: true, validation: true, tokenRevocation: true, dashboard: true, campaign: true, responsive: [1440, 768, 390], pageErrors: errors }, null, 2));
-    console.log("PASS: briefing, onboarding, persistência, publicação, RBAC, concorrência, validação, revogação, painel, campanhas e responsividade.");
+    fs.writeFileSync(path.join(out, "verification.json"), JSON.stringify({ briefing: true, onboarding: true, persistence: true, publishProjection: true, rbac: true, conflicts: true, validation: true, tokenRevocation: true, planningInheritance: true, canonicalDeliveries: true, editorContext: true, canonicalFollowUpTask: true, responsive: [1440, 768, 390], pageErrors: errors }, null, 2));
+    console.log("PASS: briefing, onboarding, persistência, publicação, RBAC, concorrência, validação, revogação, planejamento, entregas reais, contexto do editor, tarefa de follow-up e responsividade.");
     await external.close(); await context.close();
   } catch (error) {
     for (const [index, context] of browser.contexts().entries()) {

@@ -9,9 +9,11 @@ export const onboardingFields = {
 } as const;
 export type Onboarding = Record<keyof typeof onboardingFields, string>;
 export type Delivery = { id: string; title: string; date: string; url: string; description: string; published: boolean };
+/** Referência ao trabalho original; títulos e situação são resolvidos no servidor. */
+export type WorkDelivery = { key: string; title: string; date: string; type: string; calendarId: string | null; origin: "calendar" | "task"; url?: string };
 export type SocialMetric = { id: string; channel: string; metric: string; value: number; source: string };
 export type OutdoorMetric = { id: string; medium: "Busdoor" | "Outdoor"; location: string; dailyFlow: number; days: number; units: number; factor: number; source: string; assumptions: string };
-export type Report = { id: string; title: string; start: string; end: string; summary: string; learnings: string; nextSteps: string; published: boolean; social: SocialMetric[]; outdoor: OutdoorMetric[] };
+export type Report = { id: string; title: string; start: string; end: string; summary: string; learnings: string; nextSteps: string; published: boolean; social: SocialMetric[]; outdoor: OutdoorMetric[]; deliveryKeys?: string[]; linkedDeliveries?: WorkDelivery[] };
 export type BrandAsset = { id: string; title: string; url: string; kind: "Logo" | "Aplicação" | "Arquivo"; description: string };
 export type Brand = { description: string; colors: string; typography: string; rules: string; voice: string; assets: BrandAsset[]; published: boolean };
 export type FollowUp = { id: string; title: string; start: string; due: string; owner: string; participant: string; objective: string; meetingUrl: string; message: string; status: "scheduled" | "completed"; outcome: string };
@@ -25,6 +27,7 @@ export type HubPayload = {
   client: HubClient; document: HubDocument; revision: number; submittedAt: string | null;
   portalToken?: string; briefingToken?: string; portalEnabled: boolean; briefingOpen: boolean;
   calendars: { title: string; month: string; share_token: string }[];
+  workDeliveries: WorkDelivery[];
 };
 /** Cria documentos vazios sem inventar resultados ou informações comerciais. */
 export function emptyHub(): HubDocument {
