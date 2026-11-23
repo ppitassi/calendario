@@ -207,6 +207,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
       const data = await res.json();
       if (Array.isArray(data.clients)) {
         setClients(data.clients);
+
         const storedClientId = typeof window !== "undefined" ? localStorage.getItem("cp:active-client-id") : null;
         if (!activeClient && storedClientId) {
           const match = data.clients.find((c: Client) => c.id === storedClientId);
@@ -542,6 +543,7 @@ export function AppShell({ currentUser, onLogout }: AppShellProps) {
         teamMembers={teamMembers}
         onSuccess={async () => {
           setIsCreateDemandOpen(false);
+
           await loadClients();
         }}
       />

@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Eye,
 } from "lucide-react";
+import { BrandContext } from "../client-hub/BrandContext";
 import styles from "./WorkUnitDrawer.module.css";
 import {
   TASK_STATUS_LABELS,
@@ -629,6 +630,20 @@ export function WorkUnitDrawer({
             {/* Tab 1: Details and Ownership */}
             {activeTab === "details" && (
               <div className={styles.content}>
+                <BrandContext clientId={unit.clientId} reportId={details?.planning?.followUpReportId} />
+                {details?.planning?.effort && <section className={styles.ownershipSection} aria-label="Planejamento da demanda">
+                  <h3>Planejamento da demanda</h3>
+                  <div className={styles.ownershipGrid}>
+                    {[
+                      ["Solicitante", details.planning.requesterName],
+                      ["Especialidade", details.planning.specialty],
+                      ["Categoria", details.planning.category],
+                      ["Esforço por entrega", `${details.planning.effort} ponto(s)`],
+                      ["Atendimento", details.planning.serviceMode],
+                      ["Horário limite", details.planning.dueTime],
+                    ].map(([label, value]) => <div key={label} className={styles.ownershipCard}><div className={styles.ownershipLabel}>{label}</div><p>{value || "Não informado"}</p></div>)}
+                  </div>
+                </section>}
                 <div className={styles.ownershipSection}>
                   <div className={styles.ownershipGrid}>
                     {/* Accountable Owner */}

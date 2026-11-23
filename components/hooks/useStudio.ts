@@ -305,7 +305,16 @@ export function useStudio({
     }
   }, [calendar, addNotification]);
 
+  // Atualiza somente o contexto estratégico, preservando alterações e seleção do editor.
+  const refreshClientContext = async () => {
+    const response = await fetch(`/api/calendars/${calendarId}`);
+    if (!response.ok) throw new Error("Não foi possível atualizar o contexto do calendário.");
+    const data = await response.json();
+    setCalendar(previous => previous ? { ...previous, segment: data.calendar.segment, tone: data.calendar.tone, audience: data.calendar.audience, strategy: data.calendar.strategy } : previous);
+  };
+
   return {
+    refreshClientContext,
     calendar,
     items,
     month,

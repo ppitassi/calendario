@@ -20,7 +20,8 @@
     "pm2:save": "pm2 save",
     "pm2:startup": "pm2 startup",
     "typecheck": "tsc --noEmit",
-    "test:browser": "node scripts/verify-browser.cjs"
+    "test:browser": "node scripts/verify-browser.cjs",
+    "test:client-hub": "node scripts/verify-client-hub.cjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",

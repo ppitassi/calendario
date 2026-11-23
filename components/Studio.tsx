@@ -4,6 +4,8 @@
  * editor, prévia e apresentação e persiste cada alteração no SQLite/PostgreSQL.
  */
 
+import { ClientResourcesDialog } from "./client-hub/ClientResourcesDialog";
+import hubStyles from "./client-hub/Hub.module.css";
 import { useRef, useState } from "react";
 import { Plus, AlertCircle, Undo2, ArrowLeft, Loader2, Check, CloudDownload } from "lucide-react";
 import { Calendar } from "./Calendar";
@@ -54,6 +56,7 @@ export function Studio({
 }: StudioProps) {
   const {
     calendar,
+    refreshClientContext,
     items,
     month,
     selectedId,
@@ -105,6 +108,7 @@ export function Studio({
     onViewModeChange,
   });
 
+  const [clientSection, setClientSection] = useState<string | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const layout = useWorkspaceLayout(workspaceRef);
 
@@ -240,6 +244,15 @@ export function Studio({
         onOpenCalendarDrawer={() => setIsCalendarDrawerOpen(true)}
       />
 
+      {currentUser && <div className={hubStyles.contextBar} aria-label="Contexto do cliente">
+        <span>{calendar.brand || calendar.title}</span>
+        <button type="button" disabled={saveStatus === "saving" || saveStatus === "error"} onClick={() => setClientSection("onboarding")}>Briefing e onboarding</button>
+        <button type="button" disabled={saveStatus === "saving" || saveStatus === "error"} onClick={() => setClientSection("brand")}>Consultar marca</button>
+        <button type="button" disabled={saveStatus === "saving" || saveStatus === "error"} onClick={() => setClientSection("deliveries")}>Entregas e resultados</button>
+        {currentUser.role !== "designer" && <button type="button" disabled={saveStatus === "saving" || saveStatus === "error"} onClick={() => setClientSection("overview")}>Portal do cliente</button>}
+      </div>}
+      {clientSection && currentUser && <ClientResourcesDialog key={calendar.client_id} client={{ id: calendar.client_id, name: calendar.brand || calendar.title }} currentUser={currentUser}
+        section={clientSection} calendarId={calendar.id} month={calendar.month} onClose={() => setClientSection(null)} onApplied={refreshClientContext} />}
       {Boolean(calendar.client_feedback || calendar.clientFeedback) && (
         <div
           style={{

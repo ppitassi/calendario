@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { syncClientPlanning } from "@/lib/client-planning";
 import { getDb } from "@/lib/db";
 
 /** Remove o cliente; calendários e publicações relacionadas seguem as cascatas do esquema. */
@@ -15,6 +16,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
+    if (user.role === "designer") return NextResponse.json({ error: "Seu perfil tem acesso de leitura." }, { status: 403 });
     const { id } = await params;
     const db = getDb();
     await db.prepare("DELETE FROM clients WHERE id = ?").run(id);
@@ -36,6 +38,7 @@ export async function PUT(
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
+    if (user.role === "designer") return NextResponse.json({ error: "Seu perfil tem acesso de leitura." }, { status: 403 });
     const { id } = await params;
     const body = await request.json();
     const { name, segment, tone, audience, strategy, accent, logo_url, has_multiple_profiles, has_pre_calendar, profiles } = body;
@@ -58,56 +61,39 @@ export async function PUT(
     const finalAudience = audience !== undefined ? audience : existing.audience;
     const finalStrategy = strategy !== undefined ? strategy : existing.strategy;
 
-    await db.prepare(`
-      UPDATE clients
-      SET
-        name = ?,
-        segment = ?,
-        tone = ?,
-        audience = ?,
-        strategy = ?,
-        accent = ?,
-        logo_url = ?,
-        has_multiple_profiles = ?,
-        has_pre_calendar = ?,
-        profiles = ?,
-        updated_at = ?
-      WHERE id = ?
-    `).run(
-      name !== undefined ? name : existing.name,
-      finalSegment ?? "",
-      finalTone ?? "",
-      finalAudience ?? "",
-      finalStrategy ?? "",
-      accent !== undefined ? accent : existing.accent,
-      logo_url !== undefined ? logo_url : existing.logo_url,
-      has_multiple_profiles !== undefined ? (has_multiple_profiles ? 1 : 0) : existing.has_multiple_profiles,
-      has_pre_calendar !== undefined ? (has_pre_calendar ? 1 : 0) : existing.has_pre_calendar,
-      finalProfiles,
-      now,
-      id
-    );
-
-    // Sincroniza os novos dados estratégicos nos calendários deste cliente
-    try {
-      await db.prepare(`
-        UPDATE calendars
+    await db.transaction(async tx => {
+      await tx.prepare(`
+        UPDATE clients
         SET
+          name = ?,
           segment = ?,
           tone = ?,
           audience = ?,
+          strategy = ?,
+          accent = ?,
+          logo_url = ?,
+          has_multiple_profiles = ?,
+          has_pre_calendar = ?,
+          profiles = ?,
           updated_at = ?
-        WHERE client_id = ?
+        WHERE id = ?
       `).run(
+        name !== undefined ? name : existing.name,
         finalSegment ?? "",
         finalTone ?? "",
         finalAudience ?? "",
+        finalStrategy ?? "",
+        accent !== undefined ? accent : existing.accent,
+        logo_url !== undefined ? logo_url : existing.logo_url,
+        has_multiple_profiles !== undefined ? (has_multiple_profiles ? 1 : 0) : existing.has_multiple_profiles,
+        has_pre_calendar !== undefined ? (has_pre_calendar ? 1 : 0) : existing.has_pre_calendar,
+        finalProfiles,
         now,
         id
       );
-    } catch (err) {
-      console.error("Erro ao sincronizar dados estratégicos nos calendários:", err);
-    }
+
+      await syncClientPlanning(tx, id, existing, { segment: finalSegment, tone: finalTone, audience: finalAudience, strategy: finalStrategy });
+    });
 
     const updated = await db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
     return NextResponse.json({ client: updated, success: true });

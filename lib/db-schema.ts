@@ -2,6 +2,7 @@ import type { Pool, PoolClient } from "pg";
 import crypto from "node:crypto";
 import { hashPassword } from "./db-normalize";
 import { initPgStorageSchema, initSqliteStorageSchema } from "./storage-schema";
+import { CLIENT_HUB_SCHEMA } from "./client-hub-schema";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -560,6 +561,16 @@ const PG_MIGRATIONS: MigrationStep[] = [
       `);
     },
   },
+  {
+    version: "009_client_hubs",
+    name: "Portal, onboarding e histórico de briefings por cliente",
+    run: async (pool) => { await pool.query(CLIENT_HUB_SCHEMA); },
+  },
+  {
+    version: "010_work_planning",
+    name: "Planejamento de esforço e atendimento das demandas",
+    run: async (pool) => { await pool.query("ALTER TABLE work_units ADD COLUMN IF NOT EXISTS planning TEXT NOT NULL DEFAULT '{}'"); },
+  },
 ];
 
 /**
@@ -915,6 +926,7 @@ export function initSqliteSchema(db: any) {
     { table: "calendar_items", col: "extra_format", def: "TEXT DEFAULT ''" },
 
     { table: "work_units", col: "owner_id", def: "TEXT" },
+    { table: "work_units", col: "planning", def: "TEXT NOT NULL DEFAULT '{}'" },
     { table: "work_units", col: "executor_id", def: "TEXT" },
     { table: "work_units", col: "assignee_id", def: "TEXT" },
     { table: "work_units", col: "created_by_id", def: "TEXT" },
@@ -1041,6 +1053,7 @@ export function initSqliteSchema(db: any) {
   for (const idxSql of sqliteIndexes) {
     try { db.exec(idxSql); } catch {}
   }
+  db.exec(CLIENT_HUB_SCHEMA);
   try { initSqliteStorageSchema(db); } catch (e) { console.error("storage schema:", e); }
 
   const existingAdmin = db.prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1").get();

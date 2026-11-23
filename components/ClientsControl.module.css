@@ -783,3 +783,6 @@
   .rowActions { gap: 0.3rem; }
   .actionBtnPlan, .actionBtnPresent, .actionBtnEdit { font-size: 0.65rem; padding: 0.35rem 0.55rem; }
 }
+
+.clientDialog { padding:0; border:0; border-radius:1.25rem; background:transparent; max-width:96vw; max-height:94dvh; overflow:auto; }
+.clientDialog::backdrop { background:rgba(15,23,42,.5); backdrop-filter:blur(4px); }

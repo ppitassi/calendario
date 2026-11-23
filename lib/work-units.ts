@@ -1262,7 +1262,13 @@ export async function getWorkUnitDetails(
         progress,
       };
 
-      return { unit, tasks, events };
+      const planningRow = await db.prepare("SELECT planning FROM work_units WHERE id = ?").get(wu.id);
+      const planning = planningRow?.planning ? JSON.parse(planningRow.planning) : undefined;
+      if (planning?.requesterId) {
+        const requester = await db.prepare("SELECT name FROM users WHERE id = ?").get(planning.requesterId);
+        planning.requesterName = requester?.name || "Usuário indisponível";
+      }
+      return { unit, tasks, events, planning };
     }
   } catch {}
 

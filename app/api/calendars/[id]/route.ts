@@ -54,11 +54,13 @@ export async function GET(
       return NextResponse.json({ error: "Calendário não encontrado." }, { status: 404 });
     }
 
-    // Normaliza campos estratégicos garantindo herança do cliente caso o calendário não tenha sobrescrito
-    calendar.segment = calendar.segment || calendar.client_segment || "";
-    calendar.tone = calendar.tone || calendar.client_tone || "";
-    calendar.audience = calendar.audience || calendar.client_audience || "";
-    calendar.strategy = calendar.strategy || calendar.client_strategy || "";
+    // Herança dinâmica somente em rascunhos ainda não compartilhados.
+    if (calendar.status === "draft" && !calendar.share_token) {
+      calendar.segment = calendar.segment || calendar.client_segment || "";
+      calendar.tone = calendar.tone || calendar.client_tone || "";
+      calendar.audience = calendar.audience || calendar.client_audience || "";
+      calendar.strategy = calendar.strategy || calendar.client_strategy || "";
+    }
 
     // Primeiro tenta a configuração do mês; depois recorre ao padrão do cliente.
     let parsedPostingDays: number[] = [];

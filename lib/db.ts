@@ -215,8 +215,8 @@ function createSqliteAdapter(): StudioDb {
     if (!global.__studioSqliteDb) {
       let DatabaseSync: any;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        DatabaseSync = require("node:sqlite").DatabaseSync;
+        // Carrega o módulo nativo em runtime: Turbopack não resolve require("node:sqlite").
+        DatabaseSync = process.getBuiltinModule("node:sqlite").DatabaseSync;
       } catch {
         throw new Error(
           "Banco de dados não configurado. Adicione a variável DATABASE_URL ou POSTGRES_URL no painel da Vercel para conectar ao banco PostgreSQL."

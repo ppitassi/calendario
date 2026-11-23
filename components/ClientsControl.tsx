@@ -417,6 +417,7 @@ export function ClientsControl({
       </div>
 
       <ClientModal
+        currentUser={currentUser}
         isOpen={showModal}
         editingClient={editingClient}
         onClose={() => setShowModal(false)}

@@ -1,8 +1,19 @@
 # Calendário — Presentation Studio
 
 Aplicação independente em Next.js para criar calendários editoriais, editar
-peças, revisar o resultado e apresentar o planejamento. O estado fica em
-SQLite e os uploads ficam em um volume separado do código.
+peças, revisar o resultado e apresentar o planejamento. Também reúne briefing,
+onboarding, entregas, follow-up e manual da marca no portal de cada cliente.
+Usa PostgreSQL quando configurado e SQLite como alternativa local.
+
+## Onboarding e resultados no fluxo do calendário
+
+Em **Controle de Clientes → Editar → Onboarding, marca e resultados**, gere o
+formulário e revise o onboarding. **Aplicar briefing ao planejamento** alimenta
+o cadastro e os rascunhos elegíveis. No calendário, consulte o briefing e o
+manual sem sair do editor; **Entregas e resultados** cria relatórios vinculados
+às publicações aprovadas e tarefas concluídas. A revisão de resultados entra
+na fila de tarefas existente, com vínculo ao relatório.
+Consulte [o guia de uso, dados e validação](docs/client-portal.md).
 
 ## Desenvolvimento local
 
